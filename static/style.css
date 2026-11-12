@@ -26,17 +26,53 @@
   --critical: #d03b3b;
   --critical-text: #b02f2f;
   --shadow: 0 1px 2px rgba(11, 11, 11, 0.04), 0 8px 24px rgba(11, 11, 11, 0.06);
-  /* Sequential (magnitude): one hue, near-surface for 0 -> dark for the peak */
-  --seq-stops: #f4f8fd, #cde2fb, #86b6ef, #3987e5, #1c5cab, #0d366b;
-  /* Diverging (sign): blue <- gray midpoint -> red */
-  --div-stops: #184f95, #6da7ec, #f0efec, #ee8f8e, #b8302f;
+  /* Pixel maps are images, so they keep a dark ground in both themes (like the MNIST input):
+     thin bright patterns read far better on dark tiles than on a pale page-colored ground. */
+  /* Activations (magnitude): inferno-like heat scale, dark (0) -> purple -> orange -> yellow (peak) */
+  --seq-stops: #211c22, #4a1650, #8f2463, #d0453a, #f58b26, #fbd75e;
+  --map-frame: rgba(11, 11, 11, 0.18);
+  /* Weights (sign): blue (negative) <- dark gray (0) -> red (positive) */
+  --div-stops: #86b6ef, #2a5f9e, #383835, #a83c3c, #f19b9a;
   --radius: 12px;
   --font: system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
 }
 
+/* Dark theme: the user's choice (data-theme on <html>) wins; "Sistem" follows the OS setting */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --surface-2: #232321;
+  --border: rgba(255, 255, 255, 0.10);
+  --text: #f0efec;
+  --text-2: #c3c2b7;
+  --muted: #898781;
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --accent: #3987e5;
+  --accent-strong: #5598e7;
+  --accent-soft: #1b2a3d;
+  --on-accent: #ffffff;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --surface-ramp: #1a1a19, #2b2b29, #5a5953;
+  --drop-cell: #6e6d67;
+  --map-frame: rgba(255, 255, 255, 0.14);
+  --raw-line: #4a4a46;
+  --bar-muted: #2b3f58;
+  --good: #0ca30c;
+  --good-text: #0ca30c;
+  --critical: #d03b3b;
+  --critical-text: #e66767;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --seq-stops: #211c22, #4a1650, #8f2463, #d0453a, #f58b26, #fbd75e;
+  --div-stops: #86b6ef, #2a5f9e, #383835, #a83c3c, #f19b9a;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     color-scheme: dark;
     --page: #0d0d0d;
     --surface: #1a1a19;
@@ -56,6 +92,7 @@
     --series-3: #199e70;
     --surface-ramp: #1a1a19, #2b2b29, #5a5953;
     --drop-cell: #6e6d67;
+    --map-frame: rgba(255, 255, 255, 0.14);
     --raw-line: #4a4a46;
     --bar-muted: #2b3f58;
     --good: #0ca30c;
@@ -63,10 +100,19 @@
     --critical: #d03b3b;
     --critical-text: #e66767;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
-    --seq-stops: #1f2022, #123a6b, #1c5cab, #3987e5, #86b6ef, #e3eefb;
+    --seq-stops: #211c22, #4a1650, #8f2463, #d0453a, #f58b26, #fbd75e;
     --div-stops: #86b6ef, #2a5f9e, #383835, #a83c3c, #f19b9a;
   }
 }
+
+/* Theme picker in the top bar */
+.theme-switch { display: inline-flex; gap: 2px; padding: 2px; background: var(--surface-2); border-radius: 999px; }
+.theme-switch button {
+  border: 0; background: transparent; color: var(--text-2); cursor: pointer;
+  font: inherit; font-size: 12px; padding: 3px 10px; border-radius: 999px;
+}
+.theme-switch button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0, 0, 0, .15); }
+.theme-switch button:focus-visible { outline: 2px solid var(--accent); }
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -294,6 +340,12 @@ canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; display: b
 .scale-bar.diverging { background: linear-gradient(90deg, var(--div-stops)); }
 .scale-bar.sequential { background: linear-gradient(90deg, var(--seq-stops)); }
 
+/* Light frame around every pixel map, filter and color cell */
+.maps canvas, .filter-grid canvas, .filter-strip canvas, .t-fig canvas, .pixwrap canvas,
+.tb-filter, .out-swatch, .scale-bar {
+  box-shadow: 0 0 0 1px var(--map-frame);
+}
+
 .sample-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
 .sample { display: grid; gap: 4px; justify-items: center; margin: 0; min-width: 0; }
 .sample canvas { width: 100%; aspect-ratio: 1; border-radius: 6px; border: 2px solid transparent; }
@@ -394,17 +446,6 @@ canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; display: b
 
 .t-intro { display: grid; gap: 16px; }
 .t-intro-text p { color: var(--text-2); margin-top: 6px; max-width: 920px; line-height: 1.55; }
-.flow { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.flow li { display: flex; align-items: center; gap: 8px; }
-.flow li + li::before { content: "→"; color: var(--muted); }
-.flow button {
-  display: grid; gap: 1px; text-align: left; font: inherit; color: var(--text); cursor: pointer;
-  padding: 7px 12px; border-radius: 8px; background: var(--surface-2); border: 1px solid transparent;
-}
-.flow button:hover, .flow button:focus-visible { border-color: var(--accent); outline: none; }
-.flow button strong { font-size: 13px; font-weight: 600; }
-.flow button small { font-size: 11px; color: var(--text-2); font-variant-numeric: tabular-nums; }
-.flow-repeat span { display: inline-block; font-size: 11.5px; color: var(--muted); border: 1px dashed var(--axis); border-radius: 8px; padding: 4px 10px; line-height: 1.35; }
 .filter-strip { display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 6px; margin-top: 8px; max-width: 760px; }
 .filter-strip canvas { width: 100%; aspect-ratio: 1; border-radius: 4px; cursor: pointer; outline: 2px solid transparent; outline-offset: 2px; }
 .filter-strip canvas:hover { outline-color: var(--axis); }
@@ -465,7 +506,7 @@ canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; display: b
 .pixwrap { position: relative; line-height: 0; max-width: 100%; }
 .pixwrap canvas, .t-fig > canvas { max-width: 100%; height: auto; border-radius: 3px; }
 .win-box, .cell-box, .orig-box { position: absolute; pointer-events: none; }
-.win-box, .cell-box { border: 2px solid var(--series-2); border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, .4); }
+.win-box, .cell-box { border: 2px solid var(--text); border-radius: 2px; box-shadow: 0 0 0 1px var(--surface); }
 .orig-box { border: 1px dashed #ffffff80; }
 #t-conv-out, #t-pool-out { cursor: crosshair; }
 .kernel-grid { display: grid; gap: 2px; }
@@ -572,3 +613,48 @@ canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; display: b
   .sample-grid, .sample-grid.test, .filter-grid { grid-template-columns: repeat(4, 1fr); }
   .out-cells { grid-template-columns: repeat(5, 1fr); }
 }
+
+/* ---------- Zoom dialog ---------- */
+.maps canvas, .filter-grid canvas, #samples canvas, .t-fig canvas, .pixwrap canvas, #input-view { cursor: zoom-in; }
+#t-conv-out, #t-pool-out { cursor: zoom-in; }
+.zoom {
+  padding: 0; max-width: min(560px, 92vw); overflow: hidden; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow);
+}
+.zoom::backdrop { background: rgba(0, 0, 0, 0.45); }
+/* One column locked to the dialog width: no text can widen the content and add a scrollbar */
+.zoom-body { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 12px; padding: 16px 18px; }
+.zoom-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; width: 100%; }
+.zoom-head h2 { font-size: 15px; }
+.zoom-canvas { border-radius: 6px; box-shadow: 0 0 0 1px var(--map-frame); cursor: crosshair; }
+.zoom-foot { display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 16px; width: 100%; }
+.zoom-foot .scale-legend { margin: 0; flex: none; }
+.zoom-readout {
+  flex: 1; min-width: 0; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 12.5px; color: var(--text-2); font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Theory: architecture schematic ---------- */
+.t-intro { grid-template-columns: minmax(0, 1fr); }
+.schematic { margin: 0; min-width: 0; }
+.schematic-scroll { overflow-x: auto; }
+#t-schematic { display: block; width: 100%; min-width: 820px; height: auto; }
+.schematic figcaption { margin-top: 8px; max-width: 940px; font-size: 12.5px; line-height: 1.5; color: var(--text-2); }
+.sch-stage { cursor: pointer; outline: none; }
+.sch-slab { fill: #211c22; stroke: var(--muted); stroke-width: 1; }
+.sch-face { image-rendering: pixelated; }
+.sch-frame { fill: none; stroke: var(--muted); stroke-width: 1; }
+.sch-stage:hover .sch-frame, .sch-stage:focus-visible .sch-frame { stroke: var(--accent); stroke-width: 2.5; }
+.sch-name { fill: var(--text); font-size: 12.5px; font-weight: 600; }
+.sch-shape { fill: var(--muted); font-size: 11px; font-family: var(--mono); }
+.sch-op { fill: var(--accent-strong); font-size: 11.5px; font-weight: 550; cursor: pointer; outline: none; }
+.sch-op:hover, .sch-op:focus-visible { text-decoration: underline; }
+.sch-arrow { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+.sch-head { fill: var(--muted); }
+.sch-back { stroke-dasharray: 5 4; }
+.sch-back-label { fill: var(--text-2); font-size: 11.5px; cursor: pointer; outline: none; }
+.sch-back-label:hover, .sch-back-label:focus-visible { fill: var(--accent-strong); text-decoration: underline; }
+.sch-digit { fill: var(--text-2); font-size: 9.5px; font-variant-numeric: tabular-nums; }
+.sch-track { fill: var(--surface-2); }
+.sch-bar { fill: var(--bar-muted); }
+.sch-bar.top { fill: var(--series-1); }

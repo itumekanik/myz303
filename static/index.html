@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SimpleCNN Paneli</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232a78d6'/%3E%3Cg fill='%23fff'%3E%3Crect x='7' y='7' width='5' height='5' rx='1'/%3E%3Crect x='14' y='7' width='5' height='5' rx='1' opacity='.6'/%3E%3Crect x='21' y='7' width='4' height='5' rx='1' opacity='.3'/%3E%3Crect x='7' y='14' width='5' height='5' rx='1' opacity='.6'/%3E%3Crect x='14' y='14' width='5' height='5' rx='1'/%3E%3Crect x='7' y='21' width='5' height='4' rx='1' opacity='.3'/%3E%3Crect x='21' y='21' width='4' height='4' rx='1'/%3E%3C/g%3E%3C/svg%3E">
+  <script>
+    // Apply the saved theme before the first paint (no flash of the wrong theme)
+    try {
+      const saved = localStorage.getItem("theme");
+      if (saved === "light" || saved === "dark") document.documentElement.dataset.theme = saved;
+    } catch (e) { /* storage blocked: follow the system setting */ }
+  </script>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -22,6 +29,11 @@
       <button type="button" role="tab" id="tab-theory" aria-controls="panel-theory" aria-selected="false">Teori</button>
     </nav>
     <div class="badges">
+      <div class="theme-switch" id="theme-switch" role="group" aria-label="Tema">
+        <button type="button" data-theme-choice="light" aria-pressed="false">Açık</button>
+        <button type="button" data-theme-choice="dark" aria-pressed="false">Koyu</button>
+        <button type="button" data-theme-choice="system" aria-pressed="false">Sistem</button>
+      </div>
       <span class="badge" id="device-badge" title="Eğitimin çalıştığı cihaz">—</span>
       <span class="badge" id="model-badge" title="Çıkarımda kullanılan model"><span class="badge-dot"></span><span id="model-badge-text">Model yok</span></span>
     </div>
@@ -257,17 +269,13 @@
           <h2>Evrişimli sinir ağı (CNN) nasıl çalışır?</h2>
           <p>Bir CNN, görüntüdeki yerel desenleri (kenar, köşe, kıvrım) küçük filtrelerle yakalar ve bu desenleri katman katman birleştirerek "bu bir 7" gibi bir karara varır. Aşağıdaki her bölüm SimpleCNN'in bir yapı taşını açıklar. Örnekler, yukarıda seçili görüntü ve eğitilmiş modelin gerçek ağırlıklarıyla tarayıcınızda canlı hesaplanır.</p>
         </div>
-        <ol class="flow" id="t-flow" aria-label="SimpleCNN'de verinin izlediği yol">
-          <li><button type="button" data-goto="t-conv"><strong>Evrişim</strong><small>1×28×28 → 32×24×24</small></button></li>
-          <li><button type="button" data-goto="t-bn"><strong>BatchNorm</strong><small>normalleştirme</small></button></li>
-          <li><button type="button" data-goto="t-act"><strong>ReLU</strong><small>doğrusal olmama</small></button></li>
-          <li><button type="button" data-goto="t-pool"><strong>MaxPool</strong><small>→ 32×12×12</small></button></li>
-          <li><button type="button" data-goto="t-drop"><strong>Dropout</strong><small>yalnızca eğitimde</small></button></li>
-          <li class="flow-repeat"><span>2. blok, 64 filtre<br>→ 64×4×4</span></li>
-          <li><button type="button" data-goto="t-softmax"><strong>Tam bağlı</strong><small>1024 → 512 → 10</small></button></li>
-          <li><button type="button" data-goto="t-softmax"><strong>Softmax + kayıp</strong><small>olasılık ve hata</small></button></li>
-          <li><button type="button" data-goto="t-opt"><strong>Optimizasyon</strong><small>geri yayılım, Adam</small></button></li>
-        </ol>
+        <figure class="schematic">
+          <div class="schematic-scroll">
+            <svg id="t-schematic" viewBox="0 0 1120 262" role="img"
+                 aria-label="SimpleCNN mimarisi: 1×28×28 giriş, Conv 5×5 (32 filtre) + BatchNorm + ReLU ile 32×24×24, MaxPool ve Dropout ile 32×12×12, Conv 5×5 (64 filtre) + BatchNorm + ReLU ile 64×8×8, MaxPool ve Dropout ile 64×4×4, 1024 değerlik vektör, 512 nöronluk FC1 ve 10 sınıflı Softmax çıkışı. Eğitimde kayıp geri yayılımla tüm ağırlıkları günceller."></svg>
+          </div>
+          <figcaption>Her yığın bir katmanın çıktısıdır: yüksekliği uzamsal boyutu (28 → 4), derinliği kanal sayısını gösterir. Öndeki görüntüler seçili rakam için gerçek çıktılardır; evrişim bloklarında yukarıda seçili filtre, ikinci blokta en güçlü tepki veren harita gösterilir. Okların üzerindeki işlemlere tıklayarak ilgili bölüme gidin.</figcaption>
+        </figure>
         <div class="t-filters" id="t-filters">
           <p class="sub">Modelin öğrendiği 32 Conv1 filtresi. Birine tıklayarak örneklerde kullanılacak filtreyi seçin (mavi negatif, kırmızı pozitif ağırlık).</p>
           <div class="filter-strip" id="t-filter-strip"></div>
@@ -475,6 +483,23 @@
       </article>
     </section>
   </main>
+
+  <dialog class="zoom" id="zoom" aria-labelledby="zoom-title">
+    <div class="zoom-body">
+    <div class="zoom-head">
+      <div>
+        <h2 id="zoom-title">Büyütülmüş görünüm</h2>
+        <p class="sub" id="zoom-sub"></p>
+      </div>
+      <button type="button" class="btn small icon" id="zoom-close" aria-label="Kapat">×</button>
+    </div>
+    <canvas class="px zoom-canvas" id="zoom-canvas"></canvas>
+    <div class="zoom-foot">
+      <div class="scale-legend" id="zoom-legend"></div>
+      <span class="zoom-readout" id="zoom-readout">Piksellerin üzerine gelin</span>
+    </div>
+    </div>
+  </dialog>
 
   <div class="tooltip" id="tooltip" role="tooltip" hidden></div>
   <script src="/static/app.js"></script>

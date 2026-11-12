@@ -991,6 +991,179 @@ function stopOptAnim() {
 }
 
 // =====================================================================
+// 0 · Architecture schematic
+// Stacks are drawn to scale (height = spatial size, depth = channels); the front face of each
+// stack shows the selected image's real output at that layer.
+// =====================================================================
+const SCHEMATIC = {
+  cy: 112,    // vertical center of the forward path
+  cell: 4,    // drawn pixels per feature-map pixel
+  stages: [
+    { key: "input", name: "Giriş", shape: "1×28×28", size: 28, depth: 1, offset: 0, goto: "t-conv" },
+    { key: "conv1", name: "Conv1", shape: "32×24×24", size: 24, depth: 6, offset: 6, goto: "t-conv" },
+    { key: "pool1", name: "MaxPool1", shape: "32×12×12", size: 12, depth: 6, offset: 5, goto: "t-pool" },
+    { key: "conv2", name: "Conv2", shape: "64×8×8", size: 8, depth: 9, offset: 4, goto: "t-conv" },
+    { key: "pool2", name: "MaxPool2", shape: "64×4×4", size: 4, depth: 9, offset: 3, goto: "t-pool" },
+    { key: "flat", name: "Vektör", shape: "1024", column: [10, 140], goto: "t-softmax" },
+    { key: "fc1", name: "FC1", shape: "512", column: [10, 80], goto: "t-softmax" },
+    { key: "out", name: "Çıkış", shape: "10 sınıf", goto: "t-softmax" },
+  ],
+  // The operations on each arrow, top to bottom, with the section that explains them
+  ops: [
+    { width: 92, items: [["Conv 5×5", "t-conv"], ["BatchNorm", "t-bn"], ["ReLU", "t-act"]] },
+    { width: 92, items: [["MaxPool 2×2", "t-pool"], ["Dropout", "t-drop", "p = 0,45 · yalnızca eğitimde"]] },
+    { width: 92, items: [["Conv 5×5", "t-conv"], ["BatchNorm", "t-bn"], ["ReLU", "t-act"]] },
+    { width: 92, items: [["MaxPool 2×2", "t-pool"], ["Dropout", "t-drop", "p = 0,35 · yalnızca eğitimde"]] },
+    { width: 66, items: [["Düzleştir", "t-softmax"]] },
+    { width: 66, items: [["FC", "t-softmax"], ["ReLU", "t-act"]] },
+    { width: 72, items: [["FC", "t-softmax"], ["Softmax", "t-softmax"]] },
+  ],
+};
+
+/** Paints values into an off-screen canvas and returns it as an image URL for SVG. */
+function pixelsURL(face) {
+  const canvas = document.createElement("canvas");
+  paint(canvas, face.values, face.w, face.h, face.lut);
+  return canvas.toDataURL();
+}
+
+function goToSection(id) {
+  document.getElementById(id).scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function makeLink(node, target, label) {
+  node.setAttribute("tabindex", "0");
+  node.setAttribute("role", "link");
+  node.setAttribute("aria-label", label);
+  node.addEventListener("click", () => goToSection(target));
+  node.addEventListener("keydown", (e) => { if (e.key === "Enter") goToSection(target); });
+}
+
+/** The real output of every stage for the selected image (what the front faces show). */
+function schematicFaces() {
+  const faces = { input: { values: T.image.pixels, w: 28, h: 28, lut: "gray", tip: "Seçili görüntü" } };
+  const { z, rows, cols } = featureMap();
+  const a = relu(z);
+  const scale = maxOf(a);
+  const filterName = T.params ? `filtre #${T.filter + 1}` : "Sobel filtresi";
+  faces.conv1 = { values: toUnsigned(a, scale), w: cols, h: rows, lut: "seq", tip: `Conv1 · ${filterName}` };
+  const pooled = pool2(a, rows, cols, "max");
+  faces.pool1 = { values: toUnsigned(pooled.out, scale), w: pooled.ow, h: pooled.oh, lut: "seq", tip: `MaxPool1 · ${filterName}` };
+
+  const result = T.image.result;
+  if (result) {
+    const conv2 = result.layers.find((l) => l.key === "conv2");
+    const p2 = result.layers.find((l) => l.key === "pool2");
+    const k = conv2.peaks.indexOf(Math.max(...conv2.peaks));   // the map that responds most
+    faces.conv2 = { values: conv2.maps[k], w: 8, h: 8, lut: "seq", tip: `Conv2 · en güçlü harita #${k + 1}` };
+    faces.pool2 = { values: p2.maps[k], w: 4, h: 4, lut: "seq", tip: `MaxPool2 · harita #${k + 1}` };
+    // The 1024-vector: undo the per-map display scaling with each map's peak, then one shared scale
+    const flat = p2.maps.flatMap((m, c) => m.map((v) => (v / 255) * p2.peaks[c]));
+    faces.flat = { values: toUnsigned(flat, maxOf(flat)), w: 8, h: 128, lut: "seq", tip: "64 harita × 16 değer = 1024" };
+    faces.fc1 = { values: result.fc1.values, w: 8, h: 64, lut: "seq", tip: `FC1 · ${result.fc1.active} / 512 nöron aktif` };
+    faces.probabilities = result.probabilities;
+    faces.prediction = result.prediction;
+  }
+  return faces;
+}
+
+function renderSchematic() {
+  const root = $("#t-schematic");
+  if (!root || !T.image) return;
+  const { cy, cell, stages, ops } = SCHEMATIC;
+  const faces = schematicFaces();
+
+  const marker = svg("marker", { id: "sch-arrow", viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" });
+  marker.append(svg("path", { d: "M0,0 L10,5 L0,10 z", class: "sch-head" }));
+  const defs = svg("defs");
+  defs.append(marker);
+  const parts = [defs];
+  const centers = {};
+  let x = 18;
+
+  stages.forEach((stage, i) => {
+    const group = svg("g", { class: "sch-stage" });
+    makeLink(group, stage.goto, `${stage.name} ${stage.shape}`);
+    const face = faces[stage.key];
+    let width;
+    let faceBox;
+
+    if (stage.size) {
+      // Stack: back slabs first, then the front face with the real output
+      const side = stage.size * cell;
+      for (let k = stage.depth - 1; k >= 1; k--) {
+        group.append(svg("rect", { x: x + k * stage.offset, y: cy - side / 2 - k * stage.offset, width: side, height: side, class: "sch-slab" }));
+      }
+      faceBox = { x, y: cy - side / 2, w: side, h: side };
+      width = side + stage.offset * (stage.depth - 1);
+    } else if (stage.column) {
+      const [cw, ch] = stage.column;
+      faceBox = { x, y: cy - ch / 2, w: cw, h: ch };
+      width = cw;
+    } else {
+      // Output: one bar per class, the predicted class highlighted
+      width = 84;
+      const probs = faces.probabilities;
+      for (let d = 0; d < 10; d++) {
+        const y = cy - 55 + d * 11;
+        group.append(svgText(x + 4, y + 8.5, String(d), "sch-digit", "middle"));
+        group.append(svg("rect", { x: x + 12, y: y + 2, width: 66, height: 7, rx: 2, class: "sch-track" }));
+        if (probs && probs[d] > 0.002) {
+          group.append(svg("rect", { x: x + 12, y: y + 2, width: Math.max(2, probs[d] * 66), height: 7, rx: 2, class: d === faces.prediction ? "sch-bar top" : "sch-bar" }));
+        }
+      }
+    }
+
+    if (faceBox) {
+      if (face) {
+        const image = svg("image", { x: faceBox.x, y: faceBox.y, width: faceBox.w, height: faceBox.h, preserveAspectRatio: "none", class: "sch-face" });
+        image.setAttribute("href", pixelsURL(face));
+        image.addEventListener("pointermove", (e) => showTip(e.clientX, e.clientY, face.tip, [{ value: `${face.w}×${face.h}`, label: "gerçek çıktı" }]));
+        image.addEventListener("pointerleave", hideTip);
+        group.append(image);
+      } else {
+        group.append(svg("rect", { x: faceBox.x, y: faceBox.y, width: faceBox.w, height: faceBox.h, class: "sch-slab" }));
+      }
+      group.append(svg("rect", { x: faceBox.x, y: faceBox.y, width: faceBox.w, height: faceBox.h, class: "sch-frame" }));
+    }
+
+    // Name and shape on a shared baseline under every stage
+    const mid = x + width / 2;
+    centers[stage.key] = mid;
+    const name = stage.key === "out" && faces.probabilities ? `Tahmin: ${faces.prediction}` : stage.name;
+    group.append(svgText(mid, cy + 82, name, "sch-name", "middle"), svgText(mid, cy + 97, stage.shape, "sch-shape", "middle"));
+    parts.push(group);
+
+    // Arrow to the next stage, with its operations stacked above it
+    const op = ops[i];
+    if (op) {
+      const from = x + width + 6;
+      const to = x + width + op.width - 6;
+      parts.push(svg("line", { x1: from, x2: to, y1: cy, y2: cy, class: "sch-arrow", "marker-end": "url(#sch-arrow)" }));
+      op.items.forEach(([label, target, note], j) => {
+        const text = svgText((from + to) / 2, cy - 9 - (op.items.length - 1 - j) * 14, label, "sch-op", "middle");
+        makeLink(text, target, `${label}: ilgili bölüme git`);
+        if (note) {
+          text.addEventListener("pointermove", (e) => showTip(e.clientX, e.clientY, label, [{ value: note, label: "" }]));
+          text.addEventListener("pointerleave", hideTip);
+        }
+        parts.push(text);
+      });
+      x = x + width + op.width;
+    }
+  });
+
+  // Training only: the loss flows back through the network and Adam updates every weight
+  const backY = cy + 122;
+  parts.push(svg("line", { x1: centers.out, x2: centers.input, y1: backY, y2: backY, class: "sch-arrow sch-back", "marker-end": "url(#sch-arrow)" }));
+  const back = svgText((centers.out + centers.input) / 2, backY + 16, "Eğitimde: Cross-Entropy kaybı → geri yayılım → Adam tüm ağırlıkları günceller", "sch-back-label", "middle");
+  makeLink(back, "t-opt", "Geri yayılım ve optimizasyon bölümüne git");
+  parts.push(back);
+
+  root.replaceChildren(...parts);
+}
+
+// =====================================================================
 // Shared input image & filter, loading, lifecycle
 // =====================================================================
 async function loadParams() {
@@ -1035,8 +1208,10 @@ async function fetchLogits() {
     const result = await api("/api/predict", { test_index: T.image.testIndex });
     T.image.logits = result.logits;
     T.image.prediction = result.prediction;
+    T.image.result = result;   // every layer's output, used by the schematic
   } catch {
     T.image.logits = null;
+    T.image.result = null;
   }
 }
 
@@ -1082,6 +1257,7 @@ function selectFilter(index) {
   computeBnBatch();
   resetBnParams();
   updateBN();
+  renderSchematic();
 }
 
 /** Recomputes every image-dependent demo (after a new image, filter set or model). */
@@ -1091,6 +1267,7 @@ function refreshAll() {
   conv.pos = null;
   pool.pos = null;
   renderToolbar();
+  renderSchematic();
   updateConv();
   updateActivation();
   updatePool();
@@ -1116,7 +1293,7 @@ function setupToolbar() {
     const r = infer.result;
     if (!r) return;
     T.image = {
-      x: toFloat(r.input), pixels: r.input, label: r.label, prediction: r.prediction, testIndex: null, logits: r.logits,
+      x: toFloat(r.input), pixels: r.input, label: r.label, prediction: r.prediction, testIndex: null, logits: r.logits, result: r,
       title: r.label != null ? `Çıkarımdaki test görüntüsü · etiket ${r.label}` : `Sizin çiziminiz · model tahmini ${r.prediction}`,
     };
     refreshAll();
@@ -1127,9 +1304,6 @@ function setupToolbar() {
     const canvas = e.target.closest("canvas");
     if (canvas) selectFilter(Number(canvas.dataset.i));
   });
-  for (const button of document.querySelectorAll("#t-flow [data-goto]")) {
-    button.addEventListener("click", () => document.getElementById(button.dataset.goto).scrollIntoView({ behavior: "smooth", block: "start" }));
-  }
   // The toolbar sticks right under the top bar, whose height changes with the window width
   const topbar = $(".topbar");
   new ResizeObserver(() => document.documentElement.style.setProperty("--topbar-h", `${topbar.offsetHeight}px`)).observe(topbar);
@@ -1170,7 +1344,7 @@ document.addEventListener("model-status", async (event) => {
   refreshAll();
 });
 
-matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+document.addEventListener("theme-change", () => {
   if (!T.started) return;
   paintSurface();
   refreshAll();

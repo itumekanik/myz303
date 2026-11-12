@@ -1001,11 +1001,131 @@ async function poll() {
   }
 }
 
-matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+// =====================================================================
+// Zoom: click a map, filter or image to see it enlarged
+// =====================================================================
+const zoom = { dialog: $("#zoom"), canvas: $("#zoom-canvas"), source: null, peak: null };
+
+/** Canvases whose click already does something else are not zoomable. */
+function isZoomable(canvas) {
+  return canvas._paint && canvas !== zoom.canvas
+    && !canvas.closest(".filter-strip, #test-samples, .theory-bar, .draw-card");
+}
+
+function zoomInfo(canvas) {
+  const i = Number(canvas.dataset.i ?? 0);
+  const row = canvas.closest(".layer-row");
+  if (row) {
+    const count = row.querySelectorAll("canvas").length;
+    return { title: row.querySelector("h3").textContent + (count > 1 ? ` · harita ${i + 1}` : ""), sub: row.querySelector(".shape").textContent };
+  }
+  if (canvas.closest("#filters")) return { title: `Conv1 · filtre ${i + 1}`, sub: "5×5 ağırlık · eğitim boyunca güncellenir" };
+  const sample = canvas.closest("#samples figure");
+  if (sample?._info) {
+    const { label, pred, confidence } = sample._info;
+    return { title: `Doğrulama görüntüsü ${Number(sample.dataset.i) + 1}`, sub: `Tahmin ${pred} (${fmtPct(confidence * 100, 1)}) · gerçek etiket ${label}` };
+  }
+  const dropRow = canvas.closest(".drop-row");
+  if (dropRow) return { title: `Dropout · ${canvas.title}`, sub: `${dropRow.querySelector(".drop-label").textContent} · 12×12` };
+  if (canvas.id === "input-view") return { title: "Modelin gördüğü giriş", sub: "28×28 gri tonlu" };
+  const caption = canvas.closest("figure")?.querySelector("figcaption");
+  return { title: caption?.textContent || "Büyütülmüş görünüm", sub: "" };
+}
+
+const ZOOM_LEGENDS = {
+  div: ["negatif", "diverging", "pozitif"],
+  seq: ["0", "sequential", "en yüksek"],
+  drop: ["0", "sequential", "en yüksek · gri: sıfırlandı"],
+};
+
+function openZoom(canvas) {
+  const [values, w, hgt, lut, signedValues] = canvas._paint;
+  zoom.source = canvas;
+  const maps = canvas.closest(".maps");
+  zoom.peak = maps?._peaks ? maps._peaks[Number(canvas.dataset.i)] : null;   // real activation scale, if known
+  paint(zoom.canvas, values, w, hgt, lut, signedValues);
+  const side = Math.min(480, window.innerWidth * 0.8, window.innerHeight * 0.6);
+  const scale = side / Math.max(w, hgt);
+  zoom.canvas.style.width = `${Math.round(w * scale)}px`;
+  zoom.canvas.style.height = `${Math.round(hgt * scale)}px`;
+  // Fixed width while open, so the changing readout text never resizes (and re-centers) the dialog
+  zoom.dialog.style.width = `${Math.max(Math.round(w * scale), 400) + 40}px`;
+
+  const info = zoomInfo(canvas);
+  $("#zoom-title").textContent = info.title;
+  $("#zoom-sub").textContent = [info.sub, `${w}×${hgt} piksel`].filter(Boolean).join(" · ");
+  const legend = ZOOM_LEGENDS[lut];
+  $("#zoom-legend").replaceChildren(...(legend
+    ? [h("span", { text: legend[0] }), h("span", { class: `scale-bar ${legend[1]}` }), h("span", { text: legend[2] })]
+    : [h("span", { text: "Gri ton: siyah 0, beyaz 1" })]));
+  $("#zoom-readout").textContent = "Piksellerin üzerine gelin";
+  hideTip();
+  zoom.dialog.showModal();
+}
+
+function zoomReadout(event) {
+  const [values, w, hgt, lut, signedValues] = zoom.canvas._paint;
+  const box = zoom.canvas.getBoundingClientRect();
+  const c = clamp(Math.floor(((event.clientX - box.left) / box.width) * w), 0, w - 1);
+  const r = clamp(Math.floor(((event.clientY - box.top) / box.height) * hgt), 0, hgt - 1);
+  const v = values[r * w + c];
+  let text;
+  if (lut === "gray") text = `piksel ${fmtNum(v / 255, 2)}`;
+  else if (signedValues) text = `${fmtNum(v, 2)} (ölçekli, −1…1)`;
+  else if (lut === "drop" && v >= 254) text = "Dropout ile sıfırlandı";
+  else if (zoom.peak != null) text = `aktivasyon ${fmtNum((v / 255) * zoom.peak, 3)}`;
+  else text = `${fmtPct((v / (lut === "drop" ? 253 : 255)) * 100, 0)} (göreli)`;
+  $("#zoom-readout").textContent = `Satır ${r + 1}, sütun ${c + 1} · ${text}`;
+}
+
+document.addEventListener("click", (event) => {
+  const canvas = event.target.closest?.("canvas");
+  if (canvas && isZoomable(canvas)) openZoom(canvas);
+});
+zoom.canvas.addEventListener("pointermove", zoomReadout);
+$("#zoom-close").addEventListener("click", () => zoom.dialog.close());
+zoom.dialog.addEventListener("click", (event) => { if (event.target === zoom.dialog) zoom.dialog.close(); });   // backdrop
+// Live views (filters while training, inference after a new epoch) keep the zoomed copy current
+setInterval(() => {
+  if (zoom.dialog.open && zoom.source?._paint && zoom.source._paint[0] !== zoom.canvas._paint?.[0]) {
+    paint(zoom.canvas, ...zoom.source._paint);
+  }
+}, 500);
+
+// Theme: "light", "dark" or "system" (follows the OS). The choice is saved in this browser.
+const systemDark = matchMedia("(prefers-color-scheme: dark)");
+const themeChoice = () => document.documentElement.dataset.theme || "system";
+
+function markThemeButtons() {
+  for (const b of document.querySelectorAll("#theme-switch button")) {
+    b.setAttribute("aria-pressed", String(b.dataset.themeChoice === themeChoice()));
+  }
+}
+
+function applyTheme(choice) {
+  if (choice === "system") delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = choice;
+  try {
+    if (choice === "system") localStorage.removeItem("theme");
+    else localStorage.setItem("theme", choice);
+  } catch { /* storage blocked: the choice lasts until the page is reloaded */ }
+  markThemeButtons();
+  document.dispatchEvent(new CustomEvent("theme-change"));
+}
+
+for (const b of document.querySelectorAll("#theme-switch button")) {
+  b.addEventListener("click", () => applyTheme(b.dataset.themeChoice));
+}
+systemDark.addEventListener("change", () => {
+  if (themeChoice() === "system") document.dispatchEvent(new CustomEvent("theme-change"));
+});
+// Canvases keep their pixels, so repaint them with the new theme's color scales
+document.addEventListener("theme-change", () => {
   readLuts();
   repaintAll();
   if (infer.result) renderLayers(infer.result);
 });
+markThemeButtons();
 
 readLuts();
 buildLayerRows();
