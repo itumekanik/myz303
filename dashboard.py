@@ -60,7 +60,7 @@ ROOT = Path(__file__).resolve().parent
 STATIC_DIR = ROOT / "static"
 CHECKPOINT = ROOT / "checkpoints" / "simple_cnn.pt"
 # Bumped when the page needs a newer server API; the page warns when an older server is still running
-SERVER_VERSION = 2
+SERVER_VERSION = 3
 
 NUM_SAMPLES = 16      # Validation images whose predictions are shown while training
 FILTER_EVERY = 10     # Refresh the conv1 filter snapshot every N batches
@@ -590,6 +590,9 @@ def make_handler(session: TrainingSession, engine: InferenceEngine):
                     status.update(model=engine.info(), defaults=defaults, device=device,
                                   server_version=SERVER_VERSION)
                     return self._json(status)
+                if url.path == "/api/source/SimpleCNN.py":   # read-only, for the Coding tab
+                    body = (ROOT / "SimpleCNN.py").read_bytes()
+                    return self._send(body, "text/plain; charset=utf-8")
                 if url.path == "/api/theory/params":
                     which = parse_qs(url.query).get("model", ["trained"])[0]
                     if which not in engine.MODELS:

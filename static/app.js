@@ -716,7 +716,7 @@ $("#btn-stop").addEventListener("click", async () => {
 // "trained" or "initial": the random weights training starts from, to show what training changes
 // =====================================================================
 const modelView = { which: "trained" };
-const REQUIRED_SERVER_VERSION = 2;   // matches SERVER_VERSION in dashboard.py
+const REQUIRED_SERVER_VERSION = 3;   // matches SERVER_VERSION in dashboard.py
 
 /** The page files are newer than the running server (it was started before an update). */
 function showOutdatedServer() {
@@ -1009,6 +1009,7 @@ const TABS = {
   train: { tab: "#tab-train", panel: "#panel-train", hash: "#egitim" },
   infer: { tab: "#tab-infer", panel: "#panel-infer", hash: "#cikarim" },
   theory: { tab: "#tab-theory", panel: "#panel-theory", hash: "#teori" },
+  code: { tab: "#tab-code", panel: "#panel-code", hash: "#kodlama" },
 };
 
 function selectTab(name) {

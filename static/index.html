@@ -27,6 +27,7 @@
       <button type="button" role="tab" id="tab-train" aria-controls="panel-train" aria-selected="true">Eğitim</button>
       <button type="button" role="tab" id="tab-infer" aria-controls="panel-infer" aria-selected="false">Çıkarım</button>
       <button type="button" role="tab" id="tab-theory" aria-controls="panel-theory" aria-selected="false">Teori</button>
+      <button type="button" role="tab" id="tab-code" aria-controls="panel-code" aria-selected="false">Kodlama</button>
     </nav>
     <div class="badges">
       <div class="theme-switch" id="theme-switch" role="group" aria-label="Tema">
@@ -487,6 +488,20 @@
         </div>
       </article>
     </section>
+
+    <!-- ============================== CODING ============================== -->
+    <section class="panel" id="panel-code" role="tabpanel" aria-labelledby="tab-code" hidden>
+      <div class="tut">
+        <nav class="tut-toc" aria-label="Rehber adımları">
+          <div class="tut-toc-head">
+            <span class="tb-label">Adım adım</span>
+            <strong>SimpleCNN'i kodlayalım</strong>
+          </div>
+          <ol id="tut-toc"></ol>
+        </nav>
+        <div class="tut-main" id="tut-main"><p class="placeholder">Rehber yükleniyor…</p></div>
+      </div>
+    </section>
   </main>
 
   <!-- Model switch: fixed to the window, so it stays reachable while scrolling (Inference and Theory tabs) -->
@@ -521,5 +536,6 @@
   <div class="tooltip" id="tooltip" role="tooltip" hidden></div>
   <script src="/static/app.js"></script>
   <script src="/static/theory.js"></script>
+  <script src="/static/tutorial.js"></script>
 </body>
 </html>
