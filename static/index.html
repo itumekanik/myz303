@@ -190,17 +190,6 @@
 
     <!-- ============================== INFERENCE ============================== -->
     <section class="panel" id="panel-infer" role="tabpanel" aria-labelledby="tab-infer" hidden>
-      <div class="model-bar card">
-        <div class="model-bar-text">
-          <span class="tb-label">Gösterilen model</span>
-          <span class="model-bar-desc" data-model-desc></span>
-        </div>
-        <div class="seg model-switch" role="group" aria-label="Gösterilen model">
-          <button type="button" data-model="initial" aria-pressed="false">Eğitim öncesi</button>
-          <button type="button" data-model="trained" aria-pressed="true">Eğitilmiş</button>
-        </div>
-      </div>
-
       <div class="banner inline" id="no-model" hidden>
         Henüz eğitilmiş bir model yok. <strong>Eğitim</strong> sekmesinden eğitimi başlatın; ilk epoch bittiğinde burada deneyebilirsiniz. Bu arada <strong>Eğitim öncesi</strong> modeli seçerek rastgele ağırlıklı ağın ne yaptığını görebilirsiniz.
       </div>
@@ -270,13 +259,6 @@
           <button type="button" class="btn small" id="t-next-image">Başka görüntü</button>
           <button type="button" class="btn small" id="t-use-infer" disabled title="Önce Çıkarım sekmesinde bir tahmin yapın">Çıkarımdakini kullan</button>
         </div>
-        <div class="tb-group">
-          <span class="tb-label">Model</span>
-          <div class="seg model-switch" role="group" aria-label="Gösterilen model">
-            <button type="button" data-model="initial" aria-pressed="false">Eğitim öncesi</button>
-            <button type="button" data-model="trained" aria-pressed="true">Eğitilmiş</button>
-          </div>
-        </div>
         <div class="tb-group" id="t-filter-group">
           <span class="tb-label">Conv1 filtresi</span>
           <button type="button" class="btn small icon" id="t-filter-prev" aria-label="Önceki filtre">‹</button>
@@ -290,7 +272,7 @@
         <div class="t-intro-text">
           <h2>Evrişimli sinir ağı (CNN) nasıl çalışır?</h2>
           <p>Bir CNN, görüntüdeki yerel desenleri (kenar, köşe, kıvrım) küçük filtrelerle yakalar ve bu desenleri katman katman birleştirerek "bu bir 7" gibi bir karara varır. Aşağıdaki her bölüm SimpleCNN'in bir yapı taşını açıklar. Örnekler, yukarıda seçili görüntü ve modelin gerçek ağırlıklarıyla tarayıcınızda canlı hesaplanır.</p>
-          <p><b>Eğitimin etkisini görmek için</b> üst çubuktaki <b>Model</b> anahtarıyla <i>Eğitim öncesi</i> ve <i>Eğitilmiş</i> arasında geçiş yapın: eğitim öncesi model, eğitimin başladığı rastgele ağırlıklardır. Filtrelerin, öznitelik haritalarının ve tahminin nasıl değiştiğine bakın.</p>
+          <p><b>Eğitimin etkisini görmek için</b> sağ alttaki <b>Gösterilen model</b> anahtarıyla <i>Eğitim öncesi</i> ve <i>Eğitilmiş</i> arasında geçiş yapın: eğitim öncesi model, eğitimin başladığı rastgele ağırlıklardır. Filtrelerin, öznitelik haritalarının ve tahminin nasıl değiştiğine bakın.</p>
         </div>
         <figure class="schematic">
           <div class="schematic-scroll">
@@ -506,6 +488,18 @@
       </article>
     </section>
   </main>
+
+  <!-- Model switch: fixed to the window, so it stays reachable while scrolling (Inference and Theory tabs) -->
+  <aside class="model-float" aria-label="Gösterilen model">
+    <div class="model-float-text">
+      <span class="tb-label">Gösterilen model</span>
+      <span class="model-float-desc" data-model-desc></span>
+    </div>
+        <div class="seg model-switch" role="group" aria-label="Gösterilen model">
+          <button type="button" data-model="initial" aria-pressed="false">Eğitim öncesi</button>
+          <button type="button" data-model="trained" aria-pressed="true">Eğitilmiş</button>
+        </div>
+  </aside>
 
   <dialog class="zoom" id="zoom" aria-labelledby="zoom-title">
     <div class="zoom-body">

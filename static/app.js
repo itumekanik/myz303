@@ -1012,6 +1012,7 @@ const TABS = {
 };
 
 function selectTab(name) {
+  document.body.dataset.tab = name;   // CSS shows the floating model switch only where it applies
   for (const [key, t] of Object.entries(TABS)) {
     $(t.tab).setAttribute("aria-selected", String(key === name));
     $(t.panel).hidden = key !== name;
