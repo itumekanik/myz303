@@ -40,6 +40,7 @@
   </header>
 
   <div class="banner" id="conn-banner" role="alert" hidden>Sunucuya ulaşılamıyor; panel sunucusu kapanmış olabilir. Terminalde <code>.venv\Scripts\python.exe dashboard.py</code> ile yeniden başlatın, sayfa kendiliğinden yeniden bağlanır.</div>
+  <div class="banner" id="outdated-banner" role="alert" hidden>Bu sayfa eski sürüm bir panel sunucusuna bağlı; "Eğitim öncesi" model gibi yeni özellikler çalışmaz ve sessizce eğitilmiş model kullanılır. Eski sunucuyu kapatıp <code>start.bat</code> ile yeniden başlatın.</div>
 
   <main>
     <!-- ============================== TRAINING ============================== -->
@@ -189,8 +190,19 @@
 
     <!-- ============================== INFERENCE ============================== -->
     <section class="panel" id="panel-infer" role="tabpanel" aria-labelledby="tab-infer" hidden>
+      <div class="model-bar card">
+        <div class="model-bar-text">
+          <span class="tb-label">Gösterilen model</span>
+          <span class="model-bar-desc" data-model-desc></span>
+        </div>
+        <div class="seg model-switch" role="group" aria-label="Gösterilen model">
+          <button type="button" data-model="initial" aria-pressed="false">Eğitim öncesi</button>
+          <button type="button" data-model="trained" aria-pressed="true">Eğitilmiş</button>
+        </div>
+      </div>
+
       <div class="banner inline" id="no-model" hidden>
-        Henüz eğitilmiş bir model yok. <strong>Eğitim</strong> sekmesinden eğitimi başlatın; ilk epoch bittiğinde burada deneyebilirsiniz.
+        Henüz eğitilmiş bir model yok. <strong>Eğitim</strong> sekmesinden eğitimi başlatın; ilk epoch bittiğinde burada deneyebilirsiniz. Bu arada <strong>Eğitim öncesi</strong> modeli seçerek rastgele ağırlıklı ağın ne yaptığını görebilirsiniz.
       </div>
 
       <div class="row infer-top">
@@ -204,7 +216,10 @@
         </div>
 
         <div class="card result-card">
-          <h2>Tahmin</h2>
+          <div class="card-head">
+            <h2>Tahmin</h2>
+            <span class="model-tag" id="pred-model" hidden></span>
+          </div>
           <div class="result-head">
             <div class="pred-digit" id="pred-digit">–</div>
             <div class="pred-meta">
@@ -255,6 +270,13 @@
           <button type="button" class="btn small" id="t-next-image">Başka görüntü</button>
           <button type="button" class="btn small" id="t-use-infer" disabled title="Önce Çıkarım sekmesinde bir tahmin yapın">Çıkarımdakini kullan</button>
         </div>
+        <div class="tb-group">
+          <span class="tb-label">Model</span>
+          <div class="seg model-switch" role="group" aria-label="Gösterilen model">
+            <button type="button" data-model="initial" aria-pressed="false">Eğitim öncesi</button>
+            <button type="button" data-model="trained" aria-pressed="true">Eğitilmiş</button>
+          </div>
+        </div>
         <div class="tb-group" id="t-filter-group">
           <span class="tb-label">Conv1 filtresi</span>
           <button type="button" class="btn small icon" id="t-filter-prev" aria-label="Önceki filtre">‹</button>
@@ -267,7 +289,8 @@
       <div class="card t-intro">
         <div class="t-intro-text">
           <h2>Evrişimli sinir ağı (CNN) nasıl çalışır?</h2>
-          <p>Bir CNN, görüntüdeki yerel desenleri (kenar, köşe, kıvrım) küçük filtrelerle yakalar ve bu desenleri katman katman birleştirerek "bu bir 7" gibi bir karara varır. Aşağıdaki her bölüm SimpleCNN'in bir yapı taşını açıklar. Örnekler, yukarıda seçili görüntü ve eğitilmiş modelin gerçek ağırlıklarıyla tarayıcınızda canlı hesaplanır.</p>
+          <p>Bir CNN, görüntüdeki yerel desenleri (kenar, köşe, kıvrım) küçük filtrelerle yakalar ve bu desenleri katman katman birleştirerek "bu bir 7" gibi bir karara varır. Aşağıdaki her bölüm SimpleCNN'in bir yapı taşını açıklar. Örnekler, yukarıda seçili görüntü ve modelin gerçek ağırlıklarıyla tarayıcınızda canlı hesaplanır.</p>
+          <p><b>Eğitimin etkisini görmek için</b> üst çubuktaki <b>Model</b> anahtarıyla <i>Eğitim öncesi</i> ve <i>Eğitilmiş</i> arasında geçiş yapın: eğitim öncesi model, eğitimin başladığı rastgele ağırlıklardır. Filtrelerin, öznitelik haritalarının ve tahminin nasıl değiştiğine bakın.</p>
         </div>
         <figure class="schematic">
           <div class="schematic-scroll">
@@ -277,7 +300,7 @@
           <figcaption>Her yığın bir katmanın çıktısıdır: yüksekliği uzamsal boyutu (28 → 4), derinliği kanal sayısını gösterir. Öndeki görüntüler seçili rakam için gerçek çıktılardır; evrişim bloklarında yukarıda seçili filtre, ikinci blokta en güçlü tepki veren harita gösterilir. Okların üzerindeki işlemlere tıklayarak ilgili bölüme gidin.</figcaption>
         </figure>
         <div class="t-filters" id="t-filters">
-          <p class="sub">Modelin öğrendiği 32 Conv1 filtresi. Birine tıklayarak örneklerde kullanılacak filtreyi seçin (mavi negatif, kırmızı pozitif ağırlık).</p>
+          <p class="sub"><span id="t-filters-title">Modelin öğrendiği 32 Conv1 filtresi.</span> Birine tıklayarak örneklerde kullanılacak filtreyi seçin (mavi negatif, kırmızı pozitif ağırlık).</p>
           <div class="filter-strip" id="t-filter-strip"></div>
         </div>
       </div>

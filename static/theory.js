@@ -272,7 +272,7 @@ function histogram(host, values, lo, hi, mean) {
 // 1 · Convolution
 // =====================================================================
 const KERNELS = {
-  model: { label: "Modelin öğrendiği filtre (5×5)" },
+  model: { label: "Modelin filtresi (5×5)" },
   sobelX: { label: "Dikey kenar · Sobel (3×3)", k: 3, values: [-1, 0, 1, -2, 0, 2, -1, 0, 1] },
   sobelY: { label: "Yatay kenar · Sobel (3×3)", k: 3, values: [-1, -2, -1, 0, 0, 0, 1, 2, 1] },
   blur: { label: "Bulanıklaştırma (3×3)", k: 3, values: new Array(9).fill(1 / 9) },
@@ -537,7 +537,9 @@ function updateBN() {
     + `Arka plan pikselleri aynı değeri ürettiği için bir çubuk çok uzundur; o çubuk kesilip sayısı yazılmıştır.`;
   const bn = T.params.bn1;
   $("#t-bn-running").textContent = `Bu batch: μ = ${fmtNum(mu, 3)}, σ = ${fmtNum(sd, 3)}. `
-    + `Modelin eğitimde biriktirdiği hareketli ortalamalar (çıkarımda bunlar kullanılır): `
+    + (modelView.which === "initial"
+      ? "Eğitim öncesi modelde hareketli ortalamalar henüz başlangıç değerinde (çıkarımda bunlar kullanılır): "
+      : "Modelin eğitimde biriktirdiği hareketli ortalamalar (çıkarımda bunlar kullanılır): ")
     + `μ = ${fmtNum(bn.mean[T.filter], 3)}, σ = ${fmtNum(Math.sqrt(bn.var[T.filter]), 3)}. `
     + `y > 0 olan, yani ReLU'dan geçecek değerlerin oranı: ${fmtPct(active * 100, 1)}.`;
 }
@@ -1168,12 +1170,18 @@ function renderSchematic() {
 // =====================================================================
 async function loadParams() {
   try {
-    const params = await api("/api/theory/params");
+    const params = await api(`/api/theory/params?model=${modelView.which}`);
+    if (params.ready && params.model !== modelView.which) showOutdatedServer();
     T.params = params.ready ? params : null;
-    T.version = params.ready ? params.version : null;
+    T.modelVersion = params.ready ? params.version : null;
+    // Caches (BatchNorm batch, kernel grid) are keyed by this, so switching models refreshes them
+    T.version = params.ready ? `${modelView.which}-${params.version}` : null;
   } catch {
     T.params = null;
   }
+  $("#t-filters-title").textContent = modelView.which === "initial"
+    ? "Eğitim öncesi 32 Conv1 filtresi: henüz rastgele ağırlıklar."
+    : "Modelin öğrendiği 32 Conv1 filtresi.";
   const modelOption = $("#t-conv-kernel-select").querySelector('option[value="model"]');
   modelOption.disabled = !T.params;
   if (T.params && !conv.picked) conv.kernel = "model";
@@ -1202,10 +1210,13 @@ async function selectTestImage(sample) {
   refreshAll();
 }
 
+/** The selected model's output for the current image (scores and every layer, for the schematic). */
 async function fetchLogits() {
-  if (!T.params || T.image?.testIndex == null) return;
+  if (!T.params || !T.image) return;
   try {
-    const result = await api("/api/predict", { test_index: T.image.testIndex });
+    const body = T.image.testIndex != null ? { test_index: T.image.testIndex } : { pixels: Array.from(T.image.pixels) };
+    body.model = modelView.which;
+    const result = await api("/api/predict", body);
     T.image.logits = result.logits;
     T.image.prediction = result.prediction;
     T.image.result = result;   // every layer's output, used by the schematic
@@ -1289,13 +1300,14 @@ function setupToolbar() {
     const others = T.batch.filter((s) => s.index !== T.image?.testIndex);
     selectTestImage(others[Math.floor(Math.random() * others.length)]);
   });
-  $("#t-use-infer").addEventListener("click", () => {
+  $("#t-use-infer").addEventListener("click", async () => {
     const r = infer.result;
     if (!r) return;
     T.image = {
-      x: toFloat(r.input), pixels: r.input, label: r.label, prediction: r.prediction, testIndex: null, logits: r.logits, result: r,
-      title: r.label != null ? `Çıkarımdaki test görüntüsü · etiket ${r.label}` : `Sizin çiziminiz · model tahmini ${r.prediction}`,
+      x: toFloat(r.input), pixels: r.input, label: r.label, prediction: null, testIndex: null, logits: null, result: null,
+      title: r.label != null ? `Çıkarımdaki test görüntüsü · etiket ${r.label}` : "Sizin çiziminiz",
     };
+    await fetchLogits();   // recomputed with the model selected here
     refreshAll();
   });
   $("#t-filter-prev").addEventListener("click", () => selectFilter(T.filter - 1));
@@ -1334,14 +1346,25 @@ document.addEventListener("tab-shown", (event) => {
 });
 
 // A newer model (a finished epoch or a new training run) refreshes the demos
-document.addEventListener("model-status", async (event) => {
-  const model = event.detail;
-  if (!T.started || T.loading || !model.ready || model.version === T.version) return;
+async function reloadModel() {
   T.loading = true;
   await loadParams();
   if (T.image) await fetchLogits();
   T.loading = false;
+  bnState.z = null;
   refreshAll();
+}
+
+document.addEventListener("model-status", (event) => {
+  const model = event.detail;
+  if (!T.started || T.loading || model.version === T.modelVersion) return;
+  if (!model.ready && modelView.which === "trained") return;
+  reloadModel();
+});
+
+// The model switch (shared with the Inference tab): recompute every demo with the other weights
+document.addEventListener("model-view-change", () => {
+  if (T.started) reloadModel();
 });
 
 document.addEventListener("theme-change", () => {

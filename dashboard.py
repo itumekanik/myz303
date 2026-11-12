@@ -59,6 +59,8 @@ import SimpleCNN as cnn
 ROOT = Path(__file__).resolve().parent
 STATIC_DIR = ROOT / "static"
 CHECKPOINT = ROOT / "checkpoints" / "simple_cnn.pt"
+# Bumped when the page needs a newer server API; the page warns when an older server is still running
+SERVER_VERSION = 2
 
 NUM_SAMPLES = 16      # Validation images whose predictions are shown while training
 FILTER_EVERY = 10     # Refresh the conv1 filter snapshot every N batches
@@ -156,13 +158,20 @@ class ModelNotReady(Exception):
 
 class InferenceEngine:
     """
-    Keeps a CPU copy of the model for inference, so predictions never disturb
-    a training run on the GPU. Forward hooks record what each stage produces.
+    Keeps CPU copies of the model for inference, so predictions never disturb a
+    training run on the GPU. Forward hooks record what each stage produces.
+
+    Two models are kept: the trained one and the "initial" one, i.e. the exact
+    random weights training starts from, so the effect of training can be compared.
     """
+
+    MODELS = ("trained", "initial")
 
     def __init__(self):
         self.lock = threading.Lock()
         self.model = cnn.SimpleCNN(num_classes=cnn.num_class).eval()
+        self.initial = cnn.SimpleCNN(num_classes=cnn.num_class).eval()
+        self.initial_seed = None
         self.ready = False
         self.source = None
         self.meta = None
@@ -170,17 +179,43 @@ class InferenceEngine:
         self._test_set = None
         self._test_lock = threading.Lock()
         self._activations = {}
+        for model in (self.model, self.initial):
+            self._add_hooks(model)
+        self.initial_from_seed(cnn.seed)
 
+    def _add_hooks(self, model):
         # ReLU is applied functionally in SimpleCNN.forward, so it is applied here too
         stages = {
-            "conv1": (self.model.batch1, F.relu),   # Conv1 -> BatchNorm -> ReLU
-            "pool1": (self.model.max1, None),       # MaxPool (Dropout is off at inference)
-            "conv2": (self.model.batch2, F.relu),   # Conv2 -> BatchNorm -> ReLU
-            "pool2": (self.model.max2, None),
-            "fc1": (self.model.fc1, F.relu),        # FC1 -> ReLU
+            "conv1": (model.batch1, F.relu),   # Conv1 -> BatchNorm -> ReLU
+            "pool1": (model.max1, None),       # MaxPool (Dropout is off at inference)
+            "conv2": (model.batch2, F.relu),   # Conv2 -> BatchNorm -> ReLU
+            "pool2": (model.max2, None),
+            "fc1": (model.fc1, F.relu),        # FC1 -> ReLU
         }
         for name, (module, activation) in stages.items():
             module.register_forward_hook(self._make_hook(name, activation))
+
+    def initial_from_seed(self, seed: int):
+        """Rebuilds the weights a training run with this seed starts from (same order as SimpleCNN.py)."""
+        with torch.random.fork_rng(devices=[]):   # leaves the global random state untouched
+            torch.manual_seed(seed)
+            fresh = cnn.SimpleCNN(num_classes=cnn.num_class)
+        self.set_initial(fresh.state_dict(), seed)
+
+    def set_initial(self, state_dict: dict, seed: int):
+        cpu_state = {k: v.detach().cpu().clone() for k, v in state_dict.items()}
+        with self.lock:
+            self.initial.load_state_dict(cpu_state)
+            self.initial.eval()
+            self.initial_seed = seed
+
+    def _pick(self, which: str):
+        """The model to use; call it with the lock held."""
+        if which == "initial":
+            return self.initial
+        if not self.ready:
+            raise ModelNotReady()
+        return self.model
 
     def _make_hook(self, name, activation):
         def hook(_module, _inputs, output):
@@ -189,8 +224,8 @@ class InferenceEngine:
 
     def info(self) -> dict:
         with self.lock:
-            return {"ready": self.ready, "source": self.source,
-                    "meta": self.meta, "version": self.version}
+            return {"ready": self.ready, "source": self.source, "meta": self.meta,
+                    "version": self.version, "initial_seed": self.initial_seed}
 
     def load_state(self, state_dict: dict, source: str, meta: dict | None = None):
         cpu_state = {k: v.detach().cpu().clone() for k, v in state_dict.items()}
@@ -202,33 +237,42 @@ class InferenceEngine:
             self.meta = meta
             self.version += 1
 
-    def save_checkpoint(self, state_dict: dict, meta: dict):
+    def save_checkpoint(self, state_dict: dict, meta: dict, initial_state: dict):
         CHECKPOINT.parent.mkdir(exist_ok=True)
         cpu_state = {k: v.detach().cpu() for k, v in state_dict.items()}
-        torch.save({"state_dict": cpu_state, "meta": meta}, CHECKPOINT)
+        torch.save({"state_dict": cpu_state, "initial_state_dict": initial_state, "meta": meta},
+                   CHECKPOINT)
 
     def load_checkpoint(self) -> bool:
         if not CHECKPOINT.exists():
             return False
         try:
             checkpoint = torch.load(CHECKPOINT, map_location="cpu", weights_only=True)
-            self.load_state(checkpoint["state_dict"], "Kayıtlı model", checkpoint.get("meta"))
+            meta = checkpoint.get("meta") or {}
+            self.load_state(checkpoint["state_dict"], "Kayıtlı model", meta)
+            # The run's starting weights: stored with newer checkpoints, otherwise rebuilt from its seed
+            if "initial_state_dict" in checkpoint:
+                self.set_initial(checkpoint["initial_state_dict"], meta.get("seed", cnn.seed))
+            else:
+                self.initial_from_seed(meta.get("seed", cnn.seed))
             return True
         except Exception as exc:  # A broken or outdated file should not stop the app
             print(f"Could not load {CHECKPOINT}: {exc}")
             return False
 
-    def theory_params(self) -> dict:
+    def theory_params(self, which: str = "trained") -> dict:
         """Conv1 and BatchNorm1 weights for the Theory tab, which runs its demos in the browser."""
         def values(tensor):
             return [round(v, 6) for v in tensor.detach().flatten().tolist()]
 
         with self.lock:
-            if not self.ready:
+            try:
+                model = self._pick(which)
+            except ModelNotReady:
                 return {"ready": False}
-            model = self.model
             return {
                 "ready": True,
+                "model": which,
                 "version": self.version,
                 "conv1": {"weight": [values(w) for w in model.conv1.weight[:, 0]],   # 32 x (5*5)
                           "bias": values(model.conv1.bias)},
@@ -262,14 +306,13 @@ class InferenceEngine:
         image, label = test_set[index]
         return image.unsqueeze(0), int(label)
 
-    def predict(self, image: torch.Tensor) -> dict:
-        """Runs the model on one (1, 1, 28, 28) image and returns every stage's output."""
+    def predict(self, image: torch.Tensor, which: str = "trained") -> dict:
+        """Runs a model on one (1, 1, 28, 28) image and returns every stage's output."""
         with self.lock:
-            if not self.ready:
-                raise ModelNotReady()
+            model = self._pick(which)
             self._activations.clear()
             with torch.no_grad():
-                logits = self.model(image)
+                logits = model(image)
             activations = dict(self._activations)
 
         probabilities = F.softmax(logits, dim=1)[0]
@@ -290,6 +333,7 @@ class InferenceEngine:
             "input": image_to_uint8(image[0, 0]),
             "layers": layers,
             "fc1": {"values": activation_to_uint8(fc1), "active": int((fc1 > 0).sum())},
+            "model": which,
         }
 
 
@@ -378,6 +422,8 @@ class TrainingSession:
             cnn.set_seed(config["seed"])
             model, criterion, optimizer, device = cnn._setup_model_for_training(
                 cnn.num_class, config["lr"])
+            initial_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+            self.engine.set_initial(initial_state, config["seed"])
             self._log(f"Device: {device_name()}")
             self._log("Loading MNIST...")
             train_loader, val_loader, test_loader = cnn.get_mnist_dataloaders(
@@ -424,7 +470,7 @@ class TrainingSession:
             meta = {**config, "test_acc": round(test_acc, 3), "test_loss": round(test_loss, 5),
                     "val_acc": self.history[-1]["val_acc"], "device": device_name(),
                     "trained_at": datetime.now().isoformat(timespec="seconds")}
-            self.engine.save_checkpoint(model.state_dict(), meta)
+            self.engine.save_checkpoint(model.state_dict(), meta, initial_state)
             self.engine.load_state(model.state_dict(), "Yeni eğitilen model", meta)
             self._log(f"Model saved to {CHECKPOINT.relative_to(ROOT).as_posix()}")
             self._set(stage="done", state="done")
@@ -541,10 +587,14 @@ def make_handler(session: TrainingSession, engine: InferenceEngine):
                     return self._static(url.path[len("/static/"):])
                 if url.path == "/api/status":
                     status = session.snapshot()
-                    status.update(model=engine.info(), defaults=defaults, device=device)
+                    status.update(model=engine.info(), defaults=defaults, device=device,
+                                  server_version=SERVER_VERSION)
                     return self._json(status)
                 if url.path == "/api/theory/params":
-                    return self._json(engine.theory_params())
+                    which = parse_qs(url.query).get("model", ["trained"])[0]
+                    if which not in engine.MODELS:
+                        return self._error("Geçersiz model.", HTTPStatus.BAD_REQUEST)
+                    return self._json(engine.theory_params(which))
                 if url.path == "/api/test-samples":
                     count = int(parse_qs(url.query).get("n", ["12"])[0])
                     count = max(1, min(count, 48))
@@ -581,6 +631,9 @@ def make_handler(session: TrainingSession, engine: InferenceEngine):
                     return self._json({"ok": True})
 
                 if path == "/api/predict":
+                    which = body.get("model", "trained")
+                    if which not in engine.MODELS:
+                        return self._error("Geçersiz model.", HTTPStatus.BAD_REQUEST)
                     label = None
                     if "image" in body:
                         image = preprocess_drawing(str(body["image"]))
@@ -588,10 +641,15 @@ def make_handler(session: TrainingSession, engine: InferenceEngine):
                             return self._error("Önce bir rakam çizin.", HTTPStatus.BAD_REQUEST)
                     elif "test_index" in body:
                         image, label = engine.test_image(int(body["test_index"]))
+                    elif "pixels" in body:   # an already prepared 28x28 image (0-255), e.g. from the Theory tab
+                        pixels = body["pixels"]
+                        if not isinstance(pixels, list) or len(pixels) != 784:
+                            return self._error("28×28 = 784 piksel bekleniyor.", HTTPStatus.BAD_REQUEST)
+                        image = torch.tensor(pixels, dtype=torch.float32).clamp(0, 255).view(1, 1, 28, 28) / 255
                     else:
                         return self._error("Görüntü gönderilmedi.", HTTPStatus.BAD_REQUEST)
                     try:
-                        result = engine.predict(image)
+                        result = engine.predict(image, which)
                     except ModelNotReady:
                         return self._error("Henüz eğitilmiş bir model yok.", HTTPStatus.CONFLICT)
                     result["label"] = label

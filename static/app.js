@@ -712,6 +712,52 @@ $("#btn-stop").addEventListener("click", async () => {
 });
 
 // =====================================================================
+// Which model the Inference and Theory tabs show
+// "trained" or "initial": the random weights training starts from, to show what training changes
+// =====================================================================
+const modelView = { which: "trained" };
+const REQUIRED_SERVER_VERSION = 2;   // matches SERVER_VERSION in dashboard.py
+
+/** The page files are newer than the running server (it was started before an update). */
+function showOutdatedServer() {
+  $("#outdated-banner").hidden = false;
+}
+const MODEL_LABELS = { initial: "Eğitim öncesi model", trained: "Eğitilmiş model" };
+
+/** The initial model always exists; the trained one only after a training run or a saved checkpoint. */
+const modelUsable = () => modelView.which === "initial" || Boolean(lastStatus?.model.ready);
+
+function setModelView(which) {
+  if (which === modelView.which) return;
+  modelView.which = which;
+  for (const b of document.querySelectorAll(".model-switch button")) {
+    b.setAttribute("aria-pressed", String(b.dataset.model === which));
+  }
+  if (lastStatus) renderModelState(lastStatus);
+  document.dispatchEvent(new CustomEvent("model-view-change", { detail: which }));
+}
+
+function describeModels(model) {
+  const text = modelView.which === "initial"
+    ? `Eğitimin başladığı rastgele ağırlıklar (seed ${model.initial_seed ?? "—"}). Henüz hiçbir şey öğrenmedi.`
+    : model.ready
+      ? `${model.source}${model.meta?.test_acc != null ? ` · test doğruluğu ${fmtPct(model.meta.test_acc)}` : ""}`
+      : "Henüz eğitilmiş model yok.";
+  for (const el of document.querySelectorAll("[data-model-desc]")) el.textContent = text;
+}
+
+document.addEventListener("click", (event) => {
+  const button = event.target.closest?.(".model-switch button");
+  if (button) setModelView(button.dataset.model);
+});
+
+// Switching the model re-runs the current input, so both versions can be compared directly
+document.addEventListener("model-view-change", () => {
+  if (!$("#panel-infer").hidden) syncInference();
+  if (infer.last && modelUsable()) requestPredict(infer.last);
+});
+
+// =====================================================================
 // Inference tab
 // =====================================================================
 const LAYERS = [
@@ -802,6 +848,10 @@ function renderPrediction(result, input) {
   } else {
     source.textContent = "Kaynak: sizin çiziminiz";
   }
+  const tag = $("#pred-model");
+  tag.hidden = false;
+  tag.textContent = MODEL_LABELS[result.model] || "";
+  tag.classList.toggle("initial", result.model === "initial");
   paint($("#input-view"), result.input, 28, 28, "gray");
   probabilityChart($("#prob-chart"), result.probabilities, result.prediction);
   renderLayers(result);
@@ -818,7 +868,10 @@ async function sendPredict(input) {
   infer.lastSent = performance.now();
   try {
     const body = input.kind === "draw" ? { image: pad.toDataURL("image/png") } : { test_index: input.index };
-    renderPrediction(await api("/api/predict", body), input);
+    body.model = modelView.which;
+    const result = await api("/api/predict", body);
+    if (result.model !== body.model) showOutdatedServer();   // an old server ignores the model choice
+    renderPrediction(result, input);
   } catch (error) {
     resetPrediction(error.message);
   } finally {
@@ -869,7 +922,7 @@ function strokeTo(from, to) {
 let drawing = false;
 let lastPoint = null;
 pad.addEventListener("pointerdown", (event) => {
-  if (!lastStatus?.model.ready) return;
+  if (!modelUsable()) return;
   pad.setPointerCapture(event.pointerId);
   if (infer.last?.kind === "test") clearPad();  // switching from a test image to drawing
   for (const node of $("#test-samples").children) node.classList.remove("selected");
@@ -929,7 +982,7 @@ $("#btn-more").addEventListener("click", () => loadTestSamples(false));
 /** Loads examples on first visit and re-runs the last input when a newer model arrives. */
 function syncInference() {
   const model = lastStatus?.model;
-  if (!model?.ready || $("#panel-infer").hidden) return;
+  if (!modelUsable() || $("#panel-infer").hidden) return;
   if (!infer.samplesRequested) {
     infer.samplesRequested = true;
     loadTestSamples(!infer.last);
@@ -942,9 +995,9 @@ function syncInference() {
 }
 
 function renderModelState(st) {
-  const ready = st.model.ready;
-  $("#no-model").hidden = ready;
-  $("#panel-infer").classList.toggle("dim", !ready);
+  $("#no-model").hidden = st.model.ready;
+  $("#panel-infer").classList.toggle("dim", !modelUsable());
+  describeModels(st.model);
   syncInference();
   document.dispatchEvent(new CustomEvent("model-status", { detail: st.model }));
 }
@@ -986,6 +1039,7 @@ async function poll() {
   try {
     const status = await api("/api/status");
     $("#conn-banner").hidden = true;
+    if ((status.server_version ?? 0) < REQUIRED_SERVER_VERSION) showOutdatedServer();
     lastStatus = status;
     renderStatus(status);
     delay = status.running ? 400 : 2000;
