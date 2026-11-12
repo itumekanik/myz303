@@ -735,7 +735,7 @@ code.ic {
 .tut-callout.tip { border-left-color: var(--good); }
 .tut-callout.warn { border-left-color: #e0a100; }
 .tut-callout-icon { font-size: 18px; line-height: 1.4; }
-.tut-callout strong { display: block; margin-bottom: 2px; }
+.tut-callout > div > strong { display: block; margin-bottom: 2px; }   /* the title only, not bold words in the text */
 .tut-callout p { margin: 0; color: var(--text-2); font-size: 14px; line-height: 1.6; }
 .tut-table { max-width: 720px; }
 .tut-table td, .tut-table th { text-align: left !important; }

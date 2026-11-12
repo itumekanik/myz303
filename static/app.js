@@ -40,14 +40,20 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 const cssList = (name) => cssVar(name).split(",").map((s) => s.trim()).filter(Boolean);
 
+// Numbers follow the language: 0,001 and %99,29 in Turkish, 0.001 and 99.29% in English
+const locale = () => (I18N.lang === "en" ? "en-US" : "tr-TR");
 const formats = {};
 function fmtNum(value, digits) {
-  formats[digits] ??= new Intl.NumberFormat("tr-TR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
-  return formats[digits].format(value);
+  const key = `${I18N.lang}:${digits}`;
+  formats[key] ??= new Intl.NumberFormat(locale(), { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  return formats[key].format(value);
 }
-const fmtPct = (value, digits = 2) => "%" + fmtNum(value, digits);
+const pctText = (text) => (I18N.lang === "en" ? `${text}%` : `%${text}`);
+const fmtPct = (value, digits = 2) => pctText(fmtNum(value, digits));
 const fmtInt = (value) => fmtNum(value, 0);
-const fmtTick = (value) => new Intl.NumberFormat("tr-TR", { maximumSignificantDigits: 2 }).format(value);
+const fmtTick = (value) => new Intl.NumberFormat(locale(), { maximumSignificantDigits: 2 }).format(value);
+/** Probability label: a tiny value shows as "<0.1%" instead of 0.0%. */
+const fmtProb = (p) => (p < 0.001 ? `<${fmtPct(0.1, 1)}` : fmtPct(p * 100, 1));
 
 function fmtDuration(seconds) {
   if (seconds == null || !isFinite(seconds)) return "—";
@@ -64,8 +70,33 @@ async function api(path, body) {
     : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
   const response = await fetch(path, options);
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+  if (!response.ok) throw new Error(localizeServerMessage(data.error) || `HTTP ${response.status}`);
   return data;
+}
+
+/** The server answers in Turkish; known messages are shown in the page's language. */
+const SERVER_MESSAGES = [
+  [/^Önce bir rakam çizin\.$/, "srv.draw"],
+  [/^Henüz eğitilmiş bir model yok\.$/, "srv.nomodel"],
+  [/^Eğitim zaten sürüyor\.$/, "srv.running"],
+  [/^Geçersiz model\.$/, "srv.badmodel"],
+  [/^Görüntü gönderilmedi\.$/, "srv.noimage"],
+  [/^Geçersiz test görüntüsü\.$/, "srv.badtest"],
+  [/^28×28 = 784 piksel bekleniyor\.$/, "srv.pixels"],
+  [/^İstek çok büyük\.$/, "srv.toolarge"],
+  [/^Geçersiz JSON\.$/, "srv.json"],
+  [/^Bulunamadı\.$/, "srv.notfound"],
+  [/^'(?<name>\w+)' (?<lo>\S+) ile (?<hi>\S+) arasında olmalı\.$/, "srv.range"],
+  [/^'(?<name>\w+)' geçerli bir sayı değil\.$/, "srv.nan"],
+];
+
+function localizeServerMessage(message) {
+  if (!message) return message;
+  for (const [pattern, key] of SERVER_MESSAGES) {
+    const match = message.match(pattern);
+    if (match) return t(key, match.groups);
+  }
+  return message;
 }
 
 // =====================================================================
@@ -327,12 +358,12 @@ function probabilityChart(host, probabilities, prediction) {
   const m = { l: 24, r: 64, t: 2, b: 2 };
   const H = m.t + m.b + rowH * 10;
   const iw = W - m.l - m.r;
-  const root = svg("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Sınıf olasılıkları" });
+  const root = svg("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": t("a.probs") });
 
   probabilities.forEach((p, digit) => {
     const y = m.t + digit * rowH;
     const top = digit === prediction;
-    const row = svg("g", { class: "bar-row", tabindex: 0, "aria-label": `Rakam ${digit}: ${fmtPct(p * 100, 1)}` });
+    const row = svg("g", { class: "bar-row", tabindex: 0, "aria-label": `${t("digit")} ${digit}: ${fmtPct(p * 100, 1)}` });
     row.append(svgText(m.l - 12, y + rowH / 2 + 4, String(digit), "bar-label", "middle"));
     const w = p * iw;
     if (w >= 0.5) {
@@ -342,12 +373,12 @@ function probabilityChart(host, probabilities, prediction) {
         style: `fill:${top ? "var(--series-1)" : "var(--bar-muted)"}`,
       }));
     }
-    const label = p < 0.001 ? "<%0,1" : fmtPct(p * 100, 1);
+    const label = fmtProb(p);
     const value = svgText(m.l + w + 6, y + rowH / 2 + 4, label, "bar-value");
     if (top) value.style.fill = "var(--text)";
     row.append(value, svg("rect", { x: 0, y, width: W, height: rowH, fill: "transparent" }));
-    const tipFor = (e) => showTip(e.clientX, e.clientY, `Rakam ${digit}`, [
-      { value: fmtPct(p * 100, 2), label: "olasılık", color: top ? "var(--series-1)" : "var(--bar-muted)" },
+    const tipFor = (e) => showTip(e.clientX, e.clientY, `${t("digit")} ${digit}`, [
+      { value: fmtPct(p * 100, 2), label: t("probability"), color: top ? "var(--series-1)" : "var(--bar-muted)" },
     ]);
     row.addEventListener("pointermove", tipFor);
     row.addEventListener("pointerleave", hideTip);
@@ -368,8 +399,8 @@ document.querySelectorAll(".chart").forEach((chart) => resizeObserver.observe(ch
 // Training tab
 // =====================================================================
 const STAGES = ["loading", "training", "validating", "testing", "saving"];
-const STATE_LABELS = { idle: "Hazır", running: "Çalışıyor", done: "Tamamlandı", stopped: "Durduruldu", error: "Hata" };
-const STAGE_LABELS = { loading: "veri yükleniyor", training: "eğitiliyor", validating: "doğrulanıyor", testing: "test ediliyor", saving: "kaydediliyor" };
+const stateLabel = (state) => t(`state.${state}`);   // idle, running, done, stopped, error
+const stageLabel = (stage) => t(`busy.${stage}`);    // what a running job is doing
 const form = $("#train-form");
 const seen = {};
 let lastStatus = null;
@@ -397,21 +428,21 @@ function renderStatus(st) {
   }
   for (const input of form.querySelectorAll("input")) input.disabled = st.running;
   $("#btn-start").disabled = st.running;
-  $("#btn-start").textContent = st.running ? "Eğitim sürüyor…" : st.run_id ? "Yeniden eğit" : "Eğitimi başlat";
+  $("#btn-start").textContent = t(st.running ? "btn.running" : st.run_id ? "btn.retrain" : "btn.start");
   $("#btn-stop").disabled = !st.running;
 
   // Stage tracker
   const pill = $("#state-pill");
-  pill.textContent = STATE_LABELS[st.state] || st.state;
+  pill.textContent = stateLabel(st.state);
   pill.className = `state-pill ${st.state}`;
   const current = st.stage === "done" ? STAGES.length : STAGES.indexOf(st.stage);
   const hints = {
     loading: st.dataset_sizes
       ? `${fmtInt(st.dataset_sizes.train)} / ${fmtInt(st.dataset_sizes.validation)} / ${fmtInt(st.dataset_sizes.test)}`
-      : "MNIST indirilir, bölünür",
-    training: st.epoch ? `Epoch ${st.epoch}/${epochs} · batch ${st.batch}/${st.batches}` : "Ağırlıklar güncellenir",
-    validating: last ? `Son: ${fmtPct(last.val_acc)}` : "Görülmemiş veride ölçüm",
-    testing: st.test ? `Doğruluk ${fmtPct(st.test.acc)}` : "Son performans",
+      : t("hint.loading"),
+    training: st.epoch ? `Epoch ${st.epoch}/${epochs} · batch ${st.batch}/${st.batches}` : t("hint.training"),
+    validating: last ? t("hint.lastval", { v: fmtPct(last.val_acc) }) : t("hint.validating"),
+    testing: st.test ? t("hint.acc", { v: fmtPct(st.test.acc) }) : t("hint.testing"),
     saving: "checkpoints/simple_cnn.pt",
   };
   for (const li of $("#stepper").children) {
@@ -435,27 +466,27 @@ function renderStatus(st) {
   $("#epoch-progress-label").textContent = st.epoch ? `Epoch ${st.epoch}/${epochs}` : "Epoch";
   $("#epoch-progress-value").textContent = batches ? `${st.stage === "training" ? st.batch : batches}/${batches} batch` : "—";
   $("#total-progress").style.width = `${total * 100}%`;
-  $("#total-progress-value").textContent = st.run_id ? `${fmtPct(total * 100, 0)}${eta != null ? ` · kalan ~${fmtDuration(eta)}` : ""}` : "—";
+  $("#total-progress-value").textContent = st.run_id ? `${fmtPct(total * 100, 0)}${eta != null ? ` · ${t("eta", { t: fmtDuration(eta) })}` : ""}` : "—";
   $("#epoch-meter").setAttribute("aria-valuenow", Math.round(inEpoch * 100));
   $("#total-meter").setAttribute("aria-valuenow", Math.round(total * 100));
   $("#train-loop").classList.toggle("running", st.running && st.stage === "training");
-  $("#step-count").textContent = `Toplam adım: ${fmtInt(st.step)}`;
+  $("#step-count").textContent = t("steps.total", { n: fmtInt(st.step) });
 
   // Stat tiles
   $("#tile-epoch").textContent = st.epoch ? `${st.epoch} / ${epochs}` : "—";
-  $("#tile-epoch-sub").textContent = st.running ? STAGE_LABELS[st.stage] || "" : st.run_id ? (STATE_LABELS[st.state] || "").toLocaleLowerCase("tr-TR") : "henüz başlamadı";
+  $("#tile-epoch-sub").textContent = st.running ? stageLabel(st.stage) : st.run_id ? stateLabel(st.state).toLocaleLowerCase(locale()) : t("tile.notstarted");
   $("#tile-loss").textContent = ema.length ? fmtNum(ema[ema.length - 1], 4) : "—";
   $("#tile-val").textContent = last ? fmtPct(last.val_acc) : "—";
   if (st.history.length) {
     const best = st.history.reduce((a, b) => (b.val_acc > a.val_acc ? b : a));
-    $("#tile-val-sub").textContent = `en iyi ${fmtPct(best.val_acc)} (epoch ${best.epoch})`;
+    $("#tile-val-sub").textContent = t("tile.best", { v: fmtPct(best.val_acc), e: best.epoch });
   } else {
-    $("#tile-val-sub").textContent = "her epoch sonunda";
+    $("#tile-val-sub").textContent = t("tile.everyepoch");
   }
   $("#tile-test").textContent = st.test ? fmtPct(st.test.acc) : "—";
-  $("#tile-test-sub").textContent = st.test ? `kayıp ${fmtNum(st.test.loss, 4)}` : "eğitim bitince ölçülür";
+  $("#tile-test-sub").textContent = st.test ? t("tile.loss", { v: fmtNum(st.test.loss, 4) }) : t("tile.atend");
   $("#tile-time").textContent = st.elapsed != null ? fmtDuration(st.elapsed) : "—";
-  $("#tile-time-sub").textContent = eta != null ? `kalan ~${fmtDuration(eta)}` : st.state === "done" ? "toplam süre" : " ";
+  $("#tile-time-sub").textContent = eta != null ? t("eta", { t: fmtDuration(eta) }) : st.state === "done" ? t("tile.totaltime") : " ";
 
   renderRunBanner(st);
   renderCharts(st, ema);
@@ -469,39 +500,39 @@ function renderStatus(st) {
 function renderModelBadge(model) {
   const badge = $("#model-badge");
   badge.classList.toggle("ready", model.ready);
-  let text = "Model yok";
+  let text = t("model.none");
   if (model.ready) {
-    text = model.source;
+    text = modelSourceText(model);
     if (model.meta?.test_acc != null) text += ` · test ${fmtPct(model.meta.test_acc)}`;
   }
   $("#model-badge-text").textContent = text;
   badge.title = model.meta?.trained_at
-    ? `Eğitim: ${new Date(model.meta.trained_at).toLocaleString("tr-TR")} · ${model.meta.epochs} epoch`
-    : "Çıkarımda kullanılan model";
+    ? t("model.trainedat", { d: new Date(model.meta.trained_at).toLocaleString(locale()), n: model.meta.epochs })
+    : t("model.used");
 }
 
 function renderRunBanner(st) {
   const banner = $("#run-banner");
-  const key = `${st.run_id}|${st.state}`;
+  const key = `${st.run_id}|${st.state}|${I18N.lang}`;
   if (seen.banner === key) return;
   seen.banner = key;
   banner.className = "banner inline";
   banner.replaceChildren();
   if (st.state === "done" && st.test) {
     banner.classList.add("good");
-    const go = h("button", { type: "button", class: "btn small", text: "Çıkarımı dene →" });
+    const go = h("button", { type: "button", class: "btn small", text: t("run.try") });
     go.addEventListener("click", () => selectTab("infer"));
     banner.append(
       h("span", { class: "icon", text: "✓" }),
-      h("span", { text: `Eğitim tamamlandı. Test doğruluğu ${fmtPct(st.test.acc)}; model checkpoints/simple_cnn.pt dosyasına kaydedildi.` }),
+      h("span", { text: t("run.done", { v: fmtPct(st.test.acc) }) }),
       go,
     );
     go.style.marginLeft = "auto";
   } else if (st.state === "stopped" || st.state === "error") {
     banner.classList.add(st.state);
-    banner.append(h("span", { class: "icon", text: "!" }), h("span", { text: st.message }));
+    banner.append(h("span", { class: "icon", text: "!" }), h("span", { text: st.state === "stopped" ? t("run.stopped") : st.message }));
     if (st.state === "stopped" && st.history.length) {
-      banner.append(h("span", { text: ` Çıkarım için epoch ${st.history.length} sonrasındaki model kullanılabilir.` }));
+      banner.append(h("span", { text: " " + t("run.stoppedmodel", { e: st.history.length }) }));
     }
   }
   banner.hidden = !banner.childElementCount;
@@ -530,19 +561,19 @@ function renderCharts(st, ema) {
     }
   }
   lineChart($("#chart-batch"), {
-    label: "Batch başına eğitim kaybı",
-    empty: "Eğitim başlayınca her batch'in kaybı burada çizilir",
+    label: t("chart.batch.label"),
+    empty: t("chart.batch.empty"),
     x: { min: 0.5, max: batches ? epochs * batches + 0.5 : 1, ticks: xTicks, grid: xGrid },
     y: { log: true, min: yMin, max: yMax, ticks: logTicks(yMin, yMax) },
     series: [
-      { name: "Ham", points: raw, color: "var(--raw-line)", width: 1, hoverDot: false },
-      { name: "Hareketli ortalama", points: avg, color: "var(--series-1)", width: 2 },
+      { name: t("raw"), points: raw, color: "var(--raw-line)", width: 1, hoverDot: false },
+      { name: t("avg"), points: avg, color: "var(--series-1)", width: 2 },
     ],
     tooltip: (i) => ({
-      title: `Adım ${fmtInt(i + 1)} · epoch ${Math.floor(i / batches) + 1}, batch ${(i % batches) + 1}`,
+      title: t("chart.batch.tip", { s: fmtInt(i + 1), e: Math.floor(i / batches) + 1, b: (i % batches) + 1 }),
       rows: [
-        { value: fmtNum(avg[i][1], 4), label: "hareketli ortalama", color: "var(--series-1)" },
-        { value: fmtNum(raw[i][1], 4), label: "ham", color: "var(--raw-line)" },
+        { value: fmtNum(avg[i][1], 4), label: t("avg").toLocaleLowerCase(locale()), color: "var(--series-1)" },
+        { value: fmtNum(raw[i][1], 4), label: t("raw").toLocaleLowerCase(locale()), color: "var(--raw-line)" },
       ],
     }),
   });
@@ -557,8 +588,8 @@ function renderCharts(st, ema) {
   const epochTooltip = (keyTrain, keyVal, format) => (i) => ({
     title: `Epoch ${history[i].epoch}`,
     rows: [
-      { value: format(history[i][keyTrain]), label: "eğitim", color: "var(--series-1)" },
-      { value: format(history[i][keyVal]), label: "doğrulama", color: "var(--series-2)" },
+      { value: format(history[i][keyTrain]), label: t("series.train").toLocaleLowerCase(locale()), color: "var(--series-1)" },
+      { value: format(history[i][keyVal]), label: t("series.val").toLocaleLowerCase(locale()), color: "var(--series-2)" },
     ],
   });
 
@@ -566,13 +597,13 @@ function renderCharts(st, ema) {
   const lossStep = niceStep(lossMax, 4);
   const lossTop = Math.ceil(lossMax / lossStep) * lossStep;
   lineChart($("#chart-loss"), {
-    label: "Epoch başına eğitim ve doğrulama kaybı",
-    empty: "İlk epoch bitince çizilir",
+    label: t("chart.loss.label"),
+    empty: t("chart.firstepoch"),
     x: xEpoch,
     y: { min: 0, max: lossTop, ticks: linearTicks(0, lossTop, lossStep, (v) => fmtTick(v)) },
     series: [
-      { name: "Eğitim", points: pointsOf("train_loss"), color: "var(--series-1)", markers: true },
-      { name: "Doğrulama", points: pointsOf("val_loss"), color: "var(--series-2)", markers: true },
+      { name: t("series.train"), points: pointsOf("train_loss"), color: "var(--series-1)", markers: true },
+      { name: t("series.val"), points: pointsOf("val_loss"), color: "var(--series-2)", markers: true },
     ],
     tooltip: epochTooltip("train_loss", "val_loss", (v) => fmtNum(v, 4)),
   });
@@ -581,13 +612,13 @@ function renderCharts(st, ema) {
   const accStep = niceStep(100 - accMin + 0.5, 4);
   const accBottom = Math.max(0, Math.floor((accMin - 0.25) / accStep) * accStep);
   lineChart($("#chart-acc"), {
-    label: "Epoch başına eğitim ve doğrulama doğruluğu",
-    empty: "İlk epoch bitince çizilir",
+    label: t("chart.acc.label"),
+    empty: t("chart.firstepoch"),
     x: xEpoch,
-    y: { min: accBottom, max: 100, ticks: linearTicks(accBottom, 100, accStep, (v) => `%${fmtTick(v)}`) },
+    y: { min: accBottom, max: 100, ticks: linearTicks(accBottom, 100, accStep, (v) => pctText(fmtTick(v))) },
     series: [
-      { name: "Eğitim", points: pointsOf("train_acc"), color: "var(--series-1)", markers: true },
-      { name: "Doğrulama", points: pointsOf("val_acc"), color: "var(--series-2)", markers: true },
+      { name: t("series.train"), points: pointsOf("train_acc"), color: "var(--series-1)", markers: true },
+      { name: t("series.val"), points: pointsOf("val_acc"), color: "var(--series-2)", markers: true },
     ],
     tooltip: epochTooltip("train_acc", "val_acc", (v) => fmtPct(v)),
   });
@@ -610,7 +641,7 @@ function renderSamples(st) {
   const sub = $("#samples-sub");
   if (!st.samples) {
     grid.replaceChildren();
-    sub.textContent = "Eğitim başlayınca 16 sabit doğrulama görüntüsü burada tahmin edilir.";
+    sub.textContent = t("samples.empty");
     return;
   }
   if (seen.samplesRun !== st.run_id) {
@@ -636,7 +667,10 @@ function renderSamples(st) {
     const caption = fig.querySelector("figcaption");
     caption.replaceChildren(h("span", { class: "mark", text: ok ? "✓" : "✗" }), ` ${pred}${ok ? "" : ` (${label})`}`);
   });
-  sub.textContent = `${sp.epoch === 0 ? "Eğitim öncesi, rastgele ağırlıklarla" : `Epoch ${sp.epoch} sonrası`}: ${sp.correct}/${sp.predictions.length} doğru · ✓ doğru, ✗ yanlış (parantezde gerçek etiket)`;
+  sub.textContent = t("samples.sub", {
+    when: sp.epoch === 0 ? t("samples.before") : t("samples.after", { e: sp.epoch }),
+    c: sp.correct, n: sp.predictions.length,
+  });
 }
 
 function renderHistory(st) {
@@ -645,7 +679,7 @@ function renderHistory(st) {
   seen.history = key;
   const body = $("#history-table tbody");
   if (!st.history.length) {
-    body.replaceChildren(h("tr", { class: "empty" }, h("td", { colspan: 6, text: "Henüz veri yok" })));
+    body.replaceChildren(h("tr", { class: "empty" }, h("td", { colspan: 6, text: t("nodata") })));
     return;
   }
   const best = st.history.reduce((a, b) => (b.val_acc > a.val_acc ? b : a));
@@ -664,23 +698,23 @@ function renderLog(st) {
   seen.log = st.log.length;
   const log = $("#log");
   const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 24;
-  log.textContent = st.log.length ? st.log.join("\n") : "Eğitim başladığında çıktılar burada görünür.";
+  log.textContent = st.log.length ? st.log.join("\n") : t("log.empty");
   if (atBottom) log.scrollTop = log.scrollHeight;
 }
 
 attachGridTooltip($("#filters"), (canvas) => ({
-  title: `Conv1 · filtre ${+canvas.dataset.i + 1}`,
-  rows: [{ value: "5×5", label: "ağırlık (mavi negatif, kırmızı pozitif)" }],
+  title: t("filter.n", { n: +canvas.dataset.i + 1 }),
+  rows: [{ value: "5×5", label: t("filter.tip") }],
 }));
 attachGridTooltip($("#samples"), (node) => {
   const fig = node.closest("figure");
   if (!fig?._info) return null;
   const { label, pred, confidence } = fig._info;
   return {
-    title: `Doğrulama görüntüsü ${+fig.dataset.i + 1}`,
+    title: t("valimg.n", { n: +fig.dataset.i + 1 }),
     rows: [
-      { value: String(pred), label: `tahmin (${fmtPct(confidence * 100, 1)} güven)` },
-      { value: String(label), label: "gerçek etiket" },
+      { value: String(pred), label: t("valimg.pred", { v: fmtPct(confidence * 100, 1) }) },
+      { value: String(label), label: t("truelabel") },
     ],
   };
 });
@@ -722,7 +756,16 @@ const REQUIRED_SERVER_VERSION = 3;   // matches SERVER_VERSION in dashboard.py
 function showOutdatedServer() {
   $("#outdated-banner").hidden = false;
 }
-const MODEL_LABELS = { initial: "Eğitim öncesi model", trained: "Eğitilmiş model" };
+const modelLabel = (which) => (which ? t(`model.${which}`) : "");
+
+/** The server names the model in Turkish ("Kayıtlı model", "Epoch 3/10 sonrası…"); show it in the page's language. */
+function modelSourceText(model) {
+  const source = model.source || "";
+  if (source === "Kayıtlı model") return t("src.saved");
+  if (source === "Yeni eğitilen model") return t("src.new");
+  const epoch = source.match(/^Epoch (\d+)\/(\d+)/);
+  return epoch ? t("src.epoch", { e: epoch[1], n: epoch[2] }) : source;
+}
 
 /** The initial model always exists; the trained one only after a training run or a saved checkpoint. */
 const modelUsable = () => modelView.which === "initial" || Boolean(lastStatus?.model.ready);
@@ -739,10 +782,10 @@ function setModelView(which) {
 
 function describeModels(model) {
   const text = modelView.which === "initial"
-    ? `Eğitimin başladığı rastgele ağırlıklar (seed ${model.initial_seed ?? "—"}). Henüz hiçbir şey öğrenmedi.`
+    ? t("model.initial.desc", { s: model.initial_seed ?? "—" })
     : model.ready
-      ? `${model.source}${model.meta?.test_acc != null ? ` · test doğruluğu ${fmtPct(model.meta.test_acc)}` : ""}`
-      : "Henüz eğitilmiş model yok.";
+      ? `${modelSourceText(model)}${model.meta?.test_acc != null ? ` · ${t("model.testacc", { v: fmtPct(model.meta.test_acc) })}` : ""}`
+      : t("model.notrained");
   for (const el of document.querySelectorAll("[data-model-desc]")) el.textContent = text;
 }
 
@@ -761,13 +804,26 @@ document.addEventListener("model-view-change", () => {
 // Inference tab
 // =====================================================================
 const LAYERS = [
-  { key: "input", title: "Giriş", shape: "1 × 28 × 28", desc: "Gri tonlu görüntü; her piksel 0 ile 1 arasında." },
-  { key: "conv1", short: "Conv1", title: "Conv1 → BatchNorm → ReLU", cell: 48, desc: "32 adet 5×5 filtre görüntüyü tarar; her filtre bir öznitelik haritası üretir (kenar, köşe, çizgi gibi)." },
-  { key: "pool1", short: "MaxPool 1", title: "MaxPool 2×2", cell: 36, desc: "Her 2×2 bölgenin en büyük değeri alınır, boyut yarıya iner. Dropout yalnızca eğitimde çalışır." },
-  { key: "conv2", short: "Conv2", title: "Conv2 → BatchNorm → ReLU", cell: 32, desc: "64 filtre, önceki 32 haritayı birleştirerek daha karmaşık desenler arar." },
-  { key: "pool2", short: "MaxPool 2", title: "MaxPool 2×2 → Flatten", cell: 26, desc: "64 × 4 × 4 = 1024 değer tek bir vektöre düzleştirilip tam bağlı katmana verilir." },
-  { key: "fc1", title: "FC1 (1024 → 512) → ReLU", shape: "512", desc: "Tam bağlı katman. 512 nöron, 32 × 16 ızgara olarak gösteriliyor." },
-  { key: "out", title: "FC2 (512 → 10) → Softmax", shape: "10", desc: "Her rakam için bir skor; Softmax bu skorları toplamı 1 olan olasılıklara çevirir." },
+  { key: "input", title: { tr: "Giriş", en: "Input" }, shape: "1 × 28 × 28",
+    desc: { tr: "Gri tonlu görüntü; her piksel 0 ile 1 arasında.", en: "A grayscale image; every pixel is between 0 and 1." } },
+  { key: "conv1", short: "Conv1", title: "Conv1 → BatchNorm → ReLU", cell: 48,
+    desc: { tr: "32 adet 5×5 filtre görüntüyü tarar; her filtre bir öznitelik haritası üretir (kenar, köşe, çizgi gibi).",
+      en: "32 filters of 5×5 scan the image; each filter produces one feature map (edges, corners, strokes…)." } },
+  { key: "pool1", short: "MaxPool 1", title: "MaxPool 2×2", cell: 36,
+    desc: { tr: "Her 2×2 bölgenin en büyük değeri alınır, boyut yarıya iner. Dropout yalnızca eğitimde çalışır.",
+      en: "The largest value of every 2×2 region is kept, halving the size. Dropout only runs during training." } },
+  { key: "conv2", short: "Conv2", title: "Conv2 → BatchNorm → ReLU", cell: 32,
+    desc: { tr: "64 filtre, önceki 32 haritayı birleştirerek daha karmaşık desenler arar.",
+      en: "64 filters combine the previous 32 maps to look for more complex patterns." } },
+  { key: "pool2", short: "MaxPool 2", title: "MaxPool 2×2 → Flatten", cell: 26,
+    desc: { tr: "64 × 4 × 4 = 1024 değer tek bir vektöre düzleştirilip tam bağlı katmana verilir.",
+      en: "64 × 4 × 4 = 1024 values are flattened into a single vector for the fully connected layer." } },
+  { key: "fc1", title: "FC1 (1024 → 512) → ReLU", shape: "512",
+    desc: { tr: "Tam bağlı katman. 512 nöron, 32 × 16 ızgara olarak gösteriliyor.",
+      en: "A fully connected layer. Its 512 neurons are shown as a 32 × 16 grid." } },
+  { key: "out", title: "FC2 (512 → 10) → Softmax", shape: "10",
+    desc: { tr: "Her rakam için bir skor; Softmax bu skorları toplamı 1 olan olasılıklara çevirir.",
+      en: "One score per digit; softmax turns the scores into probabilities that sum to 1." } },
 ];
 const layerRows = {};
 const pad = $("#draw");
@@ -778,15 +834,15 @@ function buildLayerRows() {
   const host = $("#layers");
   for (const layer of LAYERS) {
     const shape = h("span", { class: "shape", text: layer.shape || "" });
-    const note = h("p", { text: layer.desc });
-    const body = h("div", { class: "maps" }, h("p", { class: "placeholder", text: "Tahmin yapılınca görünür." }));
+    const note = h("p", { text: L(layer.desc) });
+    const body = h("div", { class: "maps" }, h("p", { class: "placeholder", text: t("layers.placeholder") }));
     if (layer.cell) body.style.setProperty("--cell", `${layer.cell}px`);
-    host.append(h("div", { class: "layer-row" }, h("div", { class: "layer-meta" }, h("h3", { text: layer.title }), shape, note), body));
+    host.append(h("div", { class: "layer-row" }, h("div", { class: "layer-meta" }, h("h3", { text: L(layer.title) }), shape, note), body));
     layerRows[layer.key] = { body, shape };
     if (layer.cell) {
       attachGridTooltip(body, (canvas) => ({
-        title: `${layer.short} · harita ${+canvas.dataset.i + 1}`,
-        rows: [{ value: fmtNum(body._peaks?.[+canvas.dataset.i] ?? 0, 2), label: "en yüksek aktivasyon" }],
+        title: `${layer.short} · ${t("map.n", { n: +canvas.dataset.i + 1 })}`,
+        rows: [{ value: fmtNum(body._peaks?.[+canvas.dataset.i] ?? 0, 2), label: t("map.peak") }],
       }));
     }
   }
@@ -796,9 +852,9 @@ function buildLayerRows() {
     const col = clamp(Math.floor(((event.clientX - box.left) / box.width) * 32), 0, 31);
     const row = clamp(Math.floor(((event.clientY - box.top) / box.height) * 16), 0, 15);
     const index = row * 32 + col;
-    return { title: `FC1 · nöron ${index + 1}`, rows: [{ value: fmtPct((canvas._paint[0][index] / 255) * 100, 0), label: "en güçlü nörona göre" }] };
+    return { title: `FC1 · ${t("neuron.n", { n: index + 1 })}`, rows: [{ value: fmtPct((canvas._paint[0][index] / 255) * 100, 0), label: t("neuron.rel") }] };
   });
-  attachGridTooltip(layerRows.input.body, () => ({ title: "Giriş görüntüsü", rows: [{ value: "28×28", label: "piksel" }] }));
+  attachGridTooltip(layerRows.input.body, () => ({ title: t("input.image"), rows: [{ value: "28×28", label: t("pixels") }] }));
 }
 
 function ensureCanvases(container, count, cls) {
@@ -821,43 +877,45 @@ function renderLayers(result) {
 
   const fc = layerRows.fc1;
   ensureCanvases(fc.body, 1, "wide").forEach((c) => paint(c, result.fc1.values, 32, 16, "seq"));
-  fc.shape.textContent = `512 · ${result.fc1.active} nöron aktif`;
+  fc.shape.textContent = `512 · ${t("neurons.active", { n: result.fc1.active })}`;
 
   const out = layerRows.out.body;
   out.replaceChildren(h("div", { class: "out-cells" }, ...result.probabilities.map((p, digit) => {
     const cell = h("div", { class: `out-cell${digit === result.prediction ? " top" : ""}`, "data-i": digit },
       h("span", { class: "out-swatch", style: `background:${lutColor("seq", p * 255)}` }),
       h("span", { class: "out-digit", text: String(digit) }),
-      h("span", { class: "out-pct", text: p < 0.001 ? "<%0,1" : fmtPct(p * 100, 1) }));
+      h("span", { class: "out-pct", text: fmtProb(p) }));
     return cell;
   })));
 }
 
 function renderPrediction(result, input) {
   infer.result = result;
+  infer.shownInput = input;   // to redraw in another language
   const confidence = result.probabilities[result.prediction];
   $("#pred-digit").textContent = String(result.prediction);
-  $("#pred-conf").textContent = `${fmtPct(confidence * 100, 1)} olasılıkla ${result.prediction}`;
+  $("#pred-conf").textContent = t("pred.conf", { v: fmtPct(confidence * 100, 1), d: result.prediction });
   const source = $("#pred-source");
   if (input.kind === "test") {
     const ok = result.prediction === result.label;
     source.replaceChildren(
-      `Test görüntüsü #${input.index} · gerçek etiket ${result.label} · `,
-      h("span", { class: ok ? "ok" : "bad", text: ok ? "✓ doğru" : "✗ yanlış" }),
+      `${t("pred.test", { i: input.index, l: result.label })} · `,
+      h("span", { class: ok ? "ok" : "bad", text: ok ? t("pred.ok") : t("pred.bad") }),
     );
   } else {
-    source.textContent = "Kaynak: sizin çiziminiz";
+    source.textContent = t("pred.drawing");
   }
   const tag = $("#pred-model");
   tag.hidden = false;
-  tag.textContent = MODEL_LABELS[result.model] || "";
+  tag.textContent = modelLabel(result.model);
   tag.classList.toggle("initial", result.model === "initial");
   paint($("#input-view"), result.input, 28, 28, "gray");
   probabilityChart($("#prob-chart"), result.probabilities, result.prediction);
   renderLayers(result);
 }
 
-function resetPrediction(message = "Bir rakam çizin veya örnek seçin") {
+function resetPrediction(message = t("pred.prompt")) {
+  infer.shownInput = null;
   $("#pred-digit").textContent = "–";
   $("#pred-conf").textContent = message;
   $("#pred-source").textContent = "";
@@ -960,8 +1018,8 @@ async function loadTestSamples(autoPick) {
     grid.replaceChildren(...samples.map((sample) => {
       const canvas = h("canvas", { class: "px" });
       paint(canvas, sample.pixels, 28, 28, "gray");
-      const button = h("button", { type: "button", class: "sample", "aria-label": `Test görüntüsü, etiket ${sample.label}` },
-        canvas, h("span", { class: "caption", text: `Etiket ${sample.label}` }));
+      const button = h("button", { type: "button", class: "sample", "data-label": sample.label, "aria-label": t("sample.aria", { l: sample.label }) },
+        canvas, h("span", { class: "caption", text: t("sample.label", { l: sample.label }) }));
       button.addEventListener("click", () => pickSample(sample, button));
       return button;
     }));
@@ -1014,9 +1072,9 @@ const TABS = {
 
 function selectTab(name) {
   document.body.dataset.tab = name;   // CSS shows the floating model switch only where it applies
-  for (const [key, t] of Object.entries(TABS)) {
-    $(t.tab).setAttribute("aria-selected", String(key === name));
-    $(t.panel).hidden = key !== name;
+  for (const [key, tab] of Object.entries(TABS)) {
+    $(tab.tab).setAttribute("aria-selected", String(key === name));
+    $(tab.panel).hidden = key !== name;
   }
   history.replaceState(null, "", TABS[name].hash);
   hideTip();
@@ -1024,7 +1082,7 @@ function selectTab(name) {
   document.dispatchEvent(new CustomEvent("tab-shown", { detail: name }));
 }
 
-for (const [key, t] of Object.entries(TABS)) $(t.tab).addEventListener("click", () => selectTab(key));
+for (const [key, tab] of Object.entries(TABS)) $(tab.tab).addEventListener("click", () => selectTab(key));
 
 let pollTimer = null;
 let polling = false;
@@ -1073,26 +1131,26 @@ function zoomInfo(canvas) {
   const row = canvas.closest(".layer-row");
   if (row) {
     const count = row.querySelectorAll("canvas").length;
-    return { title: row.querySelector("h3").textContent + (count > 1 ? ` · harita ${i + 1}` : ""), sub: row.querySelector(".shape").textContent };
+    return { title: row.querySelector("h3").textContent + (count > 1 ? ` · ${t("map.n", { n: i + 1 })}` : ""), sub: row.querySelector(".shape").textContent };
   }
-  if (canvas.closest("#filters")) return { title: `Conv1 · filtre ${i + 1}`, sub: "5×5 ağırlık · eğitim boyunca güncellenir" };
+  if (canvas.closest("#filters")) return { title: t("filter.n", { n: i + 1 }), sub: t("zoom.filter.sub") };
   const sample = canvas.closest("#samples figure");
   if (sample?._info) {
     const { label, pred, confidence } = sample._info;
-    return { title: `Doğrulama görüntüsü ${Number(sample.dataset.i) + 1}`, sub: `Tahmin ${pred} (${fmtPct(confidence * 100, 1)}) · gerçek etiket ${label}` };
+    return { title: t("valimg.n", { n: Number(sample.dataset.i) + 1 }), sub: t("zoom.sample.sub", { p: pred, v: fmtPct(confidence * 100, 1), l: label }) };
   }
   const dropRow = canvas.closest(".drop-row");
   if (dropRow) return { title: `Dropout · ${canvas.title}`, sub: `${dropRow.querySelector(".drop-label").textContent} · 12×12` };
-  if (canvas.id === "input-view") return { title: "Modelin gördüğü giriş", sub: "28×28 gri tonlu" };
+  if (canvas.id === "input-view") return { title: t("zoom.input"), sub: t("zoom.input.sub") };
   const caption = canvas.closest("figure")?.querySelector("figcaption");
-  return { title: caption?.textContent || "Büyütülmüş görünüm", sub: "" };
+  return { title: caption?.textContent || t("zoom.title"), sub: "" };
 }
 
-const ZOOM_LEGENDS = {
-  div: ["negatif", "diverging", "pozitif"],
-  seq: ["0", "sequential", "en yüksek"],
-  drop: ["0", "sequential", "en yüksek · gri: sıfırlandı"],
-};
+const zoomLegend = (lut) => ({
+  div: [t("negative"), "diverging", t("positive")],
+  seq: ["0", "sequential", t("highest")],
+  drop: ["0", "sequential", t("zoom.droplegend")],
+})[lut];
 
 function openZoom(canvas) {
   const [values, w, hgt, lut, signedValues] = canvas._paint;
@@ -1109,12 +1167,12 @@ function openZoom(canvas) {
 
   const info = zoomInfo(canvas);
   $("#zoom-title").textContent = info.title;
-  $("#zoom-sub").textContent = [info.sub, `${w}×${hgt} piksel`].filter(Boolean).join(" · ");
-  const legend = ZOOM_LEGENDS[lut];
+  $("#zoom-sub").textContent = [info.sub, `${w}×${hgt} ${t("pixels")}`].filter(Boolean).join(" · ");
+  const legend = zoomLegend(lut);
   $("#zoom-legend").replaceChildren(...(legend
     ? [h("span", { text: legend[0] }), h("span", { class: `scale-bar ${legend[1]}` }), h("span", { text: legend[2] })]
-    : [h("span", { text: "Gri ton: siyah 0, beyaz 1" })]));
-  $("#zoom-readout").textContent = "Piksellerin üzerine gelin";
+    : [h("span", { text: t("zoom.gray") })]));
+  $("#zoom-readout").textContent = t("zoom.hover");
   hideTip();
   zoom.dialog.showModal();
 }
@@ -1126,12 +1184,12 @@ function zoomReadout(event) {
   const r = clamp(Math.floor(((event.clientY - box.top) / box.height) * hgt), 0, hgt - 1);
   const v = values[r * w + c];
   let text;
-  if (lut === "gray") text = `piksel ${fmtNum(v / 255, 2)}`;
-  else if (signedValues) text = `${fmtNum(v, 2)} (ölçekli, −1…1)`;
-  else if (lut === "drop" && v >= 254) text = "Dropout ile sıfırlandı";
-  else if (zoom.peak != null) text = `aktivasyon ${fmtNum((v / 255) * zoom.peak, 3)}`;
-  else text = `${fmtPct((v / (lut === "drop" ? 253 : 255)) * 100, 0)} (göreli)`;
-  $("#zoom-readout").textContent = `Satır ${r + 1}, sütun ${c + 1} · ${text}`;
+  if (lut === "gray") text = t("zoom.pixel", { v: fmtNum(v / 255, 2) });
+  else if (signedValues) text = t("zoom.scaled", { v: fmtNum(v, 2) });
+  else if (lut === "drop" && v >= 254) text = t("zoom.dropped");
+  else if (zoom.peak != null) text = t("zoom.act", { v: fmtNum((v / 255) * zoom.peak, 3) });
+  else text = t("zoom.relative", { v: fmtPct((v / (lut === "drop" ? 253 : 255)) * 100, 0) });
+  $("#zoom-readout").textContent = `${t("zoom.rc", { r: r + 1, c: c + 1 })} · ${text}`;
 }
 
 document.addEventListener("click", (event) => {
@@ -1183,6 +1241,25 @@ document.addEventListener("theme-change", () => {
 });
 markThemeButtons();
 
+// Language switch: static text swaps in i18n.js; everything built here is redrawn
+for (const b of document.querySelectorAll("#lang-switch button")) b.addEventListener("click", () => setLang(b.dataset.lang));
+document.addEventListener("lang-change", () => {
+  if (zoom.dialog.open) zoom.dialog.close();
+  hideTip();
+  Object.assign(seen, { charts: "", history: "", log: -1, samplesKey: undefined, banner: undefined });
+  if (lastStatus) renderStatus(lastStatus);
+  $("#layers").replaceChildren();
+  buildLayerRows();
+  if (infer.result && infer.shownInput) renderPrediction(infer.result, infer.shownInput);
+  else resetPrediction();
+  for (const b of $("#test-samples").querySelectorAll("button.sample")) {
+    b.setAttribute("aria-label", t("sample.aria", { l: b.dataset.label }));
+    b.querySelector(".caption").textContent = t("sample.label", { l: b.dataset.label });
+  }
+  $("#form-msg").textContent = "";
+});
+
+applyStaticTranslations();
 readLuts();
 buildLayerRows();
 clearPad();

@@ -81,10 +81,10 @@ function percentile(sorted, q) {
 function featureMap() {
   if (T.params) {
     const { out, oh, ow } = conv2d(T.image.x, SIZE, SIZE, T.params.conv1.weight[T.filter], 5, T.params.conv1.bias[T.filter]);
-    return { z: batchNormEval(out, T.filter), rows: oh, cols: ow, title: `BatchNorm çıktısı · filtre #${T.filter + 1}` };
+    return { z: batchNormEval(out, T.filter), rows: oh, cols: ow, title: t("th.bnout", { n: T.filter + 1 }) };
   }
   const { out, oh, ow } = conv2d(T.image.x, SIZE, SIZE, KERNELS.sobelX.values, 3);
-  return { z: out, rows: oh, cols: ow, title: "Sobel filtresi çıktısı" };
+  return { z: out, rows: oh, cols: ow, title: t("th.sobelout") };
 }
 
 // =====================================================================
@@ -241,7 +241,7 @@ function histogram(host, values, lo, hi, mean) {
   const X = (v) => m.l + ((v - lo) / (hi - lo)) * iw;
   const bw = iw / bins;
 
-  const root = svg("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Değer dağılımı" });
+  const root = svg("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": t("th.hist.aria") });
   counts.forEach((count, i) => {
     const x = m.l + i * bw;
     const barH = Math.min(count / top, 1) * ih;
@@ -252,7 +252,7 @@ function histogram(host, values, lo, hi, mean) {
     if (count > top) group.append(svgText(x + bw / 2, m.t - 5, `↑ ${fmtInt(count)}`, "cap-label", "middle"));
     group.append(svg("rect", { x, y: m.t, width: bw, height: ih, fill: "transparent" }));
     group.addEventListener("pointermove", (e) => showTip(e.clientX, e.clientY, `[${fmtNum(from, 2)}, ${fmtNum(to, 2)})`, [
-      { value: fmtInt(count), label: "değer", color: "var(--series-1)" },
+      { value: fmtInt(count), label: t("th.values"), color: "var(--series-1)" },
     ]));
     group.addEventListener("pointerleave", hideTip);
     root.append(group);
@@ -272,12 +272,12 @@ function histogram(host, values, lo, hi, mean) {
 // 1 · Convolution
 // =====================================================================
 const KERNELS = {
-  model: { label: "Modelin filtresi (5×5)" },
-  sobelX: { label: "Dikey kenar · Sobel (3×3)", k: 3, values: [-1, 0, 1, -2, 0, 2, -1, 0, 1] },
-  sobelY: { label: "Yatay kenar · Sobel (3×3)", k: 3, values: [-1, -2, -1, 0, 0, 0, 1, 2, 1] },
-  blur: { label: "Bulanıklaştırma (3×3)", k: 3, values: new Array(9).fill(1 / 9) },
-  sharpen: { label: "Keskinleştirme (3×3)", k: 3, values: [0, -1, 0, -1, 5, -1, 0, -1, 0] },
-  custom: { label: "Özel · değerleri düzenleyin (3×3)", k: 3, values: [0, 1, 0, 1, -4, 1, 0, 1, 0] },
+  model: { label: { tr: "Modelin filtresi (5×5)", en: "The model's filter (5×5)" } },
+  sobelX: { label: { tr: "Dikey kenar · Sobel (3×3)", en: "Vertical edge · Sobel (3×3)" }, k: 3, values: [-1, 0, 1, -2, 0, 2, -1, 0, 1] },
+  sobelY: { label: { tr: "Yatay kenar · Sobel (3×3)", en: "Horizontal edge · Sobel (3×3)" }, k: 3, values: [-1, -2, -1, 0, 0, 0, 1, 2, 1] },
+  blur: { label: { tr: "Bulanıklaştırma (3×3)", en: "Blur (3×3)" }, k: 3, values: new Array(9).fill(1 / 9) },
+  sharpen: { label: { tr: "Keskinleştirme (3×3)", en: "Sharpen (3×3)" }, k: 3, values: [0, -1, 0, -1, 5, -1, 0, -1, 0] },
+  custom: { label: { tr: "Özel · değerleri düzenleyin (3×3)", en: "Custom · edit the values (3×3)" }, k: 3, values: [0, 1, 0, 1, -4, 1, 0, 1, 0] },
 };
 const conv = { kernel: "sobelX", picked: false, pad: 0, stride: 1, data: null, reveal: Infinity, anim: 0, pos: null };
 const CONV_CELL = 8;
@@ -290,9 +290,18 @@ function convKernel() {
   return { k: preset.k, values: preset.values, bias: 0 };
 }
 
+function fillKernelOptions() {
+  const select = $("#t-conv-kernel-select");
+  const value = select.value;
+  select.replaceChildren(...Object.entries(KERNELS).map(([key, k]) => h("option", { value: key, text: L(k.label) })));
+  if (value) select.value = value;
+  const modelOption = select.querySelector('option[value="model"]');
+  if (modelOption) modelOption.disabled = !T.params;
+}
+
 function setupConv() {
   const select = $("#t-conv-kernel-select");
-  select.replaceChildren(...Object.entries(KERNELS).map(([key, k]) => h("option", { value: key, text: k.label })));
+  fillKernelOptions();
   select.value = conv.kernel;
   select.addEventListener("change", () => {
     conv.kernel = select.value;
@@ -326,10 +335,10 @@ function updateConv() {
   showPixels($("#t-conv-in"), padded, Wp, Wp, "gray", CONV_CELL);
   if (P) placeBox($("#t-conv-orig"), P, P, SIZE, SIZE, Wp, Wp);
   else $("#t-conv-orig").hidden = true;
-  $("#t-conv-in-cap").textContent = P ? `Giriş 28×28 + ${P} piksel padding` : "Giriş (28×28)";
+  $("#t-conv-in-cap").textContent = P ? t("th.conv.inpad", { p: P }) : t("th.conv.in");
 
   renderKernel(ker);
-  $("#t-conv-out-cap").textContent = `Çıktı (${oh}×${ow})`;
+  $("#t-conv-out-cap").textContent = t("th.conv.out", { s: `${oh}×${ow}` });
   $("#t-conv-size").textContent = ` = ⌊(28 − ${ker.k} + 2·${P}) / ${conv.stride}⌋ + 1 = ${oh}`;
   paintConvOut();
 
@@ -346,7 +355,7 @@ function renderKernel(ker) {
   const host = $("#t-conv-kernel");
   const editable = conv.kernel === "custom";
   const scale = maxAbs(ker.values);
-  const key = `${conv.kernel}|${T.filter}|${T.version}`;
+  const key = `${conv.kernel}|${T.filter}|${T.version}|${I18N.lang}`;
   if (editable && host._key === key) {
     // Recolor only, so the input being typed in keeps its focus
     [...host.children].forEach((input, i) => colorCell(input, ker.values[i], scale, "div", true));
@@ -358,7 +367,7 @@ function renderKernel(ker) {
   host.replaceChildren(...Array.from(ker.values, (v, i) => {
     let cell;
     if (editable) {
-      cell = h("input", { type: "number", step: "0.5", value: String(v), "aria-label": `Ağırlık, satır ${Math.floor(i / 3) + 1}, sütun ${(i % 3) + 1}` });
+      cell = h("input", { type: "number", step: "0.5", value: String(v), "aria-label": t("th.conv.weight", { r: Math.floor(i / 3) + 1, c: (i % 3) + 1 }) });
       cell.addEventListener("input", () => {
         KERNELS.custom.values[i] = Number(cell.value) || 0;
         stopConvAnim();
@@ -371,8 +380,8 @@ function renderKernel(ker) {
     return cell;
   }));
   $("#t-conv-kernel-cap").textContent = ker.k === 5
-    ? `Filtre #${T.filter + 1} (5×5) · bias ${fmtNum(ker.bias, 3)}`
-    : editable ? "Çekirdek (3×3) · değerleri değiştirin" : "Çekirdek (3×3)";
+    ? t("th.conv.kcap5", { n: T.filter + 1, b: fmtNum(ker.bias, 3) })
+    : editable ? t("th.conv.kcapedit") : t("th.conv.kcap3");
 }
 
 function paintConvOut() {
@@ -421,12 +430,12 @@ function setConvPos(index) {
     }
   }
   $("#t-conv-calc").replaceChildren(
-    h("div", { class: "calc-block" }, h("span", { class: "calc-cap", text: "Bölgedeki pikseller" }), matrix(patch, ker.k, "gray", 1, false)),
+    h("div", { class: "calc-block" }, h("span", { class: "calc-cap", text: t("th.conv.patch") }), matrix(patch, ker.k, "gray", 1, false)),
     h("span", { class: "op", text: "⊙" }),
-    h("div", { class: "calc-block" }, h("span", { class: "calc-cap", text: "Çekirdek" }), matrix(ker.values, ker.k, "div", maxAbs(ker.values), true)),
+    h("div", { class: "calc-block" }, h("span", { class: "calc-cap", text: t("th.conv.kernel") }), matrix(ker.values, ker.k, "div", maxAbs(ker.values), true)),
     h("div", { class: "calc-result" },
-      h("span", { class: "calc-cap", text: `Çıktı konumu (${r + 1}, ${c + 1})` }),
-      h("span", { text: `Σ çarpımlar = ${fmtNum(sum, 3)}` }),
+      h("span", { class: "calc-cap", text: t("th.outpos", { r: r + 1, c: c + 1 }) }),
+      h("span", { text: t("th.conv.sum", { v: fmtNum(sum, 3) }) }),
       ker.bias ? h("span", { text: `+ bias ${fmtNum(ker.bias, 3)}` }) : null,
       h("strong", { text: `= ${fmtNum(sum + ker.bias, 3)}` })),
   );
@@ -440,7 +449,7 @@ function playConv() {
   const total = conv.data.oh * conv.data.ow;
   const perFrame = Math.max(1, Math.ceil(total / 300));   // about 5 seconds
   conv.reveal = 0;
-  $("#t-conv-play").textContent = "■ Durdur";
+  $("#t-conv-play").textContent = t("th.stop");
   const frame = () => {
     conv.reveal = Math.min(total, conv.reveal + perFrame);
     paintConvOut();
@@ -456,7 +465,7 @@ function stopConvAnim() {
   conv.anim = 0;
   const wasSliding = conv.reveal !== Infinity;
   conv.reveal = Infinity;
-  $("#t-conv-play").textContent = "▶ Kaydır";
+  $("#t-conv-play").textContent = t("th.slide");
   if (wasSliding && conv.data) paintConvOut();
 }
 
@@ -525,23 +534,21 @@ function updateBN() {
   histogram($("#t-bn-h3"), y, lo, hi, yMean);
 
   const rows = [
-    ["1 · Evrişim çıktısı x", mu, sd],
-    ["2 · Normalleştirilmiş x̂", meanOf(xh), stdOf(xh)],
+    [t("th.bn.row1"), mu, sd],
+    [t("th.bn.row2"), meanOf(xh), stdOf(xh)],
     ["3 · y = γx̂ + β", yMean, stdOf(y, yMean)],
   ];
   $("#t-bn-table tbody").replaceChildren(...rows.map(([name, a, b]) => h("tr", {},
     h("td", { text: name }), h("td", { text: fmtNum(a, 3) }), h("td", { text: fmtNum(b, 3) }))));
 
   const active = y.reduce((n, v) => n + (v > 0), 0) / y.length;
-  $("#t-bn-sub").textContent = `Filtre #${T.filter + 1} · ${T.batch.length} test görüntüsü × 24×24 konum = ${fmtInt(z.length)} değer. `
-    + `Arka plan pikselleri aynı değeri ürettiği için bir çubuk çok uzundur; o çubuk kesilip sayısı yazılmıştır.`;
+  $("#t-bn-sub").textContent = t("th.bn.sub", { n: T.filter + 1, b: T.batch.length, v: fmtInt(z.length) });
   const bn = T.params.bn1;
-  $("#t-bn-running").textContent = `Bu batch: μ = ${fmtNum(mu, 3)}, σ = ${fmtNum(sd, 3)}. `
-    + (modelView.which === "initial"
-      ? "Eğitim öncesi modelde hareketli ortalamalar henüz başlangıç değerinde (çıkarımda bunlar kullanılır): "
-      : "Modelin eğitimde biriktirdiği hareketli ortalamalar (çıkarımda bunlar kullanılır): ")
-    + `μ = ${fmtNum(bn.mean[T.filter], 3)}, σ = ${fmtNum(Math.sqrt(bn.var[T.filter]), 3)}. `
-    + `y > 0 olan, yani ReLU'dan geçecek değerlerin oranı: ${fmtPct(active * 100, 1)}.`;
+  $("#t-bn-running").textContent = t(modelView.which === "initial" ? "th.bn.running0" : "th.bn.running", {
+    mu: fmtNum(mu, 3), sd: fmtNum(sd, 3),
+    rmu: fmtNum(bn.mean[T.filter], 3), rsd: fmtNum(Math.sqrt(bn.var[T.filter]), 3),
+    a: fmtPct(active * 100, 1),
+  });
 }
 
 // =====================================================================
@@ -551,22 +558,29 @@ const ACTIVATIONS = {
   relu: {
     label: "ReLU", f: (x) => Math.max(0, x), y: [-1, 4],
     formula: "ReLU(<i>x</i>) = max(0, <i>x</i>)",
-    desc: "Negatif değerleri 0 yapar, pozitifleri olduğu gibi geçirir. Haritada mavi (negatif) bölgelerin tamamen kaybolduğuna dikkat edin.",
+    desc: { tr: "Negatif değerleri 0 yapar, pozitifleri olduğu gibi geçirir. Haritada mavi (negatif) bölgelerin tamamen kaybolduğuna dikkat edin.",
+      en: "Sets negative values to 0 and passes positive values unchanged. Notice how the blue (negative) regions disappear completely from the map." },
   },
   leaky: {
     label: "Leaky ReLU", f: (x) => (x > 0 ? x : 0.01 * x), y: [-1, 4],
-    formula: "LReLU(<i>x</i>) = <i>x</i> (<i>x</i> &gt; 0 ise), 0,01·<i>x</i> (aksi halde)",
-    desc: "ReLU gibidir ama negatif tarafta küçük bir eğim (0,01) bırakır; böylece negatif girişlerde de gradyan tamamen sıfırlanmaz.",
+    formula: {
+      tr: "LReLU(<i>x</i>) = <i>x</i> (<i>x</i> &gt; 0 ise), 0,01·<i>x</i> (aksi halde)",
+      en: "LReLU(<i>x</i>) = <i>x</i> (if <i>x</i> &gt; 0), 0.01·<i>x</i> (otherwise)",
+    },
+    desc: { tr: "ReLU gibidir ama negatif tarafta küçük bir eğim (0,01) bırakır; böylece negatif girişlerde de gradyan tamamen sıfırlanmaz.",
+      en: "Like ReLU, but keeps a small slope (0.01) on the negative side, so the gradient does not vanish entirely for negative inputs." },
   },
   sigmoid: {
     label: "Sigmoid", f: (x) => 1 / (1 + Math.exp(-x)), y: [-0.25, 1.25],
     formula: "σ(<i>x</i>) = 1 / (1 + e<sup>−<i>x</i></sup>)",
-    desc: "Her değeri 0 ile 1 arasına sıkıştırır. |x| büyüdükçe eğimi sıfıra yaklaşır; derin ağlarda gradyanın sönümlenmesine yol açabilir.",
+    desc: { tr: "Her değeri 0 ile 1 arasına sıkıştırır. |x| büyüdükçe eğimi sıfıra yaklaşır; derin ağlarda gradyanın sönümlenmesine yol açabilir.",
+      en: "Squeezes every value into the range 0 to 1. Its slope approaches zero as |x| grows, which can make gradients vanish in deep networks." },
   },
   tanh: {
     label: "Tanh", f: Math.tanh, y: [-1.25, 1.25],
     formula: "tanh(<i>x</i>) = (e<sup><i>x</i></sup> − e<sup>−<i>x</i></sup>) / (e<sup><i>x</i></sup> + e<sup>−<i>x</i></sup>)",
-    desc: "Değerleri −1 ile 1 arasına sıkıştırır ve 0 etrafında simetriktir. Sigmoid gibi uç değerlerde doyuma ulaşır.",
+    desc: { tr: "Değerleri −1 ile 1 arasına sıkıştırır ve 0 etrafında simetriktir. Sigmoid gibi uç değerlerde doyuma ulaşır.",
+      en: "Squeezes values into the range −1 to 1 and is symmetric around 0. Like the sigmoid, it saturates at extreme values." },
   },
 };
 const act = { kind: "relu", data: null };
@@ -582,9 +596,9 @@ function setupActivation() {
       if (!act.data) return;
       const [r, c] = cellFromEvent(e, canvas, act.data.cols, act.data.rows);
       const i = r * act.data.cols + c;
-      showTip(e.clientX, e.clientY, `Konum (${r + 1}, ${c + 1})`, [
-        { value: fmtNum(act.data.z[i], 3), label: "aktivasyon öncesi" },
-        { value: fmtNum(act.data.a[i], 3), label: `${ACTIVATIONS[act.kind].label} sonrası` },
+      showTip(e.clientX, e.clientY, t("th.pos", { r: r + 1, c: c + 1 }), [
+        { value: fmtNum(act.data.z[i], 3), label: t("th.act.before") },
+        { value: fmtNum(act.data.a[i], 3), label: t("th.act.after", { f: ACTIVATIONS[act.kind].label }) },
       ]);
     });
     canvas.addEventListener("pointerleave", hideTip);
@@ -593,10 +607,10 @@ function setupActivation() {
 
 function updateActivation() {
   const fn = ACTIVATIONS[act.kind];
-  $("#t-act-formula").innerHTML = fn.formula;   // static, author-written markup
-  $("#t-act-desc").textContent = fn.desc;
+  $("#t-act-formula").innerHTML = L(fn.formula);   // static, author-written markup
+  $("#t-act-desc").textContent = L(fn.desc);
   curvePlot($("#t-act-plot"), {
-    label: `${fn.label} fonksiyonunun grafiği`,
+    label: t("th.act.plot", { f: fn.label }),
     x: [-4, 4], y: fn.y, fn: fn.f,
     xTicks: [-4, -2, 0, 2, 4].map((v) => ({ v, label: fmtTick(v) })),
     yTicks: linearTicks(fn.y[0], fn.y[1], niceStep(fn.y[1] - fn.y[0], 4), fmtTick),
@@ -611,16 +625,16 @@ function updateActivation() {
   showPixels($("#t-act-before"), toSigned(z, scale), cols, rows, "div", 6, true);
   showPixels($("#t-act-after"), toSigned(a, scale), cols, rows, "div", 6, true);
   $("#t-act-before-cap").textContent = title;
-  $("#t-act-after-cap").textContent = `${fn.label} sonrası`;
+  $("#t-act-after-cap").textContent = t("th.act.aftercap", { f: fn.label });
 
   const negatives = z.reduce((n, v) => n + (v < 0), 0) / z.length;
   let lo = Infinity;
   let hi = -Infinity;
   for (const v of a) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
   $("#t-act-stats").replaceChildren(...[
-    h("span", {}, "Negatif değerlerin oranı: ", h("strong", { text: fmtPct(negatives * 100, 0) })),
-    act.kind === "relu" ? h("span", { text: "ReLU bunların hepsini 0 yapar." }) : null,
-    h("span", {}, "Çıktı aralığı: ", h("strong", { text: `[${fmtNum(lo, 2)}; ${fmtNum(hi, 2)}]` })),
+    h("span", {}, t("th.act.neg"), " ", h("strong", { text: fmtPct(negatives * 100, 0) })),
+    act.kind === "relu" ? h("span", { text: t("th.act.relu0") }) : null,
+    h("span", {}, t("th.act.range"), " ", h("strong", { text: `[${fmtNum(lo, 2)}; ${fmtNum(hi, 2)}]` })),
   ].filter(Boolean));
 }
 
@@ -652,8 +666,8 @@ function updatePool() {
   pool.data = { x, rows, cols, out, oh, ow };
   showPixels($("#t-pool-in"), toUnsigned(x, scale), cols, rows, "seq", POOL_CELL);
   showPixels($("#t-pool-out"), toUnsigned(out, scale), ow, oh, "seq", POOL_CELL);
-  $("#t-pool-in-cap").textContent = `ReLU sonrası harita (${rows}×${cols})`;
-  $("#t-pool-out-cap").textContent = `${pool.mode === "max" ? "Max" : "Average"} pooling çıktısı (${oh}×${ow})`;
+  $("#t-pool-in-cap").textContent = t("th.pool.incap", { s: `${rows}×${cols}` });
+  $("#t-pool-out-cap").textContent = t("th.pool.outcap", { m: pool.mode === "max" ? "Max" : "Average", s: `${oh}×${ow}` });
   if (pool.pos == null || pool.pos >= out.length) {
     let best = 0;
     for (let i = 1; i < out.length; i++) if (out[i] > out[best]) best = i;
@@ -673,11 +687,11 @@ function setPoolPos(index) {
   const result = d.out[index];
   const scale = maxOf(d.x);
   $("#t-pool-calc").replaceChildren(
-    h("div", { class: "calc-block" }, h("span", { class: "calc-cap", text: "2×2 bölge" }), matrix(values, 2, "seq", scale, false)),
+    h("div", { class: "calc-block" }, h("span", { class: "calc-cap", text: t("th.pool.region") }), matrix(values, 2, "seq", scale, false)),
     h("span", { class: "op", text: "→" }),
     h("div", { class: "calc-result" },
-      h("span", { class: "calc-cap", text: `Çıktı konumu (${r + 1}, ${c + 1})` }),
-      h("span", { text: `${pool.mode === "max" ? "max" : "ortalama"}(${values.map((v) => fmtNum(v, 2)).join("; ")})` }),
+      h("span", { class: "calc-cap", text: t("th.outpos", { r: r + 1, c: c + 1 }) }),
+      h("span", { text: `${pool.mode === "max" ? "max" : t("th.pool.mean")}(${values.map((v) => fmtNum(v, 2)).join("; ")})` }),
       h("strong", { text: `= ${fmtNum(result, 2)}` })),
   );
 }
@@ -690,7 +704,7 @@ const drop = { p: 0.45, mode: "train", maps: null, noise: null, shown: null };
 function setupDropout() {
   const slider = $("#t-drop-p");
   slider.addEventListener("input", () => { drop.p = Number(slider.value); updateDropout(); });
-  segmented($("#t-drop-seg"), [["train", "Eğitim"], ["eval", "Çıkarım"]], drop.mode, (mode) => {
+  segmented($("#t-drop-seg"), [["train", t("th.drop.train")], ["eval", t("th.drop.eval")]], drop.mode, (mode) => {
     drop.mode = mode;
     updateDropout();
   });
@@ -728,7 +742,7 @@ function updateDropout(newInput = false) {
     drop.shown.forEach((c, k) => {
       const values = Array.from(source[c], (v, i) => (marked && isDropped(c, i) ? 255 : level(v)));
       paint(canvases[k], values, 12, 12, "drop");
-      canvases[k].title = `Harita ${c + 1}`;
+      canvases[k].title = t("th.map", { n: c + 1 });
     });
   };
   render($("#t-drop-before"), drop.maps, false);
@@ -748,10 +762,10 @@ function updateDropout(newInput = false) {
   }));
   $("#t-drop-p-v").textContent = fmtNum(p, 2);
   $("#t-drop-stats").replaceChildren(...[
-    h("span", {}, "Sıfırlanan: ", h("strong", { text: `${fmtPct((dropped / total) * 100, 1)} (${fmtInt(dropped)}/${fmtInt(total)})` })),
-    h("span", {}, "Ortalama aktivasyon · önce: ", h("strong", { text: fmtNum(sumBefore / total, 3) })),
-    train ? h("span", {}, "maske sonrası, ölçeklemeden: ", h("strong", { text: fmtNum(sumMasked / total, 3) })) : null,
-    h("span", {}, train ? `× 1/(1 − p) = ${fmtNum(keepScale, 2)} ile: ` : "Çıkarımda (değişmez): ", h("strong", { text: fmtNum(sumAfter / total, 3) })),
+    h("span", {}, t("th.drop.zeroed"), " ", h("strong", { text: `${fmtPct((dropped / total) * 100, 1)} (${fmtInt(dropped)}/${fmtInt(total)})` })),
+    h("span", {}, t("th.drop.meanbefore"), " ", h("strong", { text: fmtNum(sumBefore / total, 3) })),
+    train ? h("span", {}, t("th.drop.masked"), " ", h("strong", { text: fmtNum(sumMasked / total, 3) })) : null,
+    h("span", {}, train ? t("th.drop.scaled", { s: fmtNum(keepScale, 2) }) : t("th.drop.inference"), " ", h("strong", { text: fmtNum(sumAfter / total, 3) })),
   ].filter(Boolean));
 }
 
@@ -762,7 +776,7 @@ const sm = { logits: new Array(10).fill(0), base: null, label: 0 };
 
 function setupSoftmax() {
   $("#t-sm-logits").replaceChildren(...Array.from({ length: 10 }, (_, digit) => {
-    const input = h("input", { type: "range", min: "-30", max: "30", step: "0.1", value: "0", "aria-label": `Rakam ${digit} skoru` });
+    const input = h("input", { type: "range", min: "-30", max: "30", step: "0.1", value: "0", "aria-label": t("th.sm.slider", { d: digit }) });
     input.addEventListener("input", () => { sm.logits[digit] = Number(input.value); updateSoftmax(); });
     return h("label", { class: "logit-row" }, h("span", { class: "logit-d", text: String(digit) }), input, h("output", { class: "logit-v" }));
   }));
@@ -789,8 +803,8 @@ function resetSoftmax() {
   setPressed($("#t-ce-label"), sm.label);
   $("#t-sm-reset").disabled = !sm.base;
   $("#t-sm-sub").textContent = sm.base
-    ? "Skorlar, modelin seçili görüntü için ürettiği gerçek logit değerleriyle başlar. Kaydırıcılarla değiştirip olasılıkların ve kaybın nasıl tepki verdiğini izleyin."
-    : "Eğitilmiş model olmadığı için örnek skorlarla başlıyor. Kaydırıcılarla değiştirip olasılıkların ve kaybın nasıl tepki verdiğini izleyin.";
+    ? t("th.sm.subreal")
+    : t("th.sm.subdemo");
   syncLogitSliders();
   updateSoftmax();
 }
@@ -813,11 +827,11 @@ function updateSoftmax() {
   $("#t-ce-value").textContent = fmtNum(loss, 3);
   $("#t-ce-live").textContent = ` = −log(${fmtNum(p, 4)}) = ${fmtNum(loss, 3)}`;
   curvePlot($("#t-ce-plot"), {
-    label: "Cross-Entropy kaybının doğru sınıf olasılığına göre değişimi",
+    label: t("th.ce.plot"),
     x: [0.001, 1], y: [0, 7], fn: (q) => -Math.log(q), marker: clamp(p, 0.001, 1),
     xTicks: [0, 0.25, 0.5, 0.75, 1].map((v) => ({ v: Math.max(v, 0.001), label: fmtPct(v * 100, 0) })),
     yTicks: [0, 2, 4, 6].map((v) => ({ v, label: String(v) })),
-    tooltip: (q) => ({ title: `Doğru sınıfın olasılığı ${fmtPct(q * 100, 1)}`, rows: [{ value: fmtNum(-Math.log(q), 3), label: "kayıp", color: "var(--series-1)" }] }),
+    tooltip: (q) => ({ title: t("th.ce.tip", { v: fmtPct(q * 100, 1) }), rows: [{ value: fmtNum(-Math.log(q), 3), label: t("th.loss"), color: "var(--series-1)" }] }),
   });
 }
 
@@ -941,9 +955,9 @@ function drawOpt() {
 
   $("#t-opt-legend").replaceChildren(...opt.data.map((o) => h("span", { class: "legend-item" },
     h("span", { class: "key-line", style: `background:${o.color}` }),
-    `${o.label} · ${n} adım sonra kayıp `,
+    `${o.label} · ${t("th.opt.after", { n })} `,
     h("strong", { text: fmtLoss(o.losses[n]) }),
-    o.diverged ? " · ıraksadı" : "")));
+    o.diverged ? ` · ${t("th.opt.diverged")}` : "")));
 
   // Loss per step on a log axis (x = step + 1 so the shared chart helper can index it)
   const series = opt.data.map((o) => ({ name: o.label, color: o.color, points: o.losses.slice(0, n + 1).map((v, i) => [i + 1, Math.max(v, 1e-6)]) }));
@@ -960,19 +974,19 @@ function drawOpt() {
   const xTicks = [];
   for (let s = 0; s <= opt.steps; s += 20) xTicks.push({ v: s + 1, label: String(s) });
   lineChart($("#t-opt-loss"), {
-    label: "Adım başına kayıp",
+    label: t("th.opt.label"),
     empty: "",
     x: { min: 1, max: opt.steps + 1, ticks: xTicks },
     y: { log: true, min: yMin, max: yMax, ticks: yTicks },
     series,
-    tooltip: (i) => ({ title: `Adım ${i}`, rows: opt.data.map((o) => ({ value: fmtLoss(o.losses[i]), label: o.label, color: o.color })) }),
+    tooltip: (i) => ({ title: t("th.opt.step", { i }), rows: opt.data.map((o) => ({ value: fmtLoss(o.losses[i]), label: o.label, color: o.color })) }),
   });
 }
 
 function playOpt() {
   stopOptAnim();
   opt.shown = 0;
-  $("#t-opt-play").textContent = "■ Durdur";
+  $("#t-opt-play").textContent = t("th.stop");
   let last = 0;
   const frame = (time) => {
     if (time - last > 45) {
@@ -989,7 +1003,7 @@ function playOpt() {
 function stopOptAnim() {
   if (opt.anim) cancelAnimationFrame(opt.anim);
   opt.anim = 0;
-  $("#t-opt-play").textContent = "▶ Oynat";
+  $("#t-opt-play").textContent = t("th.play");
 }
 
 // =====================================================================
@@ -1001,22 +1015,22 @@ const SCHEMATIC = {
   cy: 112,    // vertical center of the forward path
   cell: 4,    // drawn pixels per feature-map pixel
   stages: [
-    { key: "input", name: "Giriş", shape: "1×28×28", size: 28, depth: 1, offset: 0, goto: "t-conv" },
+    { key: "input", name: { tr: "Giriş", en: "Input" }, shape: "1×28×28", size: 28, depth: 1, offset: 0, goto: "t-conv" },
     { key: "conv1", name: "Conv1", shape: "32×24×24", size: 24, depth: 6, offset: 6, goto: "t-conv" },
     { key: "pool1", name: "MaxPool1", shape: "32×12×12", size: 12, depth: 6, offset: 5, goto: "t-pool" },
     { key: "conv2", name: "Conv2", shape: "64×8×8", size: 8, depth: 9, offset: 4, goto: "t-conv" },
     { key: "pool2", name: "MaxPool2", shape: "64×4×4", size: 4, depth: 9, offset: 3, goto: "t-pool" },
-    { key: "flat", name: "Vektör", shape: "1024", column: [10, 140], goto: "t-softmax" },
+    { key: "flat", name: { tr: "Vektör", en: "Vector" }, shape: "1024", column: [10, 140], goto: "t-softmax" },
     { key: "fc1", name: "FC1", shape: "512", column: [10, 80], goto: "t-softmax" },
-    { key: "out", name: "Çıkış", shape: "10 sınıf", goto: "t-softmax" },
+    { key: "out", name: { tr: "Çıkış", en: "Output" }, shape: { tr: "10 sınıf", en: "10 classes" }, goto: "t-softmax" },
   ],
   // The operations on each arrow, top to bottom, with the section that explains them
   ops: [
     { width: 92, items: [["Conv 5×5", "t-conv"], ["BatchNorm", "t-bn"], ["ReLU", "t-act"]] },
-    { width: 92, items: [["MaxPool 2×2", "t-pool"], ["Dropout", "t-drop", "p = 0,45 · yalnızca eğitimde"]] },
+    { width: 92, items: [["MaxPool 2×2", "t-pool"], ["Dropout", "t-drop", { tr: "p = 0,45 · yalnızca eğitimde", en: "p = 0.45 · training only" }]] },
     { width: 92, items: [["Conv 5×5", "t-conv"], ["BatchNorm", "t-bn"], ["ReLU", "t-act"]] },
-    { width: 92, items: [["MaxPool 2×2", "t-pool"], ["Dropout", "t-drop", "p = 0,35 · yalnızca eğitimde"]] },
-    { width: 66, items: [["Düzleştir", "t-softmax"]] },
+    { width: 92, items: [["MaxPool 2×2", "t-pool"], ["Dropout", "t-drop", { tr: "p = 0,35 · yalnızca eğitimde", en: "p = 0.35 · training only" }]] },
+    { width: 66, items: [[{ tr: "Düzleştir", en: "Flatten" }, "t-softmax"]] },
     { width: 66, items: [["FC", "t-softmax"], ["ReLU", "t-act"]] },
     { width: 72, items: [["FC", "t-softmax"], ["Softmax", "t-softmax"]] },
   ],
@@ -1043,11 +1057,11 @@ function makeLink(node, target, label) {
 
 /** The real output of every stage for the selected image (what the front faces show). */
 function schematicFaces() {
-  const faces = { input: { values: T.image.pixels, w: 28, h: 28, lut: "gray", tip: "Seçili görüntü" } };
+  const faces = { input: { values: T.image.pixels, w: 28, h: 28, lut: "gray", tip: t("th.sch.selected") } };
   const { z, rows, cols } = featureMap();
   const a = relu(z);
   const scale = maxOf(a);
-  const filterName = T.params ? `filtre #${T.filter + 1}` : "Sobel filtresi";
+  const filterName = T.params ? t("th.sch.filter", { n: T.filter + 1 }) : t("th.sch.sobel");
   faces.conv1 = { values: toUnsigned(a, scale), w: cols, h: rows, lut: "seq", tip: `Conv1 · ${filterName}` };
   const pooled = pool2(a, rows, cols, "max");
   faces.pool1 = { values: toUnsigned(pooled.out, scale), w: pooled.ow, h: pooled.oh, lut: "seq", tip: `MaxPool1 · ${filterName}` };
@@ -1057,12 +1071,12 @@ function schematicFaces() {
     const conv2 = result.layers.find((l) => l.key === "conv2");
     const p2 = result.layers.find((l) => l.key === "pool2");
     const k = conv2.peaks.indexOf(Math.max(...conv2.peaks));   // the map that responds most
-    faces.conv2 = { values: conv2.maps[k], w: 8, h: 8, lut: "seq", tip: `Conv2 · en güçlü harita #${k + 1}` };
-    faces.pool2 = { values: p2.maps[k], w: 4, h: 4, lut: "seq", tip: `MaxPool2 · harita #${k + 1}` };
+    faces.conv2 = { values: conv2.maps[k], w: 8, h: 8, lut: "seq", tip: `Conv2 · ${t("th.sch.strongest", { n: k + 1 })}` };
+    faces.pool2 = { values: p2.maps[k], w: 4, h: 4, lut: "seq", tip: `MaxPool2 · ${t("th.sch.map", { n: k + 1 })}` };
     // The 1024-vector: undo the per-map display scaling with each map's peak, then one shared scale
     const flat = p2.maps.flatMap((m, c) => m.map((v) => (v / 255) * p2.peaks[c]));
-    faces.flat = { values: toUnsigned(flat, maxOf(flat)), w: 8, h: 128, lut: "seq", tip: "64 harita × 16 değer = 1024" };
-    faces.fc1 = { values: result.fc1.values, w: 8, h: 64, lut: "seq", tip: `FC1 · ${result.fc1.active} / 512 nöron aktif` };
+    faces.flat = { values: toUnsigned(flat, maxOf(flat)), w: 8, h: 128, lut: "seq", tip: t("th.sch.flat") };
+    faces.fc1 = { values: result.fc1.values, w: 8, h: 64, lut: "seq", tip: `FC1 · ${t("th.sch.fc1", { n: result.fc1.active })}` };
     faces.probabilities = result.probabilities;
     faces.prediction = result.prediction;
   }
@@ -1085,7 +1099,7 @@ function renderSchematic() {
 
   stages.forEach((stage, i) => {
     const group = svg("g", { class: "sch-stage" });
-    makeLink(group, stage.goto, `${stage.name} ${stage.shape}`);
+    makeLink(group, stage.goto, `${L(stage.name)} ${L(stage.shape)}`);
     const face = faces[stage.key];
     let width;
     let faceBox;
@@ -1120,7 +1134,7 @@ function renderSchematic() {
       if (face) {
         const image = svg("image", { x: faceBox.x, y: faceBox.y, width: faceBox.w, height: faceBox.h, preserveAspectRatio: "none", class: "sch-face" });
         image.setAttribute("href", pixelsURL(face));
-        image.addEventListener("pointermove", (e) => showTip(e.clientX, e.clientY, face.tip, [{ value: `${face.w}×${face.h}`, label: "gerçek çıktı" }]));
+        image.addEventListener("pointermove", (e) => showTip(e.clientX, e.clientY, face.tip, [{ value: `${face.w}×${face.h}`, label: t("th.sch.real") }]));
         image.addEventListener("pointerleave", hideTip);
         group.append(image);
       } else {
@@ -1132,8 +1146,8 @@ function renderSchematic() {
     // Name and shape on a shared baseline under every stage
     const mid = x + width / 2;
     centers[stage.key] = mid;
-    const name = stage.key === "out" && faces.probabilities ? `Tahmin: ${faces.prediction}` : stage.name;
-    group.append(svgText(mid, cy + 82, name, "sch-name", "middle"), svgText(mid, cy + 97, stage.shape, "sch-shape", "middle"));
+    const name = stage.key === "out" && faces.probabilities ? t("th.sch.pred", { d: faces.prediction }) : L(stage.name);
+    group.append(svgText(mid, cy + 82, name, "sch-name", "middle"), svgText(mid, cy + 97, L(stage.shape), "sch-shape", "middle"));
     parts.push(group);
 
     // Arrow to the next stage, with its operations stacked above it
@@ -1142,9 +1156,11 @@ function renderSchematic() {
       const from = x + width + 6;
       const to = x + width + op.width - 6;
       parts.push(svg("line", { x1: from, x2: to, y1: cy, y2: cy, class: "sch-arrow", "marker-end": "url(#sch-arrow)" }));
-      op.items.forEach(([label, target, note], j) => {
+      op.items.forEach(([labelText, target, noteText], j) => {
+        const label = L(labelText);
+        const note = L(noteText);
         const text = svgText((from + to) / 2, cy - 9 - (op.items.length - 1 - j) * 14, label, "sch-op", "middle");
-        makeLink(text, target, `${label}: ilgili bölüme git`);
+        makeLink(text, target, t("th.sch.goto", { l: label }));
         if (note) {
           text.addEventListener("pointermove", (e) => showTip(e.clientX, e.clientY, label, [{ value: note, label: "" }]));
           text.addEventListener("pointerleave", hideTip);
@@ -1158,8 +1174,8 @@ function renderSchematic() {
   // Training only: the loss flows back through the network and Adam updates every weight
   const backY = cy + 122;
   parts.push(svg("line", { x1: centers.out, x2: centers.input, y1: backY, y2: backY, class: "sch-arrow sch-back", "marker-end": "url(#sch-arrow)" }));
-  const back = svgText((centers.out + centers.input) / 2, backY + 16, "Eğitimde: Cross-Entropy kaybı → geri yayılım → Adam tüm ağırlıkları günceller", "sch-back-label", "middle");
-  makeLink(back, "t-opt", "Geri yayılım ve optimizasyon bölümüne git");
+  const back = svgText((centers.out + centers.input) / 2, backY + 16, t("th.sch.back"), "sch-back-label", "middle");
+  makeLink(back, "t-opt", t("th.sch.backlink"));
   parts.push(back);
 
   root.replaceChildren(...parts);
@@ -1179,9 +1195,7 @@ async function loadParams() {
   } catch {
     T.params = null;
   }
-  $("#t-filters-title").textContent = modelView.which === "initial"
-    ? "Eğitim öncesi 32 Conv1 filtresi: henüz rastgele ağırlıklar."
-    : "Modelin öğrendiği 32 Conv1 filtresi.";
+  $("#t-filters-title").textContent = t(modelView.which === "initial" ? "th.filters.initial" : "th.filters.trained");
   const modelOption = $("#t-conv-kernel-select").querySelector('option[value="model"]');
   modelOption.disabled = !T.params;
   if (T.params && !conv.picked) conv.kernel = "model";
@@ -1205,7 +1219,7 @@ async function loadBatch(selectFirst = true) {
 }
 
 async function selectTestImage(sample) {
-  T.image = { x: sample.x, pixels: sample.pixels, label: sample.label, testIndex: sample.index, logits: null, prediction: null, title: `Test görüntüsü #${sample.index} · etiket ${sample.label}` };
+  T.image = { x: sample.x, pixels: sample.pixels, label: sample.label, testIndex: sample.index, logits: null, prediction: null };
   await fetchLogits();
   refreshAll();
 }
@@ -1226,10 +1240,17 @@ async function fetchLogits() {
   }
 }
 
+/** Describes the image the demos run on, in the current language. */
+function imageTitle() {
+  const img = T.image;
+  if (img.testIndex != null) return t("th.img.test", { i: img.testIndex, l: img.label });
+  return img.label != null ? t("th.img.infertest", { l: img.label }) : t("th.img.drawing");
+}
+
 function renderToolbar() {
   if (T.image) {
     paint($("#t-thumb"), T.image.pixels, 28, 28, "gray");
-    $("#t-image-label").textContent = T.image.title;
+    $("#t-image-label").textContent = imageTitle();
   }
   $("#t-use-infer").disabled = !infer.result;
   if (T.params) {
@@ -1248,7 +1269,7 @@ function renderFilterStrip() {
   T.params.conv1.weight.forEach((w, i) => {
     paint(canvases[i], toSigned(w, maxAbs(w)), 5, 5, "div", true);
     canvases[i].classList.toggle("selected", i === T.filter);
-    canvases[i].title = `Filtre #${i + 1}`;
+    canvases[i].title = t("th.filter.n", { n: i + 1 });
   });
 }
 
@@ -1305,7 +1326,7 @@ function setupToolbar() {
     if (!r) return;
     T.image = {
       x: toFloat(r.input), pixels: r.input, label: r.label, prediction: null, testIndex: null, logits: null, result: null,
-      title: r.label != null ? `Çıkarımdaki test görüntüsü · etiket ${r.label}` : "Sizin çiziminiz",
+      fromInference: true,
     };
     await fetchLogits();   // recomputed with the model selected here
     refreshAll();
@@ -1365,6 +1386,26 @@ document.addEventListener("model-status", (event) => {
 // The model switch (shared with the Inference tab): recompute every demo with the other weights
 document.addEventListener("model-view-change", () => {
   if (T.started) reloadModel();
+});
+
+// Language change: rebuild the controls created here, then redraw every demo
+document.addEventListener("lang-change", () => {
+  if (!T.started) return;
+  fillKernelOptions();
+  const dropButtons = $("#t-drop-seg").children;
+  if (dropButtons.length === 2) {
+    dropButtons[0].textContent = t("th.drop.train");
+    dropButtons[1].textContent = t("th.drop.eval");
+  }
+  for (const [i, row] of [...$("#t-sm-logits").children].entries()) {
+    row.querySelector("input").setAttribute("aria-label", t("th.sm.slider", { d: i }));
+  }
+  $("#t-conv-play").textContent = conv.anim ? t("th.stop") : t("th.slide");
+  $("#t-opt-play").textContent = opt.anim ? t("th.stop") : t("th.play");
+  $("#t-filters-title").textContent = t(modelView.which === "initial" ? "th.filters.initial" : "th.filters.trained");
+  renderFilterStrip();
+  refreshAll();
+  drawOpt();
 });
 
 document.addEventListener("theme-change", () => {

@@ -19,88 +19,92 @@
     <div class="brand">
       <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7"/><g><rect x="7" y="7" width="5" height="5" rx="1"/><rect x="14" y="7" width="5" height="5" rx="1" opacity=".6"/><rect x="21" y="7" width="4" height="5" rx="1" opacity=".3"/><rect x="7" y="14" width="5" height="5" rx="1" opacity=".6"/><rect x="14" y="14" width="5" height="5" rx="1"/><rect x="7" y="21" width="5" height="4" rx="1" opacity=".3"/><rect x="21" y="21" width="4" height="4" rx="1"/></g></svg>
       <div>
-        <h1>SimpleCNN Paneli</h1>
-        <p class="brand-sub">MNIST el yazısı rakamlar · eğitim ve çıkarım</p>
+        <h1 data-i18n="top.title">SimpleCNN Paneli</h1>
+        <p class="brand-sub" data-i18n="top.sub">MNIST el yazısı rakamlar · eğitim ve çıkarım</p>
       </div>
     </div>
-    <nav class="tabs" role="tablist" aria-label="Bölümler">
-      <button type="button" role="tab" id="tab-train" aria-controls="panel-train" aria-selected="true">Eğitim</button>
-      <button type="button" role="tab" id="tab-infer" aria-controls="panel-infer" aria-selected="false">Çıkarım</button>
-      <button type="button" role="tab" id="tab-theory" aria-controls="panel-theory" aria-selected="false">Teori</button>
-      <button type="button" role="tab" id="tab-code" aria-controls="panel-code" aria-selected="false">Kodlama</button>
+    <nav class="tabs" role="tablist" aria-label="Bölümler" data-i18n-attr="aria-label=a.sections">
+      <button type="button" role="tab" id="tab-train" aria-controls="panel-train" aria-selected="true" data-i18n="tab.train">Eğitim</button>
+      <button type="button" role="tab" id="tab-infer" aria-controls="panel-infer" aria-selected="false" data-i18n="tab.infer">Çıkarım</button>
+      <button type="button" role="tab" id="tab-theory" aria-controls="panel-theory" aria-selected="false" data-i18n="tab.theory">Teori</button>
+      <button type="button" role="tab" id="tab-code" aria-controls="panel-code" aria-selected="false" data-i18n="tab.code">Kodlama</button>
     </nav>
     <div class="badges">
-      <div class="theme-switch" id="theme-switch" role="group" aria-label="Tema">
-        <button type="button" data-theme-choice="light" aria-pressed="false">Açık</button>
-        <button type="button" data-theme-choice="dark" aria-pressed="false">Koyu</button>
-        <button type="button" data-theme-choice="system" aria-pressed="false">Sistem</button>
+      <div class="theme-switch" id="lang-switch" role="group" aria-label="Dil / Language">
+        <button type="button" data-lang="tr" aria-pressed="true">TR</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
       </div>
-      <span class="badge" id="device-badge" title="Eğitimin çalıştığı cihaz">—</span>
+      <div class="theme-switch" id="theme-switch" role="group" aria-label="Tema" data-i18n-attr="aria-label=a.theme">
+        <button type="button" data-theme-choice="light" aria-pressed="false" data-i18n="theme.light">Açık</button>
+        <button type="button" data-theme-choice="dark" aria-pressed="false" data-i18n="theme.dark">Koyu</button>
+        <button type="button" data-theme-choice="system" aria-pressed="false" data-i18n="theme.system">Sistem</button>
+      </div>
+      <span class="badge" id="device-badge" title="Eğitimin çalıştığı cihaz" data-i18n-attr="title=a.device">—</span>
       <span class="badge" id="model-badge" title="Çıkarımda kullanılan model"><span class="badge-dot"></span><span id="model-badge-text">Model yok</span></span>
     </div>
   </header>
 
-  <div class="banner" id="conn-banner" role="alert" hidden>Sunucuya ulaşılamıyor; panel sunucusu kapanmış olabilir. Terminalde <code>.venv\Scripts\python.exe dashboard.py</code> ile yeniden başlatın, sayfa kendiliğinden yeniden bağlanır.</div>
-  <div class="banner" id="outdated-banner" role="alert" hidden>Bu sayfa eski sürüm bir panel sunucusuna bağlı; "Eğitim öncesi" model gibi yeni özellikler çalışmaz ve sessizce eğitilmiş model kullanılır. Eski sunucuyu kapatıp <code>start.bat</code> ile yeniden başlatın.</div>
+  <div class="banner" id="conn-banner" role="alert" hidden data-i18n="banner.conn">Sunucuya ulaşılamıyor; panel sunucusu kapanmış olabilir. Terminalde <code>.venv\Scripts\python.exe dashboard.py</code> ile yeniden başlatın, sayfa kendiliğinden yeniden bağlanır.</div>
+  <div class="banner" id="outdated-banner" role="alert" hidden data-i18n="banner.outdated">Bu sayfa eski sürüm bir panel sunucusuna bağlı; "Eğitim öncesi" model gibi yeni özellikler çalışmaz ve sessizce eğitilmiş model kullanılır. Eski sunucuyu kapatıp <code>start.bat</code> ile yeniden başlatın.</div>
 
   <main>
     <!-- ============================== TRAINING ============================== -->
     <section class="panel" id="panel-train" role="tabpanel" aria-labelledby="tab-train">
       <div class="row row-top">
         <form class="card controls" id="train-form" autocomplete="off">
-          <h2>Ayarlar</h2>
-          <p class="sub">Varsayılanlar <code>SimpleCNN.py</code> ile aynı; aynı seed aynı sonucu verir.</p>
+          <h2 data-i18n="train.settings">Ayarlar</h2>
+          <p class="sub" data-i18n="train.defaults">Varsayılanlar <code>SimpleCNN.py</code> ile aynı; aynı seed aynı sonucu verir.</p>
           <div class="fields">
-            <label>Epoch sayısı<input name="epochs" type="number" min="1" max="50" step="1" value="10" required></label>
-            <label>Öğrenme oranı<input name="lr" type="number" min="0.00001" max="1" step="any" value="0.001" required></label>
-            <label>Batch boyutu<input name="batch_size" type="number" min="8" max="4096" step="1" value="256" required></label>
+            <label><span data-i18n="train.f.epochs">Epoch sayısı</span><input name="epochs" type="number" min="1" max="50" step="1" value="10" required></label>
+            <label><span data-i18n="train.f.lr">Öğrenme oranı</span><input name="lr" type="number" min="0.00001" max="1" step="any" value="0.001" required></label>
+            <label><span data-i18n="train.f.batch">Batch boyutu</span><input name="batch_size" type="number" min="8" max="4096" step="1" value="256" required></label>
             <label>Seed<input name="seed" type="number" min="0" step="1" value="42" required></label>
           </div>
           <div class="buttons">
             <button type="submit" class="btn primary" id="btn-start">Eğitimi başlat</button>
-            <button type="button" class="btn" id="btn-stop" disabled>Durdur</button>
+            <button type="button" class="btn" id="btn-stop" disabled data-i18n="train.stop">Durdur</button>
           </div>
           <p class="form-msg" id="form-msg" role="status"></p>
         </form>
 
         <div class="card stages">
           <div class="card-head">
-            <h2>Aşamalar</h2>
+            <h2 data-i18n="train.stages">Aşamalar</h2>
             <span class="state-pill" id="state-pill">Hazır</span>
           </div>
           <ol class="stepper" id="stepper">
-            <li data-stage="loading"><span class="step-dot"><span>1</span></span><span class="step-label">Veri yükleme</span><span class="step-hint" data-hint>MNIST indirilir, bölünür</span></li>
-            <li data-stage="training"><span class="step-dot"><span>2</span></span><span class="step-label">Eğitim</span><span class="step-hint" data-hint>Ağırlıklar güncellenir</span></li>
-            <li data-stage="validating"><span class="step-dot"><span>3</span></span><span class="step-label">Doğrulama</span><span class="step-hint" data-hint>Görülmemiş veride ölçüm</span></li>
-            <li data-stage="testing"><span class="step-dot"><span>4</span></span><span class="step-label">Test</span><span class="step-hint" data-hint>Son performans</span></li>
-            <li data-stage="saving"><span class="step-dot"><span>5</span></span><span class="step-label">Kayıt</span><span class="step-hint" data-hint>checkpoints/simple_cnn.pt</span></li>
+            <li data-stage="loading"><span class="step-dot"><span>1</span></span><span class="step-label" data-i18n="stage.loading">Veri yükleme</span><span class="step-hint" data-hint>MNIST indirilir, bölünür</span></li>
+            <li data-stage="training"><span class="step-dot"><span>2</span></span><span class="step-label" data-i18n="stage.training">Eğitim</span><span class="step-hint" data-hint>Ağırlıklar güncellenir</span></li>
+            <li data-stage="validating"><span class="step-dot"><span>3</span></span><span class="step-label" data-i18n="stage.validating">Doğrulama</span><span class="step-hint" data-hint>Görülmemiş veride ölçüm</span></li>
+            <li data-stage="testing"><span class="step-dot"><span>4</span></span><span class="step-label" data-i18n="stage.testing">Test</span><span class="step-hint" data-hint>Son performans</span></li>
+            <li data-stage="saving"><span class="step-dot"><span>5</span></span><span class="step-label" data-i18n="stage.saving">Kayıt</span><span class="step-hint" data-hint>checkpoints/simple_cnn.pt</span></li>
           </ol>
-          <div class="loop-note" aria-hidden="true"><span>↻ 2 ve 3 her epoch'ta tekrarlanır</span></div>
+          <div class="loop-note" aria-hidden="true"><span data-i18n="train.loopnote">↻ 2 ve 3 her epoch'ta tekrarlanır</span></div>
 
           <div class="progress-group">
             <div class="progress-row">
               <span class="progress-label" id="epoch-progress-label">Epoch</span>
-              <div class="meter" role="progressbar" aria-label="Epoch ilerlemesi" id="epoch-meter"><div class="meter-fill" id="epoch-progress"></div></div>
+              <div class="meter" role="progressbar" aria-label="Epoch ilerlemesi" id="epoch-meter" data-i18n-attr="aria-label=a.epochprog"><div class="meter-fill" id="epoch-progress"></div></div>
               <span class="progress-value" id="epoch-progress-value">—</span>
             </div>
             <div class="progress-row">
-              <span class="progress-label">Toplam</span>
-              <div class="meter" role="progressbar" aria-label="Toplam ilerleme" id="total-meter"><div class="meter-fill" id="total-progress"></div></div>
+              <span class="progress-label" data-i18n="train.total">Toplam</span>
+              <div class="meter" role="progressbar" aria-label="Toplam ilerleme" id="total-meter" data-i18n-attr="aria-label=a.totalprog"><div class="meter-fill" id="total-progress"></div></div>
               <span class="progress-value" id="total-progress-value">—</span>
             </div>
           </div>
 
           <div class="loop" id="train-loop">
             <div class="loop-head">
-              <span>Her batch'te çalışan eğitim adımı</span>
+              <span data-i18n="train.loophead">Her batch'te çalışan eğitim adımı</span>
               <span class="loop-count" id="step-count">Toplam adım: 0</span>
             </div>
             <ol class="chips">
-              <li class="chip"><code>optimizer.zero_grad()</code><span>Gradyanları sıfırla</span></li>
-              <li class="chip"><code>model(x)</code><span>İleri yayılım</span></li>
-              <li class="chip"><code>criterion(out, y)</code><span>Kaybı hesapla</span></li>
-              <li class="chip"><code>loss.backward()</code><span>Geri yayılım</span></li>
-              <li class="chip"><code>optimizer.step()</code><span>Ağırlıkları güncelle</span></li>
+              <li class="chip"><code>optimizer.zero_grad()</code><span data-i18n="chip.zero">Gradyanları sıfırla</span></li>
+              <li class="chip"><code>model(x)</code><span data-i18n="chip.forward">İleri yayılım</span></li>
+              <li class="chip"><code>criterion(out, y)</code><span data-i18n="chip.loss">Kaybı hesapla</span></li>
+              <li class="chip"><code>loss.backward()</code><span data-i18n="chip.backward">Geri yayılım</span></li>
+              <li class="chip"><code>optimizer.step()</code><span data-i18n="chip.step">Ağırlıkları güncelle</span></li>
             </ol>
           </div>
         </div>
@@ -110,21 +114,21 @@
 
       <div class="tiles">
         <div class="tile"><span class="tile-label">Epoch</span><span class="tile-value" id="tile-epoch">—</span><span class="tile-sub" id="tile-epoch-sub">henüz başlamadı</span></div>
-        <div class="tile"><span class="tile-label">Eğitim kaybı</span><span class="tile-value" id="tile-loss">—</span><span class="tile-sub">son batch'lerin ortalaması</span></div>
-        <div class="tile"><span class="tile-label">Doğrulama doğruluğu</span><span class="tile-value" id="tile-val">—</span><span class="tile-sub" id="tile-val-sub">her epoch sonunda</span></div>
-        <div class="tile"><span class="tile-label">Test doğruluğu</span><span class="tile-value" id="tile-test">—</span><span class="tile-sub" id="tile-test-sub">eğitim bitince ölçülür</span></div>
-        <div class="tile"><span class="tile-label">Süre</span><span class="tile-value" id="tile-time">—</span><span class="tile-sub" id="tile-time-sub">&nbsp;</span></div>
+        <div class="tile"><span class="tile-label" data-i18n="tile.loss">Eğitim kaybı</span><span class="tile-value" id="tile-loss">—</span><span class="tile-sub" data-i18n="tile.loss.sub">son batch'lerin ortalaması</span></div>
+        <div class="tile"><span class="tile-label" data-i18n="tile.val">Doğrulama doğruluğu</span><span class="tile-value" id="tile-val">—</span><span class="tile-sub" id="tile-val-sub">her epoch sonunda</span></div>
+        <div class="tile"><span class="tile-label" data-i18n="tile.test">Test doğruluğu</span><span class="tile-value" id="tile-test">—</span><span class="tile-sub" id="tile-test-sub">eğitim bitince ölçülür</span></div>
+        <div class="tile"><span class="tile-label" data-i18n="tile.time">Süre</span><span class="tile-value" id="tile-time">—</span><span class="tile-sub" id="tile-time-sub">&nbsp;</span></div>
       </div>
 
       <div class="card chart-card">
         <div class="card-head">
           <div>
-            <h2>Batch kaybı</h2>
-            <p class="sub">Her batch'ten sonraki eğitim kaybı · logaritmik eksen · alt eksen epoch</p>
+            <h2 data-i18n="chart.batch">Batch kaybı</h2>
+            <p class="sub" data-i18n="chart.batch.sub">Her batch'ten sonraki eğitim kaybı · logaritmik eksen · alt eksen epoch</p>
           </div>
           <div class="legend">
-            <span class="legend-item"><span class="key-line raw"></span>Ham</span>
-            <span class="legend-item"><span class="key-line s1"></span>Hareketli ortalama</span>
+            <span class="legend-item" data-i18n="legend.raw"><span class="key-line raw"></span>Ham</span>
+            <span class="legend-item" data-i18n="legend.avg"><span class="key-line s1"></span>Hareketli ortalama</span>
           </div>
         </div>
         <div class="chart" id="chart-batch" data-height="230"></div>
@@ -133,40 +137,40 @@
       <div class="row two">
         <div class="card chart-card">
           <div class="card-head">
-            <div><h2>Kayıp</h2><p class="sub">Epoch sonunda ortalama kayıp</p></div>
+            <div><h2 data-i18n="chart.loss">Kayıp</h2><p class="sub" data-i18n="chart.loss.sub">Epoch sonunda ortalama kayıp</p></div>
             <div class="legend">
-              <span class="legend-item"><span class="key-line s1"></span>Eğitim</span>
-              <span class="legend-item"><span class="key-line s2"></span>Doğrulama</span>
+              <span class="legend-item" data-i18n="legend.train"><span class="key-line s1"></span>Eğitim</span>
+              <span class="legend-item" data-i18n="legend.val"><span class="key-line s2"></span>Doğrulama</span>
             </div>
           </div>
           <div class="chart" id="chart-loss" data-height="220"></div>
         </div>
         <div class="card chart-card">
           <div class="card-head">
-            <div><h2>Doğruluk</h2><p class="sub">Doğru sınıflandırılan görüntü oranı</p></div>
+            <div><h2 data-i18n="chart.acc">Doğruluk</h2><p class="sub" data-i18n="chart.acc.sub">Doğru sınıflandırılan görüntü oranı</p></div>
             <div class="legend">
-              <span class="legend-item"><span class="key-line s1"></span>Eğitim</span>
-              <span class="legend-item"><span class="key-line s2"></span>Doğrulama</span>
+              <span class="legend-item" data-i18n="legend.train"><span class="key-line s1"></span>Eğitim</span>
+              <span class="legend-item" data-i18n="legend.val"><span class="key-line s2"></span>Doğrulama</span>
             </div>
           </div>
           <div class="chart" id="chart-acc" data-height="220"></div>
         </div>
       </div>
-      <p class="footnote">Eğitim kaybı doğrulamadan yüksek görünebilir: eğitimde Dropout açık, doğrulamada kapalıdır.</p>
+      <p class="footnote" data-i18n="train.footnote">Eğitim kaybı doğrulamadan yüksek görünebilir: eğitimde Dropout açık, doğrulamada kapalıdır.</p>
 
       <div class="row two">
         <div class="card">
           <div class="card-head">
-            <div><h2>Conv1 filtreleri</h2><p class="sub">İlk katmanın 32 adet 5×5 filtresi. Rastgele başlar ve her adımda güncellenir; her biri görüntüde farklı bir deseni (kenar, köşe, çizgi) arar.</p></div>
+            <div><h2 data-i18n="train.filters">Conv1 filtreleri</h2><p class="sub" data-i18n="train.filters.sub">İlk katmanın 32 adet 5×5 filtresi. Rastgele başlar ve her adımda güncellenir; her biri görüntüde farklı bir deseni (kenar, köşe, çizgi) arar.</p></div>
           </div>
           <div class="filter-grid" id="filters"></div>
           <div class="scale-legend">
-            <span>negatif</span><span class="scale-bar diverging"></span><span>pozitif</span>
+            <span data-i18n="scale.neg">negatif</span><span class="scale-bar diverging"></span><span data-i18n="scale.pos">pozitif</span>
           </div>
         </div>
         <div class="card">
           <div class="card-head">
-            <div><h2>Doğrulama örnekleri</h2><p class="sub" id="samples-sub">Eğitim başlayınca 16 sabit doğrulama görüntüsü burada tahmin edilir.</p></div>
+            <div><h2 data-i18n="train.samples">Doğrulama örnekleri</h2><p class="sub" id="samples-sub">Eğitim başlayınca 16 sabit doğrulama görüntüsü burada tahmin edilir.</p></div>
           </div>
           <div class="sample-grid" id="samples"></div>
         </div>
@@ -174,16 +178,16 @@
 
       <div class="row two">
         <div class="card">
-          <h2>Epoch tablosu</h2>
+          <h2 data-i18n="train.table">Epoch tablosu</h2>
           <div class="table-wrap">
             <table class="data-table" id="history-table">
-              <thead><tr><th>Epoch</th><th>Eğitim kaybı</th><th>Eğitim doğr.</th><th>Doğrulama kaybı</th><th>Doğrulama doğr.</th><th>Süre</th></tr></thead>
+              <thead><tr data-i18n="train.table.head"><th>Epoch</th><th>Eğitim kaybı</th><th>Eğitim doğr.</th><th>Doğrulama kaybı</th><th>Doğrulama doğr.</th><th>Süre</th></tr></thead>
               <tbody><tr class="empty"><td colspan="6">Henüz veri yok</td></tr></tbody>
             </table>
           </div>
         </div>
         <div class="card">
-          <h2>Kayıt</h2>
+          <h2 data-i18n="train.log">Kayıt</h2>
           <pre class="log" id="log" aria-live="polite">Eğitim başladığında çıktılar burada görünür.</pre>
         </div>
       </div>
@@ -191,23 +195,23 @@
 
     <!-- ============================== INFERENCE ============================== -->
     <section class="panel" id="panel-infer" role="tabpanel" aria-labelledby="tab-infer" hidden>
-      <div class="banner inline" id="no-model" hidden>
+      <div class="banner inline" id="no-model" hidden data-i18n="infer.nomodel">
         Henüz eğitilmiş bir model yok. <strong>Eğitim</strong> sekmesinden eğitimi başlatın; ilk epoch bittiğinde burada deneyebilirsiniz. Bu arada <strong>Eğitim öncesi</strong> modeli seçerek rastgele ağırlıklı ağın ne yaptığını görebilirsiniz.
       </div>
 
       <div class="row infer-top">
         <div class="card draw-card">
           <div class="card-head">
-            <h2>Rakam çiz</h2>
-            <button type="button" class="btn small" id="btn-clear">Temizle</button>
+            <h2 data-i18n="infer.draw">Rakam çiz</h2>
+            <button type="button" class="btn small" id="btn-clear" data-i18n="infer.clear">Temizle</button>
           </div>
-          <canvas id="draw" width="280" height="280" aria-label="Çizim alanı"></canvas>
-          <p class="sub">Fareyle 0–9 arası bir rakam çizin; çizerken tahmin güncellenir.</p>
+          <canvas id="draw" width="280" height="280" aria-label="Çizim alanı" data-i18n-attr="aria-label=a.draw"></canvas>
+          <p class="sub" data-i18n="infer.draw.sub">Fareyle 0–9 arası bir rakam çizin; çizerken tahmin güncellenir.</p>
         </div>
 
         <div class="card result-card">
           <div class="card-head">
-            <h2>Tahmin</h2>
+            <h2 data-i18n="infer.pred">Tahmin</h2>
             <span class="model-tag" id="pred-model" hidden></span>
           </div>
           <div class="result-head">
@@ -218,18 +222,18 @@
             </div>
             <figure class="model-input">
               <canvas class="px gray" id="input-view" width="28" height="28"></canvas>
-              <figcaption>Modelin gördüğü 28×28</figcaption>
+              <figcaption data-i18n="infer.sees">Modelin gördüğü 28×28</figcaption>
             </figure>
           </div>
-          <div class="chart" id="prob-chart" aria-label="Sınıf olasılıkları"></div>
+          <div class="chart" id="prob-chart" aria-label="Sınıf olasılıkları" data-i18n-attr="aria-label=a.probs"></div>
         </div>
 
         <div class="card samples-card">
           <div class="card-head">
-            <h2>Test setinden</h2>
-            <button type="button" class="btn small" id="btn-more">Yeni örnekler</button>
+            <h2 data-i18n="infer.test">Test setinden</h2>
+            <button type="button" class="btn small" id="btn-more" data-i18n="infer.more">Yeni örnekler</button>
           </div>
-          <p class="sub">Modelin eğitimde hiç görmediği görüntüler. Birine tıklayın.</p>
+          <p class="sub" data-i18n="infer.test.sub">Modelin eğitimde hiç görmediği görüntüler. Birine tıklayın.</p>
           <div class="sample-grid test" id="test-samples"></div>
         </div>
       </div>
@@ -237,11 +241,11 @@
       <div class="card network">
         <div class="card-head">
           <div>
-            <h2>Katman katman ağ</h2>
-            <p class="sub">Giriş görüntüsünün her katmanda dönüştüğü öznitelik haritaları. Renk ne kadar yoğunsa aktivasyon o kadar güçlü (sağdaki skala). Haritaların üzerine gelince ayrıntı görünür.</p>
+            <h2 data-i18n="infer.layers">Katman katman ağ</h2>
+            <p class="sub" data-i18n="infer.layers.sub">Giriş görüntüsünün her katmanda dönüştüğü öznitelik haritaları. Renk ne kadar yoğunsa aktivasyon o kadar güçlü (sağdaki skala). Haritaların üzerine gelince ayrıntı görünür.</p>
           </div>
           <div class="scale-legend">
-            <span>0</span><span class="scale-bar sequential"></span><span>en yüksek</span>
+            <span>0</span><span class="scale-bar sequential"></span><span data-i18n="scale.max">en yüksek</span>
           </div>
         </div>
         <div id="layers"></div>
@@ -254,36 +258,36 @@
         <div class="tb-group">
           <canvas class="px tb-thumb" id="t-thumb" width="28" height="28" aria-hidden="true"></canvas>
           <div class="tb-text">
-            <span class="tb-label">Canlı örneklerin girdisi</span>
+            <span class="tb-label" data-i18n="th.input">Canlı örneklerin girdisi</span>
             <span class="tb-value" id="t-image-label">Yükleniyor…</span>
           </div>
-          <button type="button" class="btn small" id="t-next-image">Başka görüntü</button>
-          <button type="button" class="btn small" id="t-use-infer" disabled title="Önce Çıkarım sekmesinde bir tahmin yapın">Çıkarımdakini kullan</button>
+          <button type="button" class="btn small" id="t-next-image" data-i18n="th.next">Başka görüntü</button>
+          <button type="button" class="btn small" id="t-use-infer" disabled title="Önce Çıkarım sekmesinde bir tahmin yapın" data-i18n-attr="title=a.useinfer" data-i18n="th.useinfer">Çıkarımdakini kullan</button>
         </div>
         <div class="tb-group" id="t-filter-group">
-          <span class="tb-label">Conv1 filtresi</span>
-          <button type="button" class="btn small icon" id="t-filter-prev" aria-label="Önceki filtre">‹</button>
+          <span class="tb-label" data-i18n="th.filter">Conv1 filtresi</span>
+          <button type="button" class="btn small icon" id="t-filter-prev" aria-label="Önceki filtre" data-i18n-attr="aria-label=a.prevfilter">‹</button>
           <canvas class="px tb-filter" id="t-filter-thumb" width="5" height="5" aria-hidden="true"></canvas>
           <span class="tb-value" id="t-filter-label">#1</span>
-          <button type="button" class="btn small icon" id="t-filter-next" aria-label="Sonraki filtre">›</button>
+          <button type="button" class="btn small icon" id="t-filter-next" aria-label="Sonraki filtre" data-i18n-attr="aria-label=a.nextfilter">›</button>
         </div>
       </div>
 
       <div class="card t-intro">
         <div class="t-intro-text">
-          <h2>Evrişimli sinir ağı (CNN) nasıl çalışır?</h2>
-          <p>Bir CNN, görüntüdeki yerel desenleri (kenar, köşe, kıvrım) küçük filtrelerle yakalar ve bu desenleri katman katman birleştirerek "bu bir 7" gibi bir karara varır. Aşağıdaki her bölüm SimpleCNN'in bir yapı taşını açıklar. Örnekler, yukarıda seçili görüntü ve modelin gerçek ağırlıklarıyla tarayıcınızda canlı hesaplanır.</p>
-          <p><b>Eğitimin etkisini görmek için</b> sağ alttaki <b>Gösterilen model</b> anahtarıyla <i>Eğitim öncesi</i> ve <i>Eğitilmiş</i> arasında geçiş yapın: eğitim öncesi model, eğitimin başladığı rastgele ağırlıklardır. Filtrelerin, öznitelik haritalarının ve tahminin nasıl değiştiğine bakın.</p>
+          <h2 data-i18n="th.intro.h">Evrişimli sinir ağı (CNN) nasıl çalışır?</h2>
+          <p data-i18n="th.intro.p1">Bir CNN, görüntüdeki yerel desenleri (kenar, köşe, kıvrım) küçük filtrelerle yakalar ve bu desenleri katman katman birleştirerek "bu bir 7" gibi bir karara varır. Aşağıdaki her bölüm SimpleCNN'in bir yapı taşını açıklar. Örnekler, yukarıda seçili görüntü ve modelin gerçek ağırlıklarıyla tarayıcınızda canlı hesaplanır.</p>
+          <p data-i18n="th.intro.p2"><b>Eğitimin etkisini görmek için</b> sağ alttaki <b>Gösterilen model</b> anahtarıyla <i>Eğitim öncesi</i> ve <i>Eğitilmiş</i> arasında geçiş yapın: eğitim öncesi model, eğitimin başladığı rastgele ağırlıklardır. Filtrelerin, öznitelik haritalarının ve tahminin nasıl değiştiğine bakın.</p>
         </div>
         <figure class="schematic">
           <div class="schematic-scroll">
             <svg id="t-schematic" viewBox="0 0 1120 262" role="img"
-                 aria-label="SimpleCNN mimarisi: 1×28×28 giriş, Conv 5×5 (32 filtre) + BatchNorm + ReLU ile 32×24×24, MaxPool ve Dropout ile 32×12×12, Conv 5×5 (64 filtre) + BatchNorm + ReLU ile 64×8×8, MaxPool ve Dropout ile 64×4×4, 1024 değerlik vektör, 512 nöronluk FC1 ve 10 sınıflı Softmax çıkışı. Eğitimde kayıp geri yayılımla tüm ağırlıkları günceller."></svg>
+                 aria-label="SimpleCNN mimarisi: 1×28×28 giriş, Conv 5×5 (32 filtre) + BatchNorm + ReLU ile 32×24×24, MaxPool ve Dropout ile 32×12×12, Conv 5×5 (64 filtre) + BatchNorm + ReLU ile 64×8×8, MaxPool ve Dropout ile 64×4×4, 1024 değerlik vektör, 512 nöronluk FC1 ve 10 sınıflı Softmax çıkışı. Eğitimde kayıp geri yayılımla tüm ağırlıkları günceller." data-i18n-attr="aria-label=a.schematic"></svg>
           </div>
-          <figcaption>Her yığın bir katmanın çıktısıdır: yüksekliği uzamsal boyutu (28 → 4), derinliği kanal sayısını gösterir. Öndeki görüntüler seçili rakam için gerçek çıktılardır; evrişim bloklarında yukarıda seçili filtre, ikinci blokta en güçlü tepki veren harita gösterilir. Okların üzerindeki işlemlere tıklayarak ilgili bölüme gidin.</figcaption>
+          <figcaption data-i18n="th.schem.cap">Her yığın bir katmanın çıktısıdır: yüksekliği uzamsal boyutu (28 → 4), derinliği kanal sayısını gösterir. Öndeki görüntüler seçili rakam için gerçek çıktılardır; evrişim bloklarında yukarıda seçili filtre, ikinci blokta en güçlü tepki veren harita gösterilir. Okların üzerindeki işlemlere tıklayarak ilgili bölüme gidin.</figcaption>
         </figure>
         <div class="t-filters" id="t-filters">
-          <p class="sub"><span id="t-filters-title">Modelin öğrendiği 32 Conv1 filtresi.</span> Birine tıklayarak örneklerde kullanılacak filtreyi seçin (mavi negatif, kırmızı pozitif ağırlık).</p>
+          <p class="sub"><span id="t-filters-title">Modelin öğrendiği 32 Conv1 filtresi.</span> <span data-i18n="th.filters.tail">Birine tıklayarak örneklerde kullanılacak filtreyi seçin (mavi negatif, kırmızı pozitif ağırlık).</span></p>
           <div class="filter-strip" id="t-filter-strip"></div>
         </div>
       </div>
@@ -291,17 +295,17 @@
       <!-- 1 · Convolution -->
       <article class="card t-section" id="t-conv">
         <div class="t-text">
-          <div class="t-head"><span class="t-num">1</span><h2>Evrişim (Convolution)</h2></div>
-          <p>Evrişim katmanı, <b>çekirdek</b> (kernel, filtre) denen küçük bir ağırlık matrisini görüntünün üzerinde kaydırır. Her konumda çekirdek ile altındaki piksellerin eleman eleman çarpımları toplanır ve bias eklenir; sonuç, çıktının bir pikseli olur. Ortaya çıkan <b>öznitelik haritası</b>, filtrenin aradığı desenin görüntünün <i>neresinde</i> bulunduğunu gösterir.</p>
+          <div class="t-head"><span class="t-num">1</span><h2 data-i18n="th.conv.h">Evrişim (Convolution)</h2></div>
+          <p data-i18n="th.conv.p1">Evrişim katmanı, <b>çekirdek</b> (kernel, filtre) denen küçük bir ağırlık matrisini görüntünün üzerinde kaydırır. Her konumda çekirdek ile altındaki piksellerin eleman eleman çarpımları toplanır ve bias eklenir; sonuç, çıktının bir pikseli olur. Ortaya çıkan <b>öznitelik haritası</b>, filtrenin aradığı desenin görüntünün <i>neresinde</i> bulunduğunu gösterir.</p>
           <div class="formula">y<sub>i,j</sub> = Σ<sub>m</sub> Σ<sub>n</sub> x<sub>i·s+m, j·s+n</sub> · w<sub>m,n</sub> + b</div>
-          <p>Aynı çekirdek görüntünün her yerinde kullanılır (<b>ağırlık paylaşımı</b>). Böylece az parametreyle, desen nerede olursa olsun yakalanır. Filtre değerleri elle seçilmez, eğitimde öğrenilir.</p>
-          <p>Çıktı boyutunu çekirdek boyutu <i>k</i>, dolgu (padding) <i>p</i> ve adım (stride) <i>s</i> belirler:</p>
+          <p data-i18n="th.conv.p2">Aynı çekirdek görüntünün her yerinde kullanılır (<b>ağırlık paylaşımı</b>). Böylece az parametreyle, desen nerede olursa olsun yakalanır. Filtre değerleri elle seçilmez, eğitimde öğrenilir.</p>
+          <p data-i18n="th.conv.p3">Çıktı boyutunu çekirdek boyutu <i>k</i>, dolgu (padding) <i>p</i> ve adım (stride) <i>s</i> belirler:</p>
           <div class="formula">H<sub>out</sub> = ⌊(H<sub>in</sub> − k + 2p) / s⌋ + 1<span class="formula-live" id="t-conv-size"></span></div>
-          <div class="in-model"><b>SimpleCNN'de:</b> Conv1, 32 adet 5×5 filtreyle 28×28 girişten 32 harita (24×24) üretir. Conv2, 64 filtreyle 12×12'den 8×8'e iner. Conv1'in toplam parametre sayısı yalnızca 32·(5·5) + 32 = 832'dir.</div>
+          <div class="in-model" data-i18n="th.conv.model"><b>SimpleCNN'de:</b> Conv1, 32 adet 5×5 filtreyle 28×28 girişten 32 harita (24×24) üretir. Conv2, 64 filtreyle 12×12'den 8×8'e iner. Conv1'in toplam parametre sayısı yalnızca 32·(5·5) + 32 = 832'dir.</div>
         </div>
         <div class="t-demo">
           <div class="t-controls">
-            <label>Çekirdek <select id="t-conv-kernel-select"></select></label>
+            <label><span data-i18n="th.conv.kernel">Çekirdek</span> <select id="t-conv-kernel-select"></select></label>
             <label>Padding <select id="t-conv-pad"><option>0</option><option>1</option><option>2</option></select></label>
             <label>Stride <select id="t-conv-stride"><option>1</option><option>2</option></select></label>
             <button type="button" class="btn small primary" id="t-conv-play">▶ Kaydır</button>
@@ -320,7 +324,7 @@
             </figure>
           </div>
           <div class="calc" id="t-conv-calc"></div>
-          <div class="scale-legend"><span>negatif</span><span class="scale-bar diverging"></span><span>pozitif</span><span>· Çıktının üzerine gelerek her pikselin nasıl hesaplandığını görün.</span></div>
+          <div class="scale-legend"><span data-i18n="scale.neg">negatif</span><span class="scale-bar diverging"></span><span data-i18n="scale.pos">pozitif</span><span data-i18n="th.conv.hint">· Çıktının üzerine gelerek her pikselin nasıl hesaplandığını görün.</span></div>
         </div>
       </article>
 
@@ -328,30 +332,30 @@
       <article class="card t-section" id="t-bn">
         <div class="t-text">
           <div class="t-head"><span class="t-num">2</span><h2>Batch Normalization</h2></div>
-          <p>Ağırlıklar her adımda değiştikçe bir filtrenin çıktı dağılımı da kayar; değerler çok büyüyebilir ya da küçülebilir. BatchNorm her kanalı, mini-batch üzerinde <b>ortalaması 0, standart sapması 1</b> olacak şekilde normalleştirir:</p>
+          <p data-i18n="th.bn.p1">Ağırlıklar her adımda değiştikçe bir filtrenin çıktı dağılımı da kayar; değerler çok büyüyebilir ya da küçülebilir. BatchNorm her kanalı, mini-batch üzerinde <b>ortalaması 0, standart sapması 1</b> olacak şekilde normalleştirir:</p>
           <div class="formula">x̂ = (x − μ<sub>B</sub>) / √(σ<sub>B</sub><sup>2</sup> + ε)</div>
-          <p>Ardından öğrenilen iki parametreyle yeniden ölçekler ve kaydırır; böylece ağ gerekirse dağılımı istediği gibi ayarlayabilir:</p>
+          <p data-i18n="th.bn.p2">Ardından öğrenilen iki parametreyle yeniden ölçekler ve kaydırır; böylece ağ gerekirse dağılımı istediği gibi ayarlayabilir:</p>
           <div class="formula">y = γ · x̂ + β</div>
-          <p>Bu, eğitimi hızlandırır ve kararlı kılar. Batch'ten batch'e değişen istatistikler ayrıca hafif bir düzenlileştirme etkisi yaratır. <b>Eğitimde</b> o batch'in μ ve σ değerleri, <b>çıkarımda</b> ise eğitim boyunca biriktirilen hareketli ortalamalar kullanılır.</p>
-          <div class="in-model"><b>SimpleCNN'de:</b> Her evrişimden sonra, ReLU'dan önce uygulanır (Conv1 için 32, Conv2 için 64 kanal).</div>
+          <p data-i18n="th.bn.p3">Bu, eğitimi hızlandırır ve kararlı kılar. Batch'ten batch'e değişen istatistikler ayrıca hafif bir düzenlileştirme etkisi yaratır. <b>Eğitimde</b> o batch'in μ ve σ değerleri, <b>çıkarımda</b> ise eğitim boyunca biriktirilen hareketli ortalamalar kullanılır.</p>
+          <div class="in-model" data-i18n="th.bn.model"><b>SimpleCNN'de:</b> Her evrişimden sonra, ReLU'dan önce uygulanır (Conv1 için 32, Conv2 için 64 kanal).</div>
         </div>
         <div class="t-demo" data-needs-model>
-          <p class="no-model-msg">Bu örnek eğitilmiş modelin ağırlıklarını kullanır. Önce Eğitim sekmesinden modeli eğitin.</p>
+          <p class="no-model-msg" data-i18n="th.nomodel">Bu örnek eğitilmiş modelin ağırlıklarını kullanır. Önce Eğitim sekmesinden modeli eğitin.</p>
           <div class="t-controls">
             <label>γ <input type="range" id="t-bn-gamma" min="0" max="3" step="0.01"><output id="t-bn-gamma-v"></output></label>
             <label>β <input type="range" id="t-bn-beta" min="-3" max="3" step="0.01"><output id="t-bn-beta-v"></output></label>
-            <button type="button" class="btn small" id="t-bn-reset">Modelin γ, β değerleri</button>
-            <button type="button" class="btn small" id="t-bn-batch">Yeni batch</button>
+            <button type="button" class="btn small" id="t-bn-reset" data-i18n="th.bn.reset">Modelin γ, β değerleri</button>
+            <button type="button" class="btn small" id="t-bn-batch" data-i18n="th.bn.batch">Yeni batch</button>
           </div>
           <p class="sub" id="t-bn-sub"></p>
           <div class="hist-row">
-            <figure class="t-fig hist"><div class="chart" id="t-bn-h1" data-height="150"></div><figcaption>1 · Evrişim çıktısı x</figcaption></figure>
-            <figure class="t-fig hist"><div class="chart" id="t-bn-h2" data-height="150"></div><figcaption>2 · Normalleştirilmiş x̂</figcaption></figure>
-            <figure class="t-fig hist"><div class="chart" id="t-bn-h3" data-height="150"></div><figcaption>3 · Ölçeklenmiş y = γx̂ + β</figcaption></figure>
+            <figure class="t-fig hist"><div class="chart" id="t-bn-h1" data-height="150"></div><figcaption data-i18n="th.bn.h1">1 · Evrişim çıktısı x</figcaption></figure>
+            <figure class="t-fig hist"><div class="chart" id="t-bn-h2" data-height="150"></div><figcaption data-i18n="th.bn.h2">2 · Normalleştirilmiş x̂</figcaption></figure>
+            <figure class="t-fig hist"><div class="chart" id="t-bn-h3" data-height="150"></div><figcaption data-i18n="th.bn.h3">3 · Ölçeklenmiş y = γx̂ + β</figcaption></figure>
           </div>
           <div class="table-wrap">
             <table class="data-table compact" id="t-bn-table">
-              <thead><tr><th>Aşama</th><th>Ortalama</th><th>Std. sapma</th></tr></thead>
+              <thead><tr data-i18n="th.bn.head"><th>Aşama</th><th>Ortalama</th><th>Std. sapma</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
@@ -362,14 +366,14 @@
       <!-- 3 · Activation -->
       <article class="card t-section" id="t-act">
         <div class="t-text">
-          <div class="t-head"><span class="t-num">3</span><h2>Aktivasyon fonksiyonu</h2></div>
-          <p>Evrişim ve tam bağlı katmanlar <b>doğrusal</b> işlemlerdir. Kaç tanesini üst üste koyarsanız koyun, sonuç yine tek bir doğrusal işleme eşittir ve ağ karmaşık desenleri öğrenemez. Her katmandan sonra uygulanan <b>doğrusal olmayan</b> bir aktivasyon fonksiyonu bu sınırı kaldırır.</p>
+          <div class="t-head"><span class="t-num">3</span><h2 data-i18n="th.act.h">Aktivasyon fonksiyonu</h2></div>
+          <p data-i18n="th.act.p1">Evrişim ve tam bağlı katmanlar <b>doğrusal</b> işlemlerdir. Kaç tanesini üst üste koyarsanız koyun, sonuç yine tek bir doğrusal işleme eşittir ve ağ karmaşık desenleri öğrenemez. Her katmandan sonra uygulanan <b>doğrusal olmayan</b> bir aktivasyon fonksiyonu bu sınırı kaldırır.</p>
           <div class="formula" id="t-act-formula"></div>
           <p id="t-act-desc"></p>
-          <div class="in-model"><b>SimpleCNN'de:</b> ReLU, her BatchNorm'dan sonra ve FC1'in çıkışında kullanılır. Hızlı hesaplanır ve pozitif tarafta gradyanı küçültmez (sönümlenen gradyan sorunu yaşamaz).</div>
+          <div class="in-model" data-i18n="th.act.model"><b>SimpleCNN'de:</b> ReLU, her BatchNorm'dan sonra ve FC1'in çıkışında kullanılır. Hızlı hesaplanır ve pozitif tarafta gradyanı küçültmez (sönümlenen gradyan sorunu yaşamaz).</div>
         </div>
         <div class="t-demo">
-          <div class="t-controls"><div class="seg" id="t-act-seg" role="group" aria-label="Aktivasyon fonksiyonu"></div></div>
+          <div class="t-controls"><div class="seg" id="t-act-seg" role="group" aria-label="Aktivasyon fonksiyonu" data-i18n-attr="aria-label=a.act"></div></div>
           <div class="chart" id="t-act-plot" data-height="180"></div>
           <div class="map-pair">
             <figure class="t-fig"><canvas class="px" id="t-act-before"></canvas><figcaption id="t-act-before-cap">Aktivasyon öncesi</figcaption></figure>
@@ -377,21 +381,21 @@
             <figure class="t-fig"><canvas class="px" id="t-act-after"></canvas><figcaption id="t-act-after-cap">Aktivasyon sonrası</figcaption></figure>
             <div class="map-stats" id="t-act-stats"></div>
           </div>
-          <div class="scale-legend"><span>negatif</span><span class="scale-bar diverging"></span><span>pozitif</span><span>· İki harita aynı renk skalasını kullanır.</span></div>
+          <div class="scale-legend"><span data-i18n="scale.neg">negatif</span><span class="scale-bar diverging"></span><span data-i18n="scale.pos">pozitif</span><span data-i18n="th.act.hint">· İki harita aynı renk skalasını kullanır.</span></div>
         </div>
       </article>
 
       <!-- 4 · Pooling -->
       <article class="card t-section" id="t-pool">
         <div class="t-text">
-          <div class="t-head"><span class="t-num">4</span><h2>Havuzlama (Pooling)</h2></div>
-          <p>Havuzlama katmanı öznitelik haritasını küçültür. Harita çakışmayan küçük bölgelere ayrılır ve her bölgeden tek bir değer alınır: <b>max pooling</b> en büyük değeri, <b>average pooling</b> ortalamayı seçer.</p>
+          <div class="t-head"><span class="t-num">4</span><h2 data-i18n="th.pool.h">Havuzlama (Pooling)</h2></div>
+          <p data-i18n="th.pool.p1">Havuzlama katmanı öznitelik haritasını küçültür. Harita çakışmayan küçük bölgelere ayrılır ve her bölgeden tek bir değer alınır: <b>max pooling</b> en büyük değeri, <b>average pooling</b> ortalamayı seçer.</p>
           <div class="formula">y<sub>i,j</sub> = max<sub>m,n ∈ {0,1}</sub> x<sub>2i+m, 2j+n</sub></div>
-          <p>Böylece sonraki katmanların hesap yükü azalır ve desenin birkaç piksel kayması sonucu pek değiştirmez (küçük kaymalara dayanıklılık). Havuzlamanın öğrenilen bir parametresi yoktur.</p>
-          <div class="in-model"><b>SimpleCNN'de:</b> İki evrişim bloğunun sonunda 2×2 max pooling (stride 2) kullanılır: 24×24 → 12×12 ve 8×8 → 4×4. Her biri değer sayısını dörtte birine indirir.</div>
+          <p data-i18n="th.pool.p2">Böylece sonraki katmanların hesap yükü azalır ve desenin birkaç piksel kayması sonucu pek değiştirmez (küçük kaymalara dayanıklılık). Havuzlamanın öğrenilen bir parametresi yoktur.</p>
+          <div class="in-model" data-i18n="th.pool.model"><b>SimpleCNN'de:</b> İki evrişim bloğunun sonunda 2×2 max pooling (stride 2) kullanılır: 24×24 → 12×12 ve 8×8 → 4×4. Her biri değer sayısını dörtte birine indirir.</div>
         </div>
         <div class="t-demo">
-          <div class="t-controls"><div class="seg" id="t-pool-seg" role="group" aria-label="Havuzlama türü"></div></div>
+          <div class="t-controls"><div class="seg" id="t-pool-seg" role="group" aria-label="Havuzlama türü" data-i18n-attr="aria-label=a.pool"></div></div>
           <div class="map-pair">
             <figure class="t-fig">
               <div class="pixwrap"><canvas class="px" id="t-pool-in"></canvas><div class="win-box" id="t-pool-win"></div></div>
@@ -404,7 +408,7 @@
             </figure>
           </div>
           <div class="calc" id="t-pool-calc"></div>
-          <div class="scale-legend"><span>0</span><span class="scale-bar sequential"></span><span>en yüksek</span><span>· Çıktının üzerine gelerek hangi 2×2 bölgeden geldiğini görün.</span></div>
+          <div class="scale-legend"><span>0</span><span class="scale-bar sequential"></span><span data-i18n="scale.max">en yüksek</span><span data-i18n="th.pool.hint">· Çıktının üzerine gelerek hangi 2×2 bölgeden geldiğini görün.</span></div>
         </div>
       </article>
 
@@ -412,22 +416,22 @@
       <article class="card t-section" id="t-drop">
         <div class="t-text">
           <div class="t-head"><span class="t-num">5</span><h2>Dropout</h2></div>
-          <p>Dropout, <b>eğitim sırasında</b> her ileri geçişte değerlerin rastgele bir kısmını (oran <i>p</i>) sıfırlar. Her adımda farklı bir alt ağ eğitilmiş olur. Ağ tek tek nöronlara güvenemez, birbirini tamamlayan sağlam öznitelikler öğrenir; bu da ezberlemeyi (overfitting) azaltır.</p>
-          <div class="formula">h̃ = 0 &nbsp;(olasılık p) &nbsp;&nbsp;·&nbsp;&nbsp; h̃ = h / (1 − p) &nbsp;(olasılık 1 − p)</div>
-          <p>Kalan değerler 1/(1 − p) ile büyütülür; böylece ortalama aktivasyon değişmez ve <b>çıkarımda</b> Dropout hiçbir şey yapmaz, tüm değerler olduğu gibi geçer.</p>
-          <div class="in-model"><b>SimpleCNN'de:</b> İlk havuzlamadan sonra p = 0,45, ikinciden sonra p = 0,35. Eğitim kaybının doğrulama kaybından yüksek görünmesinin bir nedeni de budur.</div>
+          <p data-i18n="th.drop.p1">Dropout, <b>eğitim sırasında</b> her ileri geçişte değerlerin rastgele bir kısmını (oran <i>p</i>) sıfırlar. Her adımda farklı bir alt ağ eğitilmiş olur. Ağ tek tek nöronlara güvenemez, birbirini tamamlayan sağlam öznitelikler öğrenir; bu da ezberlemeyi (overfitting) azaltır.</p>
+          <div class="formula" data-i18n="th.drop.f">h̃ = 0 &nbsp;(olasılık p) &nbsp;&nbsp;·&nbsp;&nbsp; h̃ = h / (1 − p) &nbsp;(olasılık 1 − p)</div>
+          <p data-i18n="th.drop.p2">Kalan değerler 1/(1 − p) ile büyütülür; böylece ortalama aktivasyon değişmez ve <b>çıkarımda</b> Dropout hiçbir şey yapmaz, tüm değerler olduğu gibi geçer.</p>
+          <div class="in-model" data-i18n="th.drop.model"><b>SimpleCNN'de:</b> İlk havuzlamadan sonra p = 0,45, ikinciden sonra p = 0,35. Eğitim kaybının doğrulama kaybından yüksek görünmesinin bir nedeni de budur.</div>
         </div>
         <div class="t-demo" data-needs-model>
-          <p class="no-model-msg">Bu örnek eğitilmiş modelin ağırlıklarını kullanır. Önce Eğitim sekmesinden modeli eğitin.</p>
+          <p class="no-model-msg" data-i18n="th.nomodel">Bu örnek eğitilmiş modelin ağırlıklarını kullanır. Önce Eğitim sekmesinden modeli eğitin.</p>
           <div class="t-controls">
             <label>p <input type="range" id="t-drop-p" min="0" max="0.9" step="0.05" value="0.45"><output id="t-drop-p-v"></output></label>
-            <div class="seg" id="t-drop-seg" role="group" aria-label="Mod"></div>
-            <button type="button" class="btn small" id="t-drop-new">Yeni maske</button>
+            <div class="seg" id="t-drop-seg" role="group" aria-label="Mod" data-i18n-attr="aria-label=a.mode"></div>
+            <button type="button" class="btn small" id="t-drop-new" data-i18n="th.drop.new">Yeni maske</button>
           </div>
-          <p class="sub">MaxPool1 çıktısından en aktif 8 harita (12×12), yani Dropout1'e giren değerler. <span class="drop-key"></span> gri hücreler sıfırlanan değerlerdir; iki satır aynı renk skalasını kullanır.</p>
+          <p class="sub" data-i18n="th.drop.sub">MaxPool1 çıktısından en aktif 8 harita (12×12), yani Dropout1'e giren değerler. <span class="drop-key"></span> gri hücreler sıfırlanan değerlerdir; iki satır aynı renk skalasını kullanır.</p>
           <div class="drop-rows">
-            <div class="drop-row"><span class="drop-label">Önce</span><div class="maps" id="t-drop-before"></div></div>
-            <div class="drop-row"><span class="drop-label">Sonra</span><div class="maps" id="t-drop-after"></div></div>
+            <div class="drop-row"><span class="drop-label" data-i18n="th.drop.before">Önce</span><div class="maps" id="t-drop-before"></div></div>
+            <div class="drop-row"><span class="drop-label" data-i18n="th.drop.after">Sonra</span><div class="maps" id="t-drop-after"></div></div>
           </div>
           <div class="t-stats" id="t-drop-stats"></div>
         </div>
@@ -436,32 +440,32 @@
       <!-- 6 · Fully connected, softmax, cross-entropy -->
       <article class="card t-section" id="t-softmax">
         <div class="t-text">
-          <div class="t-head"><span class="t-num">6</span><h2>Tam bağlı katman, Softmax ve kayıp</h2></div>
-          <p>Son havuzlamanın çıktısı (64×4×4 = 1024 değer) tek bir vektöre düzleştirilir ve <b>tam bağlı</b> (fully connected) katmanlara verilir. Burada her çıkış nöronu, tüm girişlerin ağırlıklı toplamıdır:</p>
+          <div class="t-head"><span class="t-num">6</span><h2 data-i18n="th.sm.h">Tam bağlı katman, Softmax ve kayıp</h2></div>
+          <p data-i18n="th.sm.p1">Son havuzlamanın çıktısı (64×4×4 = 1024 değer) tek bir vektöre düzleştirilir ve <b>tam bağlı</b> (fully connected) katmanlara verilir. Burada her çıkış nöronu, tüm girişlerin ağırlıklı toplamıdır:</p>
           <div class="formula">y<sub>j</sub> = h(Σ<sub>i</sub> w<sub>ji</sub> x<sub>i</sub> + b<sub>j</sub>)</div>
-          <p>Son katman her rakam için bir <b>skor</b> (logit) üretir. <b>Softmax</b> bu skorları toplamı 1 olan olasılıklara çevirir; en yüksek skor en yüksek olasılığı alır:</p>
+          <p data-i18n="th.sm.p2">Son katman her rakam için bir <b>skor</b> (logit) üretir. <b>Softmax</b> bu skorları toplamı 1 olan olasılıklara çevirir; en yüksek skor en yüksek olasılığı alır:</p>
           <div class="formula">p<sub>k</sub> = e<sup>z<sub>k</sub></sup> / Σ<sub>j</sub> e<sup>z<sub>j</sub></sup></div>
-          <p><b>Kayıp</b>, tahminin ne kadar yanlış olduğunu tek bir sayıyla ölçer. Sınıflandırmada <b>Cross-Entropy</b> kullanılır: doğru sınıfa verilen olasılık p ise kayıp −log p'dir. Doğru sınıftan emin olan model sıfıra yakın kayıp alır, doğru sınıfa düşük olasılık veren model büyük ceza alır.</p>
-          <div class="formula">L = −log p<sub>doğru sınıf</sub><span class="formula-live" id="t-ce-live"></span></div>
-          <div class="in-model"><b>SimpleCNN'de:</b> FC1 1024 → 512 (ReLU), FC2 512 → 10. Modelde ayrı bir Softmax katmanı yoktur; <code>nn.CrossEntropyLoss</code> softmax'ı kendi içinde uygular.</div>
+          <p data-i18n="th.sm.p3"><b>Kayıp</b>, tahminin ne kadar yanlış olduğunu tek bir sayıyla ölçer. Sınıflandırmada <b>Cross-Entropy</b> kullanılır: doğru sınıfa verilen olasılık p ise kayıp −log p'dir. Doğru sınıftan emin olan model sıfıra yakın kayıp alır, doğru sınıfa düşük olasılık veren model büyük ceza alır.</p>
+          <div class="formula" data-i18n="th.sm.f">L = −log p<sub>doğru sınıf</sub><span class="formula-live" id="t-ce-live"></span></div>
+          <div class="in-model" data-i18n="th.sm.model"><b>SimpleCNN'de:</b> FC1 1024 → 512 (ReLU), FC2 512 → 10. Modelde ayrı bir Softmax katmanı yoktur; <code>nn.CrossEntropyLoss</code> softmax'ı kendi içinde uygular.</div>
         </div>
         <div class="t-demo">
           <p class="sub" id="t-sm-sub">Skorlar, modelin seçili görüntü için ürettiği gerçek logit değerleriyle başlar. Kaydırıcılarla değiştirip olasılıkların ve kaybın nasıl tepki verdiğini izleyin.</p>
           <div class="softmax-grid">
-            <div><div class="mini-title">Skorlar (logit)</div><div class="logits" id="t-sm-logits"></div></div>
-            <div><div class="mini-title">Softmax olasılıkları</div><div class="chart" id="t-sm-probs"></div></div>
+            <div><div class="mini-title" data-i18n="th.sm.scores">Skorlar (logit)</div><div class="logits" id="t-sm-logits"></div></div>
+            <div><div class="mini-title" data-i18n="th.sm.probs">Softmax olasılıkları</div><div class="chart" id="t-sm-probs"></div></div>
           </div>
           <div class="t-controls">
-            <button type="button" class="btn small" id="t-sm-reset">Modelin skorlarına dön</button>
-            <button type="button" class="btn small" id="t-sm-zero">Hepsini 0 yap</button>
+            <button type="button" class="btn small" id="t-sm-reset" data-i18n="th.sm.reset">Modelin skorlarına dön</button>
+            <button type="button" class="btn small" id="t-sm-zero" data-i18n="th.sm.zero">Hepsini 0 yap</button>
           </div>
           <div class="ce-row">
             <div>
-              <div class="mini-title">Doğru sınıf</div>
-              <div class="seg digits" id="t-ce-label" role="group" aria-label="Doğru sınıf"></div>
-              <div class="ce-value"><span>Cross-Entropy kaybı</span><strong id="t-ce-value">—</strong></div>
+              <div class="mini-title" data-i18n="th.sm.label">Doğru sınıf</div>
+              <div class="seg digits" id="t-ce-label" role="group" aria-label="Doğru sınıf" data-i18n-attr="aria-label=a.cls"></div>
+              <div class="ce-value"><span data-i18n="th.sm.ce">Cross-Entropy kaybı</span><strong id="t-ce-value">—</strong></div>
             </div>
-            <div><div class="mini-title">Kayıp = −log p, doğru sınıfın olasılığına göre (turuncu nokta: şu anki durum)</div><div class="chart" id="t-ce-plot" data-height="170"></div></div>
+            <div><div class="mini-title" data-i18n="th.sm.plot">Kayıp = −log p, doğru sınıfın olasılığına göre (turuncu nokta: şu anki durum)</div><div class="chart" id="t-ce-plot" data-height="170"></div></div>
           </div>
         </div>
       </article>
@@ -469,22 +473,22 @@
       <!-- 7 · Backpropagation & optimization -->
       <article class="card t-section" id="t-opt">
         <div class="t-text">
-          <div class="t-head"><span class="t-num">7</span><h2>Geri yayılım ve optimizasyon</h2></div>
-          <p>Eğitim, kaybı en küçük yapan ağırlıkları arar. <b>Geri yayılım</b> (backpropagation), zincir kuralıyla kaybın her ağırlığa göre türevini, yani <b>gradyanı</b> hesaplar. Gradyan kaybın en hızlı arttığı yönü gösterir; <b>gradyan inişi</b> ağırlıkları bunun tersi yönünde küçük adımlarla günceller:</p>
+          <div class="t-head"><span class="t-num">7</span><h2 data-i18n="th.opt.h">Geri yayılım ve optimizasyon</h2></div>
+          <p data-i18n="th.opt.p1">Eğitim, kaybı en küçük yapan ağırlıkları arar. <b>Geri yayılım</b> (backpropagation), zincir kuralıyla kaybın her ağırlığa göre türevini, yani <b>gradyanı</b> hesaplar. Gradyan kaybın en hızlı arttığı yönü gösterir; <b>gradyan inişi</b> ağırlıkları bunun tersi yönünde küçük adımlarla günceller:</p>
           <div class="formula">θ ← θ − η · ∇L(θ)</div>
-          <p>Adım büyüklüğünü <b>öğrenme oranı</b> η belirler: çok küçükse eğitim yavaş ilerler, çok büyükse minimumun etrafında salınır ya da ıraksar. <b>Momentum</b> geçmiş gradyanları biriktirerek tutarlı yönlerde hızlanır. <b>Adam</b> ise momentumu, her parametre için gradyanın büyüklüğüne göre ayarlanan bir adım boyuyla birleştirir:</p>
+          <p data-i18n="th.opt.p2">Adım büyüklüğünü <b>öğrenme oranı</b> η belirler: çok küçükse eğitim yavaş ilerler, çok büyükse minimumun etrafında salınır ya da ıraksar. <b>Momentum</b> geçmiş gradyanları biriktirerek tutarlı yönlerde hızlanır. <b>Adam</b> ise momentumu, her parametre için gradyanın büyüklüğüne göre ayarlanan bir adım boyuyla birleştirir:</p>
           <div class="formula small">m<sub>t</sub> = β<sub>1</sub>m<sub>t−1</sub> + (1 − β<sub>1</sub>) g<sub>t</sub> &nbsp;·&nbsp; v<sub>t</sub> = β<sub>2</sub>v<sub>t−1</sub> + (1 − β<sub>2</sub>) g<sub>t</sub><sup>2</sup><br>θ ← θ − η · m̂<sub>t</sub> / (√v̂<sub>t</sub> + ε)</div>
-          <div class="in-model"><b>SimpleCNN'de:</b> Adam, η = 0,001 ile kullanılır. Her batch'te <code>loss.backward()</code> gradyanları hesaplar, <code>optimizer.step()</code> ağırlıkları günceller (Eğitim sekmesindeki 5 adım).</div>
+          <div class="in-model" data-i18n="th.opt.model"><b>SimpleCNN'de:</b> Adam, η = 0,001 ile kullanılır. Her batch'te <code>loss.backward()</code> gradyanları hesaplar, <code>optimizer.step()</code> ağırlıkları günceller (Eğitim sekmesindeki 5 adım).</div>
         </div>
         <div class="t-demo">
           <div class="t-controls">
-            <label>Öğrenme oranı η <input type="range" id="t-opt-lr" min="-2" max="0.08" step="0.01"><output id="t-opt-lr-v"></output></label>
+            <label><span data-i18n="th.opt.lr">Öğrenme oranı η</span> <input type="range" id="t-opt-lr" min="-2" max="0.08" step="0.01"><output id="t-opt-lr-v"></output></label>
             <button type="button" class="btn small primary" id="t-opt-play">▶ Oynat</button>
           </div>
-          <p class="sub">İki parametreli bir kayıp yüzeyi: L(θ₁, θ₂) = θ₁²/20 + θ₂². Gri bantlar eşit kayıp bölgeleridir; kenarlara doğru kayıp artar, minimum ortadaki + işaretidir. Başlangıç noktasını değiştirmek için yüzeye tıklayın.</p>
-          <div class="opt-stage" id="t-opt-stage"><canvas id="t-opt-surface" aria-hidden="true"></canvas><svg id="t-opt-svg" viewBox="0 0 200 100" role="img" aria-label="Üç optimizerın kayıp yüzeyindeki yolu"></svg></div>
+          <p class="sub" data-i18n="th.opt.sub">İki parametreli bir kayıp yüzeyi: L(θ₁, θ₂) = θ₁²/20 + θ₂². Gri bantlar eşit kayıp bölgeleridir; kenarlara doğru kayıp artar, minimum ortadaki + işaretidir. Başlangıç noktasını değiştirmek için yüzeye tıklayın.</p>
+          <div class="opt-stage" id="t-opt-stage"><canvas id="t-opt-surface" aria-hidden="true"></canvas><svg id="t-opt-svg" viewBox="0 0 200 100" role="img" aria-label="Üç optimizerın kayıp yüzeyindeki yolu" data-i18n-attr="aria-label=a.opt"></svg></div>
           <div class="opt-legend" id="t-opt-legend"></div>
-          <div><div class="mini-title">Adım başına kayıp (logaritmik eksen)</div><div class="chart" id="t-opt-loss" data-height="170"></div></div>
+          <div><div class="mini-title" data-i18n="th.opt.loss">Adım başına kayıp (logaritmik eksen)</div><div class="chart" id="t-opt-loss" data-height="170"></div></div>
         </div>
       </article>
     </section>
@@ -492,27 +496,27 @@
     <!-- ============================== CODING ============================== -->
     <section class="panel" id="panel-code" role="tabpanel" aria-labelledby="tab-code" hidden>
       <div class="tut">
-        <nav class="tut-toc" aria-label="Rehber adımları">
+        <nav class="tut-toc" aria-label="Rehber adımları" data-i18n-attr="aria-label=a.toc">
           <div class="tut-toc-head">
-            <span class="tb-label">Adım adım</span>
-            <strong>SimpleCNN'i kodlayalım</strong>
+            <span class="tb-label" data-i18n="code.step">Adım adım</span>
+            <strong data-i18n="code.title">SimpleCNN'i kodlayalım</strong>
           </div>
           <ol id="tut-toc"></ol>
         </nav>
-        <div class="tut-main" id="tut-main"><p class="placeholder">Rehber yükleniyor…</p></div>
+        <div class="tut-main" id="tut-main"><p class="placeholder" data-i18n="code.loading">Rehber yükleniyor…</p></div>
       </div>
     </section>
   </main>
 
   <!-- Model switch: fixed to the window, so it stays reachable while scrolling (Inference and Theory tabs) -->
-  <aside class="model-float" aria-label="Gösterilen model">
+  <aside class="model-float" aria-label="Gösterilen model" data-i18n-attr="aria-label=a.float">
     <div class="model-float-text">
-      <span class="tb-label">Gösterilen model</span>
+      <span class="tb-label" data-i18n="float.label">Gösterilen model</span>
       <span class="model-float-desc" data-model-desc></span>
     </div>
-        <div class="seg model-switch" role="group" aria-label="Gösterilen model">
-          <button type="button" data-model="initial" aria-pressed="false">Eğitim öncesi</button>
-          <button type="button" data-model="trained" aria-pressed="true">Eğitilmiş</button>
+        <div class="seg model-switch" role="group" aria-label="Gösterilen model" data-i18n-attr="aria-label=a.float">
+          <button type="button" data-model="initial" aria-pressed="false" data-i18n="model.initial">Eğitim öncesi</button>
+          <button type="button" data-model="trained" aria-pressed="true" data-i18n="model.trained">Eğitilmiş</button>
         </div>
   </aside>
 
@@ -523,7 +527,7 @@
         <h2 id="zoom-title">Büyütülmüş görünüm</h2>
         <p class="sub" id="zoom-sub"></p>
       </div>
-      <button type="button" class="btn small icon" id="zoom-close" aria-label="Kapat">×</button>
+      <button type="button" class="btn small icon" id="zoom-close" aria-label="Kapat" data-i18n-attr="aria-label=a.close">×</button>
     </div>
     <canvas class="px zoom-canvas" id="zoom-canvas"></canvas>
     <div class="zoom-foot">
@@ -534,6 +538,7 @@
   </dialog>
 
   <div class="tooltip" id="tooltip" role="tooltip" hidden></div>
+  <script src="/static/i18n.js"></script>
   <script src="/static/app.js"></script>
   <script src="/static/theory.js"></script>
   <script src="/static/tutorial.js"></script>
