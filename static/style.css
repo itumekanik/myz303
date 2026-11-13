@@ -1096,3 +1096,113 @@ h2 > .info-btn { vertical-align: 2px; }
 .formula-live .katex { color: var(--accent-strong); }
 .bn-chip b .katex { font-size: 1em; }
 .bn-calc-row .katex { font-size: 1.05em; }
+
+/* ---------- Math tab (mathtab.js); the layout reuses the Coding tab's .tut classes ---------- */
+.m-step > p { margin: 0; color: var(--text-2); font-size: 14.5px; line-height: 1.7; max-width: 880px; }
+.m-step > p b, .m-step code { color: var(--text); }
+.m-step code { padding: 0 4px; border-radius: 4px; background: var(--surface-2); font-family: var(--mono); font-size: 0.88em; }
+.m-h3 { margin: 6px 0 -4px; font-size: 15.5px; color: var(--text); }
+.m-eq {
+  max-width: 880px; padding: 12px 18px; border-radius: 10px; background: var(--surface-2);
+  color: var(--text); font-size: 16px; overflow-x: auto; overflow-y: hidden; text-align: center;
+}
+.m-eq .katex { font-size: 1.12em; }
+.m-model { margin-top: 0; max-width: 880px; }
+.m-links { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; font-size: 13px; color: var(--muted); }
+.m-links a { color: var(--accent-strong); font-weight: 600; text-decoration: none; }
+.m-links a:hover { text-decoration: underline; }
+.m-step .data-table td, .m-step .data-table th { white-space: normal; }
+.m-table td .katex, .m-table th .katex { font-size: 1.02em; }
+
+/* Derivations, one line at a time */
+.m-derive { max-width: 880px; border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 10px; padding: 12px 16px; display: grid; gap: 10px; }
+.m-derive-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.m-derive-kicker { font-size: 11px; font-weight: 650; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent-strong); }
+.m-derive-head strong { color: var(--text); font-size: 14.5px; }
+.m-derive-count { margin-left: auto; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.m-derive-steps { margin: 0; padding: 0; list-style: none; counter-reset: dstep; display: grid; gap: 10px; }
+.m-derive-steps li { counter-increment: dstep; display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 4px 10px; align-items: start; }
+.m-derive-steps li::before {
+  content: counter(dstep); grid-row: span 2; width: 22px; height: 22px; margin-top: 12px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-strong); font-size: 11.5px; font-weight: 700;
+}
+.m-derive-steps .m-eq { text-align: left; padding: 10px 14px; }
+.m-why { margin: 0; color: var(--text-2); font-size: 13.5px; line-height: 1.6; }
+.m-reveal { animation: m-reveal 0.35s ease-out; }
+@keyframes m-reveal { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.m-derive-ctl { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Interactive examples */
+.m-widget {
+  max-width: 920px; display: grid; gap: 12px; padding: 14px 16px; border-radius: 12px;
+  border: 1px solid var(--border); background: var(--surface); box-shadow: inset 0 0 0 1px var(--surface-2);
+}
+.m-widget .t-controls select, .m-input input, .m-input select {
+  font: inherit; color: var(--text); background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 5px 8px;
+}
+.m-widget input[type="checkbox"] { accent-color: var(--accent); }
+.m-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.m-fig { margin: 0; display: grid; gap: 6px; justify-items: center; }
+.m-fig figcaption { font-size: 11.5px; color: var(--text-2); text-align: center; }
+.m-op { font-size: 20px; color: var(--muted); }
+.m-op.wide { font-size: 12.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.m-grid { display: grid; gap: 3px; }
+.m-cell {
+  min-width: 34px; height: 30px; padding: 0 4px; display: grid; place-items: center; border-radius: 5px;
+  background: var(--surface-2); color: var(--text); font-size: 13px; font-variant-numeric: tabular-nums; border: 1px solid transparent;
+}
+.m-cell.win { background: var(--accent-soft); border-color: var(--accent); }
+.m-cell.sel { background: var(--accent); color: var(--on-accent); font-weight: 700; }
+.m-grid.pick .m-cell { cursor: pointer; }
+.m-grid.pick .m-cell:hover:not(.sel) { border-color: var(--accent); }
+.m-grid.pick .m-cell:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.m-grid.kernel .m-cell.pos { background: color-mix(in srgb, var(--series-2) 28%, var(--surface)); }
+.m-grid.kernel .m-cell.neg { background: color-mix(in srgb, var(--series-1) 28%, var(--surface)); }
+.m-cell.w0 { background: color-mix(in srgb, var(--series-1) 16%, var(--surface)); }
+.m-cell.w1 { background: color-mix(in srgb, var(--series-2) 16%, var(--surface)); }
+.m-cell.w2 { background: color-mix(in srgb, var(--series-3) 18%, var(--surface)); }
+.m-cell.w3 { background: color-mix(in srgb, #a463d6 18%, var(--surface)); }
+.m-cell.win-max { font-weight: 800; border-color: var(--text); }
+.m-calc {
+  padding: 10px 14px; border-radius: 8px; background: var(--surface-2); color: var(--text);
+  overflow-x: auto; overflow-y: hidden; font-variant-numeric: tabular-nums;
+}
+.m-calc .katex { font-size: 1.06em; }
+.m-hint { margin: 0; color: var(--text-2); font-size: 13px; line-height: 1.55; }
+.m-inputs { display: flex; flex-wrap: wrap; align-items: end; gap: 10px 14px; }
+.m-input { display: grid; gap: 4px; font-size: 12.5px; color: var(--text-2); }
+.m-input input { width: 84px; font-variant-numeric: tabular-nums; }
+.m-out { display: grid; gap: 10px; min-width: 0; }
+.m-table td.m-dropped { color: var(--muted); text-decoration: line-through; }
+.m-table td.m-strong { font-weight: 700; color: var(--text); }
+.m-plot { width: 100%; max-width: 620px; height: auto; display: block; }
+.m-curve { fill: none; stroke-width: 2.5; stroke-linejoin: round; }
+.m-curve.f { stroke: var(--series-1); }
+.m-curve.d { stroke: var(--series-2); stroke-dasharray: 6 4; }
+.m-legend { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-2); }
+.m-legend .key { display: inline-block; width: 18px; height: 3px; border-radius: 2px; margin-left: 8px; }
+.m-legend .key.f { background: var(--series-1); }
+.m-legend .key.d { background: repeating-linear-gradient(90deg, var(--series-2) 0 6px, transparent 6px 9px); }
+
+/* "∑ The math" link in the Theory section headers */
+.t-head .m-theory-link {
+  margin-left: auto; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border);
+  background: var(--surface-2); color: var(--accent-strong); font-size: 12.5px; font-weight: 600; text-decoration: none; white-space: nowrap;
+}
+.t-head .m-theory-link:hover { border-color: var(--accent); background: var(--accent-soft); }
+
+@media (max-width: 720px) {
+  .m-eq { text-align: left; padding: 10px 12px; }
+  .m-derive { padding: 10px 12px; }
+  .m-cell { min-width: 28px; height: 26px; font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .m-reveal { animation: none; } }
+
+/* Phones: five tabs share the width of the top bar (scrolling inside it if they still do not fit) */
+@media (max-width: 720px) {
+  .tabs { width: 100%; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs button { flex: 1 0 auto; padding: 6px 8px; font-size: 13.5px; }
+}
+/* A formula never wraps mid-way; a box too narrow for it scrolls sideways instead */
+.m-eq, .m-calc { white-space: nowrap; }

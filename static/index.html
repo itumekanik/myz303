@@ -28,6 +28,7 @@
       <button type="button" role="tab" id="tab-train" aria-controls="panel-train" aria-selected="true" data-i18n="tab.train">Eğitim</button>
       <button type="button" role="tab" id="tab-infer" aria-controls="panel-infer" aria-selected="false" data-i18n="tab.infer">Çıkarım</button>
       <button type="button" role="tab" id="tab-theory" aria-controls="panel-theory" aria-selected="false" data-i18n="tab.theory">Teori</button>
+      <button type="button" role="tab" id="tab-math" aria-controls="panel-math" aria-selected="false" data-i18n="tab.math">Matematik</button>
       <button type="button" role="tab" id="tab-code" aria-controls="panel-code" aria-selected="false" data-i18n="tab.code">Kodlama</button>
     </nav>
     <div class="badges">
@@ -547,6 +548,19 @@
     </section>
 
     <!-- ============================== CODING ============================== -->
+    <section class="panel" id="panel-math" role="tabpanel" aria-labelledby="tab-math" hidden>
+      <div class="tut">
+        <nav class="tut-toc" aria-label="Matematik bölümleri" data-i18n-attr="aria-label=a.mtoc">
+          <div class="tut-toc-head">
+            <span class="tb-label" data-i18n="math.kicker">Formüllerle</span>
+            <strong data-i18n="math.title">CNN'in matematiği</strong>
+          </div>
+          <ol id="mt-toc"></ol>
+        </nav>
+        <div class="tut-main" id="mt-main"><p class="placeholder" data-i18n="math.loading">Yükleniyor…</p></div>
+      </div>
+    </section>
+
     <section class="panel" id="panel-code" role="tabpanel" aria-labelledby="tab-code" hidden>
       <div class="tut">
         <nav class="tut-toc" aria-label="Rehber adımları" data-i18n-attr="aria-label=a.toc">
@@ -597,6 +611,7 @@
   <script src="/static/app.js"></script>
   <script src="/static/theory.js"></script>
   <script src="/static/tutorial.js"></script>
+  <script src="/static/mathtab.js"></script>
   <script src="/static/glossary.js"></script>
   <script src="/static/help.js"></script>
   <script src="/static/math.js"></script>

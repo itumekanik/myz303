@@ -699,6 +699,20 @@ function termify(html, self = null) {
     GLOSSARY[key] && key !== self ? `<button type="button" class="gl-term" data-term="${key}">${text}</button>` : text);
 }
 
+/** The Math tab section that derives each term (mathtab.js). */
+const TERM_MATH = {
+  parameter: "m-notation", tensor: "m-notation",
+  convolution: "m-conv", kernel: "m-conv", stride: "m-conv", padding: "m-conv", channel: "m-conv", "feature-map": "m-conv",
+  batchnorm: "m-bn", "train-eval": "m-bn",
+  activation: "m-act", relu: "m-act",
+  pooling: "m-pool", "receptive-field": "m-pool",
+  dropout: "m-drop",
+  flatten: "m-fc", "fully-connected": "m-fc",
+  softmax: "m-softmax", "cross-entropy": "m-softmax", logit: "m-softmax", loss: "m-softmax",
+  backprop: "m-backprop", gradient: "m-backprop", "forward-pass": "m-backprop", step: "m-backprop",
+  "gradient-descent": "m-opt", sgd: "m-opt", momentum: "m-opt", adam: "m-opt", optimizer: "m-opt", "learning-rate": "m-opt",
+};
+
 /** Section names for links whose section has no heading of its own. */
 const SECTION_NAMES = { "t-schematic": { tr: "Mimari şeması", en: "Architecture diagram" } };
 
@@ -710,6 +724,10 @@ function placeLabel(link) {
   if (!name && link.tab === "code") {
     const step = STEPS.find((s) => s.id === link.section);
     name = step && L(step.title);
+  }
+  if (!name && link.tab === "math") {
+    const section = window.MATH_SECTIONS?.find((s) => s.id === link.section);
+    name = section && L(section.title);
   }
   if (!name) name = document.querySelector(`#${link.section} h2`)?.textContent.trim();
   return name ? `${tabName} → ${name}` : tabName;
@@ -742,11 +760,13 @@ function renderTerm(key, { glossaryLink }) {
     nodes.push(h("div", { class: "g-see" }, h("span", { text: L({ tr: "İlgili:", en: "Related:" }) }), ...related.map(termChip)));
   }
   const links = h("div", { class: "g-links" });
-  if (entry.link) {
-    const a = h("a", { href: "#", class: "g-place", text: `${placeLabel(entry.link)} →` });
+  for (const place of [entry.link, TERM_MATH[key] && { tab: "math", section: TERM_MATH[key] }]) {
+    if (!place) continue;
+    const a = h("a", { href: "#", class: "g-place", text: `${placeLabel(place)} →` });
     a.addEventListener("click", (event) => {
       event.preventDefault();
-      goToPlace(entry.link);
+      event.stopPropagation();   // not the page-wide data-go handler
+      goToPlace(place);
     });
     links.append(a);
   }

@@ -1067,6 +1067,7 @@ const TABS = {
   train: { tab: "#tab-train", panel: "#panel-train", hash: "#egitim" },
   infer: { tab: "#tab-infer", panel: "#panel-infer", hash: "#cikarim" },
   theory: { tab: "#tab-theory", panel: "#panel-theory", hash: "#teori" },
+  math: { tab: "#tab-math", panel: "#panel-math", hash: "#matematik" },
   code: { tab: "#tab-code", panel: "#panel-code", hash: "#kodlama" },
 };
 
