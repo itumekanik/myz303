@@ -1010,8 +1010,19 @@ let glossaryScrollTimer = 0;
 // =====================================================================
 // Wiring
 // =====================================================================
+/**
+ * Static page texts (data-i18n) may hold [[key|text]] too; i18n.js puts the raw text back on
+ * every language change, so the links are made again after it.
+ */
+function linkStaticTerms() {
+  for (const el of document.querySelectorAll("[data-i18n]")) {
+    if (el.innerHTML.includes("[[")) el.innerHTML = termify(el.innerHTML);
+  }
+}
+
 buildTermCard();
 buildGlossary();
+linkStaticTerms();
 
 glossary.list.addEventListener("scroll", () => {
   clearTimeout(glossaryScrollTimer);
@@ -1062,6 +1073,7 @@ document.addEventListener("keydown", (event) => {
 window.addEventListener("resize", () => { if (termCard.anchor) placeNear(termCard.el, termCard.anchor); });
 document.addEventListener("tab-shown", closeTerm);
 document.addEventListener("lang-change", () => {
+  linkStaticTerms();
   renderGlossary();
   if (termCard.anchor && termCard.key) showTerm(termCard.key);
   $("#glossary-btn .glossary-btn-text").textContent = L({ tr: "Sözlük", en: "Glossary" });

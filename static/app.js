@@ -1220,7 +1220,7 @@ const zoom = { dialog: $("#zoom"), canvas: $("#zoom-canvas"), source: null, peak
 /** Canvases whose click already does something else are not zoomable. */
 function isZoomable(canvas) {
   return canvas._paint && canvas !== zoom.canvas
-    && !canvas.closest(".filter-strip, #test-samples, .theory-bar, .draw-card");
+    && !canvas.closest(".filter-strip, #test-samples, .theory-bar, .draw-card, .bn-maps");   // BatchNorm maps: a click picks a pixel
 }
 
 function zoomInfo(canvas) {

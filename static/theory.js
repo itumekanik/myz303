@@ -223,8 +223,8 @@ function columnPath(x, y, w, hgt, r = 4) {
 }
 
 /** Histogram on a shared x range; a bar far taller than the rest is cut and labelled. */
-function histogram(host, values, lo, hi, mean) {
-  host._render = () => histogram(host, values, lo, hi, mean);
+function histogram(host, values, lo, hi, mean, opts = {}) {
+  host._render = () => histogram(host, values, lo, hi, mean, opts);
   if (!host.clientWidth) { host._w = 0; return; }   // hidden: the resize observer redraws it once shown
   host._w = host.clientWidth;
   const W = host.clientWidth;
@@ -242,6 +242,13 @@ function histogram(host, values, lo, hi, mean) {
   const bw = iw / bins;
 
   const root = svg("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": t("th.hist.aria") });
+  const span = (a, b, cls) => {   // a shaded x range behind the bars
+    const x1 = X(clamp(a, lo, hi));
+    const x2 = X(clamp(b, lo, hi));
+    if (x2 > x1) root.append(svg("rect", { x: x1, y: m.t, width: x2 - x1, height: ih, class: cls }));
+  };
+  if (opts.band) span(opts.band[0], opts.band[1], "hist-band");
+  if (opts.zero) span(lo, 0, "hist-cut");
   counts.forEach((count, i) => {
     const x = m.l + i * bw;
     const barH = Math.min(count / top, 1) * ih;
@@ -264,6 +271,11 @@ function histogram(host, values, lo, hi, mean) {
   if (mean >= lo && mean <= hi) {
     root.append(svg("line", { x1: X(mean), x2: X(mean), y1: m.t, y2: m.t + ih, class: "mean-line" }));
     root.append(svgText(X(mean) + 4, m.t + 10, "μ", "mean-label"));
+  }
+  if (opts.zero && lo < 0 && hi > 0) root.append(svgText(X(lo) + 4, m.t + 10, "ReLU → 0", "cut-label"));
+  if (opts.mark != null && opts.mark >= lo && opts.mark <= hi) {   // the value being traced
+    root.append(svg("line", { x1: X(opts.mark), x2: X(opts.mark), y1: m.t + 4, y2: m.t + ih, class: "hist-mark" }));
+    root.append(svg("circle", { cx: X(opts.mark), cy: m.t + 4, r: 4, class: "hist-mark-dot" }));
   }
   host.replaceChildren(root);
 }
@@ -470,11 +482,89 @@ function stopConvAnim() {
 }
 
 // =====================================================================
-// 2 · Batch normalization
+// 2 · Batch normalization, step by step
+// Everything is computed here, on the selected Conv1 filter's real output for a batch of
+// test images, exactly as BatchNorm2d does in training mode (biased variance, ε from the model).
 // =====================================================================
-const bnState = { gamma: 1, beta: 0, z: null, zSorted: null, xhSorted: null, mu: 0, sd: 1 };
+const BN_MOMENTUM = 0.1;   // PyTorch's default; SimpleCNN does not change it
+
+const BN_TEXT = {
+  lead: {
+    tr: "Batch Normalization (BatchNorm), bir katmanın çıktısını sonraki katmana vermeden önce <b>her [[channel|kanalı]] ayrı ayrı</b> standart bir ölçeğe getirir: önce değerleri ortalaması 0, standart sapması 1 olacak şekilde kaydırıp ölçekler, sonra öğrenilen iki sayıyla (γ ve β) ağın ihtiyaç duyduğu ölçeğe taşır. Aşağıda bunu adım adım, seçili filtrenin gerçek test görüntülerindeki çıktısı üzerinde izleyebilirsiniz.",
+    en: "Batch normalization (BatchNorm) brings <b>each [[channel|channel]] separately</b> to a standard scale before passing a layer's output on: it first shifts and scales the values to mean 0 and standard deviation 1, then moves them to whatever scale the network needs with two learned numbers (γ and β). Below you can follow it step by step on the selected filter's real output for test images.",
+  },
+  "flow.x": { tr: "evrişim çıktısı", en: "convolution output" },
+  "flow.stats": { tr: "kanalın batch ortalaması ve std. sapması", en: "the channel's batch mean and std. dev." },
+  "flow.norm": { tr: "normalleştir", en: "normalize" },
+  "flow.affine": { tr: "öğrenilen ölçek ve kayma", en: "learned scale and shift" },
+  "flow.relu": { tr: "sonraki işlem", en: "next operation" },
+
+  "s1.h": { tr: "Sorun: her kanal farklı bir ölçekte", en: "The problem: every channel has its own scale" },
+  "s1.p": {
+    tr: "<p>Conv1'in 32 filtresinin her biri farklı bir desene bakar ve çıktıları farklı aralıklarda olur: kiminin değerleri dar bir aralıkta toplanır, kimininki geniş bir aralığa yayılır; kiminin ortalaması pozitif, kiminin negatiftir. Üstelik ağırlıklar her adımda değiştiği için bu aralıklar eğitim boyunca kayar; sonraki katman sürekli kayan girdilere uyum sağlamak zorunda kalır. Eğitim yavaşlar ve [[learning-rate|öğrenme oranını]] küçük tutmak gerekir.</p><p>BatchNorm her kanalı aynı başlangıç ölçeğine çeker. Grafikte her çubuk, bir kanalın bu batch'teki değer aralığıdır (ortalama ± 1 standart sapma). Mavi bant, normalleştirmeden sonra <b>bütün kanalların</b> geleceği aralıktır: dar kanallar genişler, geniş olanlar daralır, kaymış olanlar ortalanır.</p>",
+    en: "<p>Each of Conv1's 32 filters looks for a different pattern, and their outputs fall in different ranges: some channels' values stay in a narrow range, others spread widely; some have a positive mean, others a negative one. And since the weights change at every step, these ranges drift during training; the next layer has to keep adapting to inputs that keep moving. Training slows down and the [[learning-rate|learning rate]] has to stay small.</p><p>BatchNorm brings every channel to the same starting scale. In the chart, each bar is one channel's range in this batch (mean ± 1 standard deviation). The blue band is where <b>every channel</b> ends up after normalization: narrow channels are widened, wide ones narrowed, shifted ones centered.</p>",
+  },
+  "s1.cap": { tr: "Bir çubuğa tıklayarak o filtreyi seçin; sonraki adımlar seçili filtre için hesaplanır.", en: "Click a bar to select that filter; the next steps are computed for the selected filter." },
+
+  "s2.h": { tr: "Hangi değerler birlikte normalleştirilir?", en: "Which values are normalized together?" },
+  "s2.p": {
+    tr: "<p>En çok karıştırılan nokta burası. Conv1'in çıktısı 4 boyutlu bir [[tensor|tensördür]]: <b>(görüntü, kanal, satır, sütun)</b>. BatchNorm her <b>kanal</b> için ayrı çalışır ve o kanalın batch'teki <b>bütün görüntülerdeki bütün konumlarını</b> tek bir havuzda toplar.</p><p>Yani seçili filtre için sağdaki haritaların bütün piksellerinden <b>tek bir μ ve tek bir σ</b> hesaplanır ve hepsine aynı işlem uygulanır. 32 kanal için toplam 32 μ ve 32 σ vardır. Tek bir görüntünün ya da tek bir pikselin kendi istatistiği yoktur.</p><p class=\"bn-note\">Tam bağlı katmanlardan sonra kullanılan <code>BatchNorm1d</code>'de satır ve sütun yoktur: her nöron için yalnızca batch boyunca hesaplanır.</p>",
+    en: "<p>This is the part most often misunderstood. Conv1's output is a 4-dimensional [[tensor|tensor]]: <b>(image, channel, row, column)</b>. BatchNorm works on each <b>channel</b> separately and pools <b>every position in every image</b> of the batch for that channel.</p><p>So for the selected filter, <b>one μ and one σ</b> are computed from all the pixels of the maps on the right, and the same operation is applied to all of them. For 32 channels there are 32 μ and 32 σ in total. A single image, or a single pixel, has no statistics of its own.</p><p class=\"bn-note\">In <code>BatchNorm1d</code>, used after fully connected layers, there are no rows and columns: each neuron is normalized over the batch only.</p>",
+  },
+  "s2.cap": { tr: "Bir haritanın üzerine gelin ya da dokunun: o pikselin değerini sonraki adımlarda izleyin.", en: "Hover over or tap a map: follow that pixel's value through the next steps." },
+  "axes.image": { tr: "görüntü", en: "images" },
+  "axes.channel": { tr: "kanal", en: "channels" },
+  "axes.row": { tr: "satır", en: "rows" },
+  "axes.col": { tr: "sütun", en: "columns" },
+  "axes.pooled": { tr: "birlikte", en: "pooled" },
+  "axes.separate": { tr: "ayrı ayrı", en: "separately" },
+
+  "s3.h": { tr: "Kanalın ortalamasını ve standart sapmasını hesapla", en: "Compute the channel's mean and standard deviation" },
+  "s3.p": {
+    tr: "<p>Havuzdaki <i>m</i> değerin ortalaması μ<sub>B</sub> ve varyansı σ<sub>B</sub><sup>2</sup> hesaplanır (B: batch):</p><div class=\"formula small\">μ<sub>B</sub> = (1/m) Σ x<sub>i</sub> &nbsp;&nbsp; σ<sub>B</sub><sup>2</sup> = (1/m) Σ (x<sub>i</sub> − μ<sub>B</sub>)<sup>2</sup></div><p>Bunlar <b>bu batch'in</b> istatistikleridir; başka bir batch'te biraz farklı çıkarlar. Yukarıdaki <b>Yeni batch</b> düğmesiyle deneyin.</p>",
+    en: "<p>The mean μ<sub>B</sub> and variance σ<sub>B</sub><sup>2</sup> of the <i>m</i> pooled values are computed (B: batch):</p><div class=\"formula small\">μ<sub>B</sub> = (1/m) Σ x<sub>i</sub> &nbsp;&nbsp; σ<sub>B</sub><sup>2</sup> = (1/m) Σ (x<sub>i</sub> − μ<sub>B</sub>)<sup>2</sup></div><p>These are <b>this batch's</b> statistics; another batch gives slightly different ones. Try the <b>New batch</b> button above.</p>",
+  },
+  h1: { tr: "Evrişim çıktısı x · gölgeli alan μ ± σ", en: "Convolution output x · shaded area μ ± σ" },
+
+  "s4.h": { tr: "Normalleştir: ortalamayı çıkar, standart sapmaya böl", en: "Normalize: subtract the mean, divide by the standard deviation" },
+  "s4.p": {
+    tr: "<div class=\"formula small\">x̂ = (x − μ<sub>B</sub>) / √(σ<sub>B</sub><sup>2</sup> + ε)</div><p>Her değerden kanal ortalaması çıkarılır (dağılım 0'a kayar) ve standart sapmaya bölünür (genişliği 1 olur: σ'sı 1'den küçük olan bir kanal genişler, büyük olan daralır). Dağılımın <b>şekli değişmez</b>, yalnızca yeri ve genişliği değişir: üstteki ve alttaki histogramlar aynı eksende çizildi.</p><p>ε çok küçük bir sayıdır (0,00001); σ sıfıra çok yakın olduğunda sıfıra bölmeyi önler.</p><p class=\"bn-note\">İlginç bir sonuç: evrişimin bias'ı her değere aynı sabiti ekler ve ortalama çıkarılırken bu sabit de silinir. Bu yüzden BatchNorm'dan önce gelen katmanlarda bias çoğu zaman kapatılır (<code>bias=False</code>).</p>",
+    en: "<div class=\"formula small\">x̂ = (x − μ<sub>B</sub>) / √(σ<sub>B</sub><sup>2</sup> + ε)</div><p>The channel mean is subtracted from every value (the distribution moves to 0) and the result is divided by the standard deviation (its width becomes 1: a channel with σ below 1 gets wider, one above 1 narrower). The <b>shape</b> of the distribution <b>does not change</b>, only its position and width: the histograms above and below use the same axis.</p><p>ε is a tiny number (0.00001) that prevents dividing by zero when σ is very close to zero.</p><p class=\"bn-note\">A neat consequence: the convolution's bias adds the same constant to every value, and subtracting the mean removes that constant too. That is why layers right before a BatchNorm often have their bias turned off (<code>bias=False</code>).</p>",
+  },
+  h2: { tr: "Normalleştirilmiş x̂ · gölgeli alan −1 … 1", en: "Normalized x̂ · shaded area −1 … 1" },
+
+  "s5.h": { tr: "Ölçekle ve kaydır: γ ve β", en: "Scale and shift: γ and β" },
+  "s5.p": {
+    tr: "<div class=\"formula small\">y = γ · x̂ + β</div><p>Her kanalı zorla ortalama 0, standart sapma 1'de tutmak ağı kısıtlayabilir: örneğin bir kanalın [[relu|ReLU]]'dan önce çoğunlukla negatif kalması, yani yalnızca güçlü desenlerde \"yanması\" daha yararlı olabilir. Bu yüzden her kanalın öğrenilen iki parametresi vardır: <b>γ</b> (ölçek) dağılımı genişletir ya da daraltır, <b>β</b> (kayma) sağa ya da sola kaydırır.</p><p>γ ve β da ağırlıklar gibi [[backprop|geri yayılımla]] öğrenilir. Ağ isterse γ = σ ve β = μ seçerek normalleştirmeyi tamamen geri alabilir; yani BatchNorm ağdan bir şey eksiltmez, yalnızca öğrenmeyi kolaylaştırır.</p><p>Kaydırıcılarla deneyin; <b>Modelin γ, β değerleri</b> düğmesi eğitimin bulduğu değerlere döner.</p>",
+    en: "<div class=\"formula small\">y = γ · x̂ + β</div><p>Forcing every channel to mean 0 and standard deviation 1 could restrict the network: it may be more useful for a channel to stay mostly negative before [[relu|ReLU]], so that it only \"fires\" on strong patterns. That is why every channel has two learned parameters: <b>γ</b> (scale) widens or narrows the distribution, <b>β</b> (shift) moves it left or right.</p><p>γ and β are learned with [[backprop|backpropagation]] just like the weights. If it helps, the network can choose γ = σ and β = μ and undo the normalization completely; BatchNorm takes nothing away from the network, it only makes learning easier.</p><p>Try the sliders; the <b>Model's γ and β</b> button goes back to the values training found.</p>",
+  },
+  h3: { tr: "BatchNorm çıktısı y · sağdaki kısım ReLU'dan geçer", en: "BatchNorm output y · the part right of 0 passes ReLU" },
+
+  "s6.h": { tr: "Eğitimde ve çıkarımda farklı çalışır", en: "It works differently in training and at inference" },
+  "s6.p": {
+    tr: "<p>Yukarıdaki μ<sub>B</sub> ve σ<sub>B</sub> bu batch'ten hesaplandı; eğitimde ([[train-eval|<code>model.train()</code>]]) tam olarak böyle çalışır. Ama [[inference|çıkarımda]] tek bir görüntü gelebilir ve bir görüntünün sonucunun yanındaki başka görüntülere bağlı olması istenmez.</p><p>Bu yüzden BatchNorm, eğitimin her adımında batch istatistiklerinin [[moving-average|hareketli ortalamasını]] günceller ve çıkarımda (<code>model.eval()</code>) bunları kullanır. Bu ortalamalar öğrenilmez, yalnızca biriktirilir ve [[checkpoint|checkpoint]]'e γ ve β ile birlikte kaydedilir.</p>",
+    en: "<p>The μ<sub>B</sub> and σ<sub>B</sub> above were computed from this batch; that is exactly how it works in training ([[train-eval|<code>model.train()</code>]]). But at [[inference|inference]] a single image may come in, and an image's result should not depend on the other images next to it.</p><p>That is why, at every training step, BatchNorm updates a [[moving-average|moving average]] of the batch statistics, and uses those at inference (<code>model.eval()</code>). They are not learned, only accumulated, and they are saved in the [[checkpoint|checkpoint]] together with γ and β.</p>",
+  },
+
+  model: {
+    tr: "<b>SimpleCNN'de:</b> Her evrişimden sonra, ReLU'dan önce: <code>BatchNorm2d(32)</code> ve <code>BatchNorm2d(64)</code>. Her biri kanal başına bir γ ve bir β öğrenir (toplam 2 × (32 + 64) = 192 parametre) ve kanal başına bir hareketli ortalama ile bir hareketli varyans saklar.",
+    en: "<b>In SimpleCNN:</b> after every convolution, before ReLU: <code>BatchNorm2d(32)</code> and <code>BatchNorm2d(64)</code>. Each learns one γ and one β per channel (2 × (32 + 64) = 192 parameters in total) and keeps one running mean and one running variance per channel.",
+  },
+};
+
+const bnState = {
+  gamma: 1, beta: 0, z: null, zSorted: null, xh: null, xhSorted: null, mu: 0, sd: 1,
+  pick: null, channels: null, channelsKey: null, frame: 0,
+};
+
+function fillBnText() {
+  for (const el of document.querySelectorAll("#t-bn [data-bn]")) {
+    el.innerHTML = termify(L(BN_TEXT[el.dataset.bn]));   // static, author-written markup
+  }
+}
 
 function setupBN() {
+  fillBnText();
   const gamma = $("#t-bn-gamma");
   const beta = $("#t-bn-beta");
   gamma.addEventListener("input", () => { bnState.gamma = Number(gamma.value); updateBN(); });
@@ -485,11 +575,53 @@ function setupBN() {
     computeBnBatch();
     updateBN();
   });
+  // Pick a pixel on the maps (hover, or tap on touch screens)
+  const maps = $("#t-bn-maps");
+  const pickFrom = (event) => {
+    const canvas = event.target.closest?.("canvas");
+    if (!canvas || !bnState.z) return;
+    const [r, c] = cellFromEvent(event, canvas, 24, 24);
+    const pick = { img: Number(canvas.dataset.i), r, c };
+    if (bnState.pick && pick.img === bnState.pick.img && r === bnState.pick.r && c === bnState.pick.c) return;
+    bnState.pick = pick;
+    cancelAnimationFrame(bnState.frame);
+    bnState.frame = requestAnimationFrame(updateBN);
+  };
+  maps.addEventListener("pointermove", pickFrom);
+  maps.addEventListener("pointerdown", pickFrom);
+  $("#t-bn-channels").addEventListener("click", (event) => {
+    const hit = event.target.closest?.("[data-channel]");
+    if (hit) selectFilter(Number(hit.dataset.channel));
+  });
+}
+
+/** Mean and standard deviation of every Conv1 channel over the batch (step 1). */
+function channelStats() {
+  const { weight, bias } = T.params.conv1;
+  return weight.map((w, ch) => {
+    let sum = 0;
+    let sq = 0;
+    let n = 0;
+    for (const sample of T.batch) {
+      for (const v of conv2d(sample.x, SIZE, SIZE, w, 5, bias[ch]).out) {
+        sum += v;
+        sq += v * v;
+        n++;
+      }
+    }
+    const mu = sum / n;
+    return { mu, sd: Math.sqrt(Math.max(sq / n - mu * mu, 0)) };
+  });
 }
 
 /** Conv1 output of the selected filter for every image in the batch: N x 24 x 24 values. */
 function computeBnBatch() {
   if (!T.params || !T.batch.length) return;
+  const key = `${T.version}|${T.batch.map((s) => s.index).join(",")}`;
+  if (bnState.channelsKey !== key) {
+    bnState.channels = channelStats();
+    bnState.channelsKey = key;
+  }
   const w = T.params.conv1.weight[T.filter];
   const b = T.params.conv1.bias[T.filter];
   const z = new Float32Array(T.batch.length * 576);
@@ -498,11 +630,16 @@ function computeBnBatch() {
   const sd = stdOf(z, mu);
   const denom = Math.sqrt(sd * sd + T.params.bn1.eps);
   Object.assign(bnState, {
-    z, mu, sd, filter: T.filter,
+    z, mu, sd, denom, filter: T.filter,
     zSorted: Float32Array.from(z).sort(),
     xh: z.map((v) => (v - mu) / denom),
   });
   bnState.xhSorted = Float32Array.from(bnState.xh).sort();
+  // Start by following the strongest response in the first image
+  let best = 0;
+  for (let i = 1; i < 576; i++) if (z[i] > z[best]) best = i;
+  bnState.pick = { img: 0, r: Math.floor(best / 24), c: best % 24 };
+  renderBnMaps();
 }
 
 function resetBnParams() {
@@ -511,16 +648,132 @@ function resetBnParams() {
   bnState.beta = T.params.bn1.beta[T.filter];
 }
 
+/** Step 2: the selected channel's map for every image in the batch, on one color scale. */
+function renderBnMaps() {
+  const host = $("#t-bn-maps");
+  const { z } = bnState;
+  const n = T.batch.length;
+  if (host.querySelectorAll("canvas").length !== n) {
+    host.replaceChildren(...Array.from({ length: n }, (_, i) =>
+      h("div", { class: "bn-map" }, h("canvas", { class: "px", "data-i": i }))));
+    host.append(h("div", { class: "cell-box bn-pick", hidden: true }));
+  }
+  const scale = maxAbs(z);
+  host.querySelectorAll("canvas").forEach((canvas, i) => {
+    paint(canvas, toSigned(z.subarray(i * 576, (i + 1) * 576), scale), 24, 24, "div", true);
+  });
+}
+
+/** Step 1: every channel's range (μ ± σ) before BatchNorm, and the band they all share after it. */
+function renderBnChannels(host) {
+  host._render = () => renderBnChannels(host);
+  if (!host.clientWidth) { host._w = 0; return; }
+  host._w = host.clientWidth;
+  const stats = bnState.channels;
+  const W = host.clientWidth;
+  const H = +host.dataset.height || 220;
+  const m = { l: 40, r: 10, t: 12, b: 26 };
+  const iw = W - m.l - m.r;
+  const ih = H - m.t - m.b;
+  let lo = -1.3;
+  let hi = 1.3;
+  for (const s of stats) {
+    lo = Math.min(lo, s.mu - s.sd);
+    hi = Math.max(hi, s.mu + s.sd);
+  }
+  const padY = (hi - lo) * 0.06;
+  lo -= padY;
+  hi += padY;
+  const Y = (v) => m.t + ((hi - v) / (hi - lo)) * ih;
+  const slot = iw / stats.length;
+  const X = (i) => m.l + (i + 0.5) * slot;
+
+  const root = svg("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": L({ tr: "Kanal başına değer aralıkları", en: "Value range per channel" }) });
+  for (const tick of linearTicks(lo, hi, niceStep(hi - lo, 5), (v) => fmtTick(v))) {
+    root.append(svg("line", { x1: m.l, x2: W - m.r, y1: Y(tick.v), y2: Y(tick.v), class: "gridline" }));
+    root.append(svgText(m.l - 6, Y(tick.v) + 4, tick.label, "tick", "end"));
+  }
+  root.append(svg("rect", { x: m.l, y: Y(1), width: iw, height: Y(-1) - Y(1), class: "bn-band" }));
+  root.append(svgText(W - m.r - 4, Y(1) - 5, L({ tr: "BatchNorm sonrası: hepsi μ = 0, σ = 1", en: "after BatchNorm: all at μ = 0, σ = 1" }), "bn-band-label", "end"));
+  root.append(svg("line", { x1: m.l, x2: W - m.r, y1: Y(0), y2: Y(0), class: "baseline" }));
+  stats.forEach((s, i) => {
+    const selected = i === T.filter;
+    const group = svg("g", { class: `bn-ch${selected ? " selected" : ""}`, "data-channel": i });
+    group.append(svg("rect", { x: m.l + i * slot, y: m.t, width: slot, height: ih, fill: "transparent" }));
+    group.append(svg("line", { x1: X(i), x2: X(i), y1: Y(s.mu + s.sd), y2: Y(s.mu - s.sd), class: "bn-range" }));
+    group.append(svg("circle", { cx: X(i), cy: Y(s.mu), r: selected ? 4.5 : 3, class: "bn-mu" }));
+    group.addEventListener("pointermove", (e) => showTip(e.clientX, e.clientY, t("th.filter.n", { n: i + 1 }), [
+      { value: fmtNum(s.mu, 3), label: "μ", color: "var(--series-2)" },
+      { value: fmtNum(s.sd, 3), label: "σ", color: "var(--series-2)" },
+    ]));
+    group.addEventListener("pointerleave", hideTip);
+    root.append(group);
+    if (i % 4 === 0 || selected) root.append(svgText(X(i), H - 8, String(i + 1), selected ? "tick bn-tick-selected" : "tick", "middle"));
+  });
+  host.replaceChildren(root);
+}
+
+/** One line of a worked calculation: label, then the expression, then the result. */
+function bnCalc(host, rows) {
+  host.replaceChildren(...rows.map(([label, expr, result]) => h("div", { class: "bn-calc-row" },
+    h("span", { class: "calc-cap", text: label }),
+    h("span", { class: "bn-expr", text: expr }),
+    result != null ? h("strong", { text: result }) : null)));
+}
+
 function updateBN() {
   if (!T.params || !bnState.z) return;
-  const { z, xh, zSorted, xhSorted, mu, sd, gamma, beta } = bnState;
+  const { z, xh, zSorted, xhSorted, mu, sd, denom, gamma, beta, pick } = bnState;
+  const n = T.batch.length;
+  const eps = T.params.bn1.eps;
   $("#t-bn-gamma").value = gamma;
   $("#t-bn-beta").value = beta;
   $("#t-bn-gamma-v").textContent = fmtNum(gamma, 2);
   $("#t-bn-beta-v").textContent = fmtNum(beta, 2);
+  $("#t-bn-sub").textContent = L({
+    tr: `Filtre #${T.filter + 1} · batch: ${n} test görüntüsü`,
+    en: `Filter #${T.filter + 1} · batch: ${n} test images`,
+  });
 
-  const y = xh.map((v) => gamma * v + beta);
-  // One x range for all three, so the shift and the scaling are visible
+  // Step 1
+  renderBnChannels($("#t-bn-channels"));
+  const mus = bnState.channels.map((c) => c.mu);
+  const sds = bnState.channels.map((c) => c.sd);
+  const range = (a, d) => `${fmtNum(Math.min(...a), d)} … ${fmtNum(Math.max(...a), d)}`;
+  bnCalc($("#t-bn-chstats"), [
+    [L({ tr: "BatchNorm öncesi", en: "Before BatchNorm" }),
+      L({ tr: `ortalamalar ${range(mus, 2)}, std. sapmalar ${range(sds, 2)}`, en: `means ${range(mus, 2)}, std. devs ${range(sds, 2)}` }),
+      L({ tr: `(en geniş kanal en darın ${fmtNum(Math.max(...sds) / Math.max(Math.min(...sds), 1e-9), 1)} katı)`,
+        en: `(the widest channel is ${fmtNum(Math.max(...sds) / Math.max(Math.min(...sds), 1e-9), 1)}× the narrowest)` })],
+    [L({ tr: "Normalleştirme sonrası", en: "After normalizing" }),
+      L({ tr: "her kanalın ortalaması 0, std. sapması 1", en: "every channel has mean 0 and std. dev. 1" }), null],
+  ]);
+
+  // Step 2: which axes are pooled
+  const axis = (size, name, pooled) => h("span", { class: `bn-axis${pooled ? "" : " separate"}` },
+    h("b", { text: String(size) }), h("span", { text: L(BN_TEXT[`axes.${name}`]) }),
+    h("small", { text: L(BN_TEXT[pooled ? "axes.pooled" : "axes.separate"]) }));
+  $("#t-bn-axes").replaceChildren(
+    h("span", { class: "bn-paren", text: "(" }), axis(n, "image", true), axis(32, "channel", false), axis(24, "row", true), axis(24, "col", true),
+    h("span", { class: "bn-paren", text: ")" }),
+    h("span", { class: "bn-axes-sum", text: L({
+      tr: `→ filtre #${T.filter + 1} için ${n} × 24 × 24 = ${fmtInt(z.length)} değer → 1 μ, 1 σ`,
+      en: `→ for filter #${T.filter + 1}: ${n} × 24 × 24 = ${fmtInt(z.length)} values → 1 μ, 1 σ`,
+    }) }));
+  const index = pick.img * 576 + pick.r * 24 + pick.c;
+  const box = $("#t-bn-maps .bn-pick");
+  const cell = $(`#t-bn-maps canvas[data-i="${pick.img}"]`)?.parentElement;
+  if (cell) {
+    cell.append(box);
+    placeBox(box, pick.c, pick.r, 1, 1, 24, 24);
+  }
+  for (const map of document.querySelectorAll("#t-bn-maps .bn-map")) map.classList.toggle("picked", map === cell);
+
+  // Steps 3 to 5 share one x range, so the shift and the squeeze are visible
+  const x = z[index];
+  const xn = xh[index];
+  const y = gamma * xn + beta;
+  const ys = xh.map((v) => gamma * v + beta);
   const ends = [percentile(zSorted, 0.002), percentile(zSorted, 0.998), percentile(xhSorted, 0.002), percentile(xhSorted, 0.998)];
   ends.push(gamma * ends[2] + beta, gamma * ends[3] + beta);
   let lo = Math.min(...ends);
@@ -529,26 +782,62 @@ function updateBN() {
   lo -= pad;
   hi += pad;
   const yMean = gamma * meanOf(xh) + beta;
-  histogram($("#t-bn-h1"), z, lo, hi, mu);
-  histogram($("#t-bn-h2"), xh, lo, hi, meanOf(xh));
-  histogram($("#t-bn-h3"), y, lo, hi, yMean);
+  histogram($("#t-bn-h1"), z, lo, hi, mu, { band: [mu - sd, mu + sd], mark: x });
+  histogram($("#t-bn-h2"), xh, lo, hi, meanOf(xh), { band: [-1, 1], mark: xn });
+  histogram($("#t-bn-h3"), ys, lo, hi, yMean, { mark: y, zero: true });
 
-  const rows = [
-    [t("th.bn.row1"), mu, sd],
-    [t("th.bn.row2"), meanOf(xh), stdOf(xh)],
-    ["3 · y = γx̂ + β", yMean, stdOf(y, yMean)],
-  ];
-  $("#t-bn-table tbody").replaceChildren(...rows.map(([name, a, b]) => h("tr", {},
-    h("td", { text: name }), h("td", { text: fmtNum(a, 3) }), h("td", { text: fmtNum(b, 3) }))));
+  const where = L({ tr: `görüntü ${pick.img + 1}, satır ${pick.r + 1}, sütun ${pick.c + 1}`, en: `image ${pick.img + 1}, row ${pick.r + 1}, column ${pick.c + 1}` });
+  $("#t-bn-stats").replaceChildren(
+    h("span", {}, "m = ", h("strong", { text: fmtInt(z.length) })),
+    h("span", {}, "μ", h("sub", { text: "B" }), " = ", h("strong", { text: fmtNum(mu, 4) })),
+    h("span", {}, "σ", h("sub", { text: "B" }), " = ", h("strong", { text: fmtNum(sd, 4) })));
+  bnCalc($("#t-bn-c1"), [
+    [L({ tr: "İzlenen değer", en: "Traced value" }), `x = ${fmtNum(x, 4)}`, null],
+    ["", where, null],
+  ]);
+  bnCalc($("#t-bn-c2"), [
+    [L({ tr: "İzlenen değer", en: "Traced value" }),
+      `x̂ = (${fmtNum(x, 4)} − ${fmtNum(mu, 4)}) / √(${fmtNum(sd, 4)}² + ${fmtNum(eps, 5)})`, `= ${fmtNum(xn, 3)}`],
+    [L({ tr: "Bütün kanal", en: "Whole channel" }),
+      L({ tr: `ortalama ${fmtNum(meanOf(xh), 3)}, std. sapma ${fmtNum(stdOf(xh), 3)}`, en: `mean ${fmtNum(meanOf(xh), 3)}, std. dev. ${fmtNum(stdOf(xh), 3)}` }), null],
+  ]);
+  const active = ys.reduce((count, v) => count + (v > 0), 0) / ys.length;
+  bnCalc($("#t-bn-c3"), [
+    [L({ tr: "İzlenen değer", en: "Traced value" }),
+      `y = ${fmtNum(gamma, 2)} · ${fmtNum(xn, 3)} + (${fmtNum(beta, 2)})`, `= ${fmtNum(y, 3)}`],
+    ["ReLU", `max(0, ${fmtNum(y, 3)})`, `= ${fmtNum(Math.max(0, y), 3)}`],
+    [L({ tr: "Bütün kanal", en: "Whole channel" }),
+      L({ tr: `ortalama ${fmtNum(yMean, 3)}, std. sapma ${fmtNum(stdOf(ys, yMean), 3)} · ReLU'dan geçen (y > 0): ${fmtPct(active * 100, 1)}`,
+        en: `mean ${fmtNum(yMean, 3)}, std. dev. ${fmtNum(stdOf(ys, yMean), 3)} · passing ReLU (y > 0): ${fmtPct(active * 100, 1)}` }), null],
+  ]);
 
-  const active = y.reduce((n, v) => n + (v > 0), 0) / y.length;
-  $("#t-bn-sub").textContent = t("th.bn.sub", { n: T.filter + 1, b: T.batch.length, v: fmtInt(z.length) });
+  // Step 6: training vs inference
   const bn = T.params.bn1;
-  $("#t-bn-running").textContent = t(modelView.which === "initial" ? "th.bn.running0" : "th.bn.running", {
-    mu: fmtNum(mu, 3), sd: fmtNum(sd, 3),
-    rmu: fmtNum(bn.mean[T.filter], 3), rsd: fmtNum(Math.sqrt(bn.var[T.filter]), 3),
-    a: fmtPct(active * 100, 1),
-  });
+  const runMu = bn.mean[T.filter];
+  const runSd = Math.sqrt(bn.var[T.filter]);
+  const yEval = gamma * ((x - runMu) / Math.sqrt(bn.var[T.filter] + eps)) + beta;
+  const initial = modelView.which === "initial";
+  const modeCard = (cls, title, code, lines) => h("div", { class: `bn-mode ${cls}` },
+    h("div", { class: "bn-mode-head" }, h("strong", { text: title }), h("code", { text: code })),
+    ...lines.map((line) => (typeof line === "string" ? h("p", { text: line }) : line)));
+  const stat = (label, value) => h("div", { class: "bn-mode-stat" }, h("span", { text: label }), h("strong", { text: value }));
+  $("#t-bn-modes").replaceChildren(
+    modeCard("train", L({ tr: "Eğitimde", en: "In training" }), "model.train()", [
+      stat(L({ tr: "kullanılan μ, σ", en: "μ, σ used" }), `${fmtNum(mu, 4)}, ${fmtNum(sd, 4)}`),
+      L({ tr: "Bu batch'ten hesaplanır; her batch'te biraz değişir.", en: "Computed from this batch; changes a little with every batch." }),
+      h("div", { class: "formula small" }, "μ", h("sub", { text: "run" }), ` ← ${fmtNum(1 - BN_MOMENTUM, 1)} · μ`, h("sub", { text: "run" }),
+        ` + ${fmtNum(BN_MOMENTUM, 1)} · μ`, h("sub", { text: "B" })),
+      L({ tr: "Her adımda hareketli ortalama da güncellenir (aynısı varyans için).", en: "At every step the running average is updated too (the same for the variance)." }),
+      stat(L({ tr: "izlenen değer → y", en: "traced value → y" }), fmtNum(y, 3)),
+    ]),
+    modeCard("eval", L({ tr: "Çıkarımda", en: "At inference" }), "model.eval()", [
+      stat(L({ tr: "kullanılan μ, σ", en: "μ, σ used" }), `${fmtNum(runMu, 4)}, ${fmtNum(runSd, 4)}`),
+      initial
+        ? L({ tr: "Eğitim öncesi model: hareketli ortalamalar henüz başlangıç değerinde (μ = 0, σ = 1).", en: "Model before training: the running averages still have their initial values (μ = 0, σ = 1)." })
+        : L({ tr: "Eğitim boyunca biriktirilen hareketli ortalamalar; sabittir, batch'e bağlı değildir.", en: "The running averages collected during training; fixed, independent of the batch." }),
+      L({ tr: "Görüntüler tek tek de işlenebilir ve her görüntünün sonucu yalnızca kendisine bağlıdır.", en: "Images can be processed one by one, and each image's result depends only on itself." }),
+      stat(L({ tr: "izlenen değer → y", en: "traced value → y" }), fmtNum(yEval, 3)),
+    ]));
 }
 
 // =====================================================================
@@ -567,14 +856,14 @@ const ACTIVATIONS = {
       tr: "LReLU(<i>x</i>) = <i>x</i> (<i>x</i> &gt; 0 ise), 0,01·<i>x</i> (aksi halde)",
       en: "LReLU(<i>x</i>) = <i>x</i> (if <i>x</i> &gt; 0), 0.01·<i>x</i> (otherwise)",
     },
-    desc: { tr: "ReLU gibidir ama negatif tarafta küçük bir eğim (0,01) bırakır; böylece negatif girişlerde de gradyan tamamen sıfırlanmaz.",
-      en: "Like ReLU, but keeps a small slope (0.01) on the negative side, so the gradient does not vanish entirely for negative inputs." },
+    desc: { tr: "ReLU gibidir ama negatif tarafta küçük bir eğim (0,01) bırakır; böylece negatif girişlerde de [[gradient|gradyan]] tamamen sıfırlanmaz.",
+      en: "Like ReLU, but keeps a small slope (0.01) on the negative side, so the [[gradient|gradient]] does not vanish entirely for negative inputs." },
   },
   sigmoid: {
     label: "Sigmoid", f: (x) => 1 / (1 + Math.exp(-x)), y: [-0.25, 1.25],
     formula: "σ(<i>x</i>) = 1 / (1 + e<sup>−<i>x</i></sup>)",
-    desc: { tr: "Her değeri 0 ile 1 arasına sıkıştırır. |x| büyüdükçe eğimi sıfıra yaklaşır; derin ağlarda gradyanın sönümlenmesine yol açabilir.",
-      en: "Squeezes every value into the range 0 to 1. Its slope approaches zero as |x| grows, which can make gradients vanish in deep networks." },
+    desc: { tr: "Her değeri 0 ile 1 arasına sıkıştırır. |x| büyüdükçe eğimi sıfıra yaklaşır; derin ağlarda [[gradient|gradyanın]] sönümlenmesine yol açabilir.",
+      en: "Squeezes every value into the range 0 to 1. Its slope approaches zero as |x| grows, which can make [[gradient|gradients]] vanish in deep networks." },
   },
   tanh: {
     label: "Tanh", f: Math.tanh, y: [-1.25, 1.25],
@@ -608,7 +897,7 @@ function setupActivation() {
 function updateActivation() {
   const fn = ACTIVATIONS[act.kind];
   $("#t-act-formula").innerHTML = L(fn.formula);   // static, author-written markup
-  $("#t-act-desc").textContent = L(fn.desc);
+  $("#t-act-desc").innerHTML = termify(L(fn.desc));   // static, author-written text; [[key|text]] → glossary links
   curvePlot($("#t-act-plot"), {
     label: t("th.act.plot", { f: fn.label }),
     x: [-4, 4], y: fn.y, fn: fn.f,
@@ -1391,6 +1680,7 @@ document.addEventListener("model-view-change", () => {
 document.addEventListener("lang-change", () => {
   if (!T.started) return;
   fillKernelOptions();
+  fillBnText();
   const dropButtons = $("#t-drop-seg").children;
   if (dropButtons.length === 2) {
     dropButtons[0].textContent = t("th.drop.train");
@@ -1410,6 +1700,7 @@ document.addEventListener("lang-change", () => {
 document.addEventListener("theme-change", () => {
   if (!T.started) return;
   paintSurface();
+  if (bnState.z) renderBnMaps();   // the maps use the theme's color scale
   refreshAll();
   drawOpt();
 });

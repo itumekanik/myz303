@@ -280,15 +280,15 @@
       <div class="card t-intro">
         <div class="t-intro-text">
           <h2 data-i18n="th.intro.h">Evrişimli sinir ağı (CNN) nasıl çalışır?</h2>
-          <p data-i18n="th.intro.p1">Bir CNN, görüntüdeki yerel desenleri (kenar, köşe, kıvrım) küçük filtrelerle yakalar ve bu desenleri katman katman birleştirerek "bu bir 7" gibi bir karara varır. Aşağıdaki her bölüm SimpleCNN'in bir yapı taşını açıklar. Örnekler, yukarıda seçili görüntü ve modelin gerçek ağırlıklarıyla tarayıcınızda canlı hesaplanır.</p>
-          <p data-i18n="th.intro.p2"><b>Eğitimin etkisini görmek için</b> sağ alttaki <b>Gösterilen model</b> anahtarıyla <i>Eğitim öncesi</i> ve <i>Eğitilmiş</i> arasında geçiş yapın: eğitim öncesi model, eğitimin başladığı rastgele ağırlıklardır. Filtrelerin, öznitelik haritalarının ve tahminin nasıl değiştiğine bakın.</p>
+          <p data-i18n="th.intro.p1">Bir [[cnn|CNN]], görüntüdeki yerel desenleri (kenar, köşe, kıvrım) küçük [[kernel|filtrelerle]] yakalar ve bu desenleri katman katman birleştirerek "bu bir 7" gibi bir karara varır. Aşağıdaki her bölüm SimpleCNN'in bir yapı taşını açıklar. Örnekler, yukarıda seçili görüntü ve modelin gerçek [[parameter|ağırlıklarıyla]] tarayıcınızda canlı hesaplanır.</p>
+          <p data-i18n="th.intro.p2"><b>Eğitimin etkisini görmek için</b> sağ alttaki <b>Gösterilen model</b> anahtarıyla <i>Eğitim öncesi</i> ve <i>Eğitilmiş</i> arasında geçiş yapın: eğitim öncesi model, eğitimin başladığı rastgele ağırlıklardır. Filtrelerin, [[feature-map|öznitelik haritalarının]] ve tahminin nasıl değiştiğine bakın.</p>
         </div>
         <figure class="schematic">
           <div class="schematic-scroll">
             <svg id="t-schematic" viewBox="0 0 1120 262" role="img"
                  aria-label="SimpleCNN mimarisi: 1×28×28 giriş, Conv 5×5 (32 filtre) + BatchNorm + ReLU ile 32×24×24, MaxPool ve Dropout ile 32×12×12, Conv 5×5 (64 filtre) + BatchNorm + ReLU ile 64×8×8, MaxPool ve Dropout ile 64×4×4, 1024 değerlik vektör, 512 nöronluk FC1 ve 10 sınıflı Softmax çıkışı. Eğitimde kayıp geri yayılımla tüm ağırlıkları günceller." data-i18n-attr="aria-label=a.schematic"></svg>
           </div>
-          <figcaption data-i18n="th.schem.cap">Her yığın bir katmanın çıktısıdır: yüksekliği uzamsal boyutu (28 → 4), derinliği kanal sayısını gösterir. Öndeki görüntüler seçili rakam için gerçek çıktılardır; evrişim bloklarında yukarıda seçili filtre, ikinci blokta en güçlü tepki veren harita gösterilir. Okların üzerindeki işlemlere tıklayarak ilgili bölüme gidin.</figcaption>
+          <figcaption data-i18n="th.schem.cap">Her yığın bir katmanın çıktısıdır: yüksekliği uzamsal boyutu (28 → 4), derinliği [[channel|kanal]] sayısını gösterir. Öndeki görüntüler seçili rakam için gerçek çıktılardır; evrişim bloklarında yukarıda seçili filtre, ikinci blokta en güçlü tepki veren harita gösterilir. Okların üzerindeki işlemlere tıklayarak ilgili bölüme gidin.</figcaption>
         </figure>
         <div class="t-filters" id="t-filters">
           <p class="sub"><span id="t-filters-title">Modelin öğrendiği 32 Conv1 filtresi.</span> <span data-i18n="th.filters.tail">Birine tıklayarak örneklerde kullanılacak filtreyi seçin (mavi negatif, kırmızı pozitif ağırlık).</span></p>
@@ -300,12 +300,12 @@
       <article class="card t-section" id="t-conv">
         <div class="t-text">
           <div class="t-head"><span class="t-num">1</span><h2 data-i18n="th.conv.h">Evrişim (Convolution)</h2></div>
-          <p data-i18n="th.conv.p1">Evrişim katmanı, <b>çekirdek</b> (kernel, filtre) denen küçük bir ağırlık matrisini görüntünün üzerinde kaydırır. Her konumda çekirdek ile altındaki piksellerin eleman eleman çarpımları toplanır ve bias eklenir; sonuç, çıktının bir pikseli olur. Ortaya çıkan <b>öznitelik haritası</b>, filtrenin aradığı desenin görüntünün <i>neresinde</i> bulunduğunu gösterir.</p>
+          <p data-i18n="th.conv.p1">Evrişim katmanı, [[kernel|<b>çekirdek</b>]] (kernel, filtre) denen küçük bir ağırlık matrisini görüntünün üzerinde kaydırır. Her konumda çekirdek ile altındaki piksellerin eleman eleman çarpımları toplanır ve [[parameter|bias]] eklenir; sonuç, çıktının bir pikseli olur. Ortaya çıkan [[feature-map|<b>öznitelik haritası</b>]], filtrenin aradığı desenin görüntünün <i>neresinde</i> bulunduğunu gösterir.</p>
           <div class="formula">y<sub>i,j</sub> = Σ<sub>m</sub> Σ<sub>n</sub> x<sub>i·s+m, j·s+n</sub> · w<sub>m,n</sub> + b</div>
-          <p data-i18n="th.conv.p2">Aynı çekirdek görüntünün her yerinde kullanılır (<b>ağırlık paylaşımı</b>). Böylece az parametreyle, desen nerede olursa olsun yakalanır. Filtre değerleri elle seçilmez, eğitimde öğrenilir.</p>
-          <p data-i18n="th.conv.p3">Çıktı boyutunu çekirdek boyutu <i>k</i>, dolgu (padding) <i>p</i> ve adım (stride) <i>s</i> belirler:</p>
+          <p data-i18n="th.conv.p2">Aynı çekirdek görüntünün her yerinde kullanılır (<b>ağırlık paylaşımı</b>). Böylece az [[parameter|parametreyle]], desen nerede olursa olsun yakalanır. Filtre değerleri elle seçilmez, eğitimde öğrenilir.</p>
+          <p data-i18n="th.conv.p3">Çıktı boyutunu çekirdek boyutu <i>k</i>, [[padding|dolgu]] (padding) <i>p</i> ve [[stride|adım]] (stride) <i>s</i> belirler:</p>
           <div class="formula">H<sub>out</sub> = ⌊(H<sub>in</sub> − k + 2p) / s⌋ + 1<span class="formula-live" id="t-conv-size"></span></div>
-          <div class="in-model" data-i18n="th.conv.model"><b>SimpleCNN'de:</b> Conv1, 32 adet 5×5 filtreyle 28×28 girişten 32 harita (24×24) üretir. Conv2, 64 filtreyle 12×12'den 8×8'e iner. Conv1'in toplam parametre sayısı yalnızca 32·(5·5) + 32 = 832'dir.</div>
+          <div class="in-model" data-i18n="th.conv.model"><b>SimpleCNN'de:</b> Conv1, 32 adet 5×5 filtreyle 28×28 girişten 32 harita (24×24) üretir. Conv2, 64 filtreyle 12×12'den 8×8'e iner. Conv1'in toplam [[parameter|parametre]] sayısı yalnızca 32·(5·5) + 32 = 832'dir.</div>
         </div>
         <div class="t-demo">
           <div class="t-controls">
@@ -332,49 +332,97 @@
         </div>
       </article>
 
-      <!-- 2 · Batch normalization -->
-      <article class="card t-section" id="t-bn">
-        <div class="t-text">
+      <!-- 2 · Batch normalization: step by step (texts in theory.js, BN_TEXT) -->
+      <article class="card t-section bn-section" id="t-bn" data-needs-model>
+        <div class="bn-intro">
           <div class="t-head"><span class="t-num">2</span><h2>Batch Normalization</h2></div>
-          <p data-i18n="th.bn.p1">Ağırlıklar her adımda değiştikçe bir filtrenin çıktı dağılımı da kayar; değerler çok büyüyebilir ya da küçülebilir. BatchNorm her kanalı, mini-batch üzerinde <b>ortalaması 0, standart sapması 1</b> olacak şekilde normalleştirir:</p>
-          <div class="formula">x̂ = (x − μ<sub>B</sub>) / √(σ<sub>B</sub><sup>2</sup> + ε)</div>
-          <p data-i18n="th.bn.p2">Ardından öğrenilen iki parametreyle yeniden ölçekler ve kaydırır; böylece ağ gerekirse dağılımı istediği gibi ayarlayabilir:</p>
-          <div class="formula">y = γ · x̂ + β</div>
-          <p data-i18n="th.bn.p3">Bu, eğitimi hızlandırır ve kararlı kılar. Batch'ten batch'e değişen istatistikler ayrıca hafif bir düzenlileştirme etkisi yaratır. <b>Eğitimde</b> o batch'in μ ve σ değerleri, <b>çıkarımda</b> ise eğitim boyunca biriktirilen hareketli ortalamalar kullanılır.</p>
-          <div class="in-model" data-i18n="th.bn.model"><b>SimpleCNN'de:</b> Her evrişimden sonra, ReLU'dan önce uygulanır (Conv1 için 32, Conv2 için 64 kanal).</div>
-        </div>
-        <div class="t-demo" data-needs-model>
+          <p class="bn-lead" data-bn="lead"></p>
+          <div class="bn-flow" aria-hidden="true">
+            <span class="bn-chip"><b>x</b><small data-bn="flow.x"></small></span>
+            <span class="bn-arrow">→</span>
+            <span class="bn-chip"><b>μ<sub>B</sub>, σ<sub>B</sub></b><small data-bn="flow.stats"></small></span>
+            <span class="bn-arrow">→</span>
+            <span class="bn-chip"><b>x̂ = (x − μ<sub>B</sub>) / σ<sub>B</sub></b><small data-bn="flow.norm"></small></span>
+            <span class="bn-arrow">→</span>
+            <span class="bn-chip"><b>y = γ · x̂ + β</b><small data-bn="flow.affine"></small></span>
+            <span class="bn-arrow">→</span>
+            <span class="bn-chip muted"><b>ReLU</b><small data-bn="flow.relu"></small></span>
+          </div>
           <p class="no-model-msg" data-i18n="th.nomodel">Bu örnek eğitilmiş modelin ağırlıklarını kullanır. Önce Eğitim sekmesinden modeli eğitin.</p>
-          <div class="t-controls">
-            <label>γ <input type="range" id="t-bn-gamma" min="0" max="3" step="0.01"><output id="t-bn-gamma-v"></output></label>
-            <label>β <input type="range" id="t-bn-beta" min="-3" max="3" step="0.01"><output id="t-bn-beta-v"></output></label>
-            <button type="button" class="btn small" id="t-bn-reset" data-i18n="th.bn.reset">Modelin γ, β değerleri</button>
+          <div class="bn-bar">
+            <span class="sub" id="t-bn-sub"></span>
             <button type="button" class="btn small" id="t-bn-batch" data-i18n="th.bn.batch">Yeni batch</button>
           </div>
-          <p class="sub" id="t-bn-sub"></p>
-          <div class="hist-row">
-            <figure class="t-fig hist"><div class="chart" id="t-bn-h1" data-height="150"></div><figcaption data-i18n="th.bn.h1">1 · Evrişim çıktısı x</figcaption></figure>
-            <figure class="t-fig hist"><div class="chart" id="t-bn-h2" data-height="150"></div><figcaption data-i18n="th.bn.h2">2 · Normalleştirilmiş x̂</figcaption></figure>
-            <figure class="t-fig hist"><div class="chart" id="t-bn-h3" data-height="150"></div><figcaption data-i18n="th.bn.h3">3 · Ölçeklenmiş y = γx̂ + β</figcaption></figure>
-          </div>
-          <div class="table-wrap">
-            <table class="data-table compact" id="t-bn-table">
-              <thead><tr data-i18n="th.bn.head"><th>Aşama</th><th>Ortalama</th><th>Std. sapma</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-          <p class="sub" id="t-bn-running"></p>
         </div>
+
+        <ol class="bn-steps">
+          <li class="bn-step" id="t-bn-s1">
+            <div class="bn-step-text"><h3><span class="bn-step-num">1</span><span data-bn="s1.h"></span></h3><div data-bn="s1.p"></div></div>
+            <div class="bn-step-vis">
+              <div class="chart" id="t-bn-channels" data-height="220"></div>
+              <div class="bn-calc" id="t-bn-chstats"></div>
+              <p class="sub" data-bn="s1.cap"></p>
+            </div>
+          </li>
+
+          <li class="bn-step" id="t-bn-s2">
+            <div class="bn-step-text"><h3><span class="bn-step-num">2</span><span data-bn="s2.h"></span></h3><div data-bn="s2.p"></div></div>
+            <div class="bn-step-vis">
+              <div class="bn-axes" id="t-bn-axes"></div>
+              <div class="bn-maps" id="t-bn-maps"></div>
+              <p class="sub" data-bn="s2.cap"></p>
+            </div>
+          </li>
+
+          <li class="bn-step" id="t-bn-s3">
+            <div class="bn-step-text"><h3><span class="bn-step-num">3</span><span data-bn="s3.h"></span></h3><div data-bn="s3.p"></div></div>
+            <div class="bn-step-vis">
+              <div class="bn-stats" id="t-bn-stats"></div>
+              <figure class="t-fig hist"><div class="chart" id="t-bn-h1" data-height="150"></div><figcaption data-bn="h1"></figcaption></figure>
+              <div class="bn-calc" id="t-bn-c1"></div>
+            </div>
+          </li>
+
+          <li class="bn-step" id="t-bn-s4">
+            <div class="bn-step-text"><h3><span class="bn-step-num">4</span><span data-bn="s4.h"></span></h3><div data-bn="s4.p"></div></div>
+            <div class="bn-step-vis">
+              <figure class="t-fig hist"><div class="chart" id="t-bn-h2" data-height="150"></div><figcaption data-bn="h2"></figcaption></figure>
+              <div class="bn-calc" id="t-bn-c2"></div>
+            </div>
+          </li>
+
+          <li class="bn-step" id="t-bn-s5">
+            <div class="bn-step-text"><h3><span class="bn-step-num">5</span><span data-bn="s5.h"></span></h3><div data-bn="s5.p"></div></div>
+            <div class="bn-step-vis">
+              <div class="t-controls">
+                <label>γ <input type="range" id="t-bn-gamma" min="0" max="3" step="0.01"><output id="t-bn-gamma-v"></output></label>
+                <label>β <input type="range" id="t-bn-beta" min="-3" max="3" step="0.01"><output id="t-bn-beta-v"></output></label>
+                <button type="button" class="btn small" id="t-bn-reset" data-i18n="th.bn.reset">Modelin γ, β değerleri</button>
+              </div>
+              <figure class="t-fig hist"><div class="chart" id="t-bn-h3" data-height="150"></div><figcaption data-bn="h3"></figcaption></figure>
+              <div class="bn-calc" id="t-bn-c3"></div>
+            </div>
+          </li>
+
+          <li class="bn-step" id="t-bn-s6">
+            <div class="bn-step-text"><h3><span class="bn-step-num">6</span><span data-bn="s6.h"></span></h3><div data-bn="s6.p"></div></div>
+            <div class="bn-step-vis">
+              <div class="bn-modes" id="t-bn-modes"></div>
+            </div>
+          </li>
+        </ol>
+
+        <div class="in-model bn-model" data-bn="model"></div>
       </article>
 
       <!-- 3 · Activation -->
       <article class="card t-section" id="t-act">
         <div class="t-text">
           <div class="t-head"><span class="t-num">3</span><h2 data-i18n="th.act.h">Aktivasyon fonksiyonu</h2></div>
-          <p data-i18n="th.act.p1">Evrişim ve tam bağlı katmanlar <b>doğrusal</b> işlemlerdir. Kaç tanesini üst üste koyarsanız koyun, sonuç yine tek bir doğrusal işleme eşittir ve ağ karmaşık desenleri öğrenemez. Her katmandan sonra uygulanan <b>doğrusal olmayan</b> bir aktivasyon fonksiyonu bu sınırı kaldırır.</p>
+          <p data-i18n="th.act.p1">[[convolution|Evrişim]] ve [[fully-connected|tam bağlı]] katmanlar <b>doğrusal</b> işlemlerdir. Kaç tanesini üst üste koyarsanız koyun, sonuç yine tek bir doğrusal işleme eşittir ve ağ karmaşık desenleri öğrenemez. Her katmandan sonra uygulanan <b>doğrusal olmayan</b> bir aktivasyon fonksiyonu bu sınırı kaldırır.</p>
           <div class="formula" id="t-act-formula"></div>
           <p id="t-act-desc"></p>
-          <div class="in-model" data-i18n="th.act.model"><b>SimpleCNN'de:</b> ReLU, her BatchNorm'dan sonra ve FC1'in çıkışında kullanılır. Hızlı hesaplanır ve pozitif tarafta gradyanı küçültmez (sönümlenen gradyan sorunu yaşamaz).</div>
+          <div class="in-model" data-i18n="th.act.model"><b>SimpleCNN'de:</b> [[relu|ReLU]], her [[batchnorm|BatchNorm]]'dan sonra ve FC1'in çıkışında kullanılır. Hızlı hesaplanır ve pozitif tarafta [[gradient|gradyanı]] küçültmez (sönümlenen gradyan sorunu yaşamaz).</div>
         </div>
         <div class="t-demo">
           <div class="t-controls"><div class="seg" id="t-act-seg" role="group" aria-label="Aktivasyon fonksiyonu" data-i18n-attr="aria-label=a.act"></div></div>
@@ -393,10 +441,10 @@
       <article class="card t-section" id="t-pool">
         <div class="t-text">
           <div class="t-head"><span class="t-num">4</span><h2 data-i18n="th.pool.h">Havuzlama (Pooling)</h2></div>
-          <p data-i18n="th.pool.p1">Havuzlama katmanı öznitelik haritasını küçültür. Harita çakışmayan küçük bölgelere ayrılır ve her bölgeden tek bir değer alınır: <b>max pooling</b> en büyük değeri, <b>average pooling</b> ortalamayı seçer.</p>
+          <p data-i18n="th.pool.p1">Havuzlama katmanı [[feature-map|öznitelik haritasını]] küçültür. Harita çakışmayan küçük bölgelere ayrılır ve her bölgeden tek bir değer alınır: <b>max pooling</b> en büyük değeri, <b>average pooling</b> ortalamayı seçer.</p>
           <div class="formula">y<sub>i,j</sub> = max<sub>m,n ∈ {0,1}</sub> x<sub>2i+m, 2j+n</sub></div>
-          <p data-i18n="th.pool.p2">Böylece sonraki katmanların hesap yükü azalır ve desenin birkaç piksel kayması sonucu pek değiştirmez (küçük kaymalara dayanıklılık). Havuzlamanın öğrenilen bir parametresi yoktur.</p>
-          <div class="in-model" data-i18n="th.pool.model"><b>SimpleCNN'de:</b> İki evrişim bloğunun sonunda 2×2 max pooling (stride 2) kullanılır: 24×24 → 12×12 ve 8×8 → 4×4. Her biri değer sayısını dörtte birine indirir.</div>
+          <p data-i18n="th.pool.p2">Böylece sonraki katmanların hesap yükü azalır ve desenin birkaç piksel kayması sonucu pek değiştirmez (küçük kaymalara dayanıklılık). Ayrıca sonraki katmanların [[receptive-field|algı alanı]] büyür. Havuzlamanın öğrenilen bir [[parameter|parametresi]] yoktur.</p>
+          <div class="in-model" data-i18n="th.pool.model"><b>SimpleCNN'de:</b> İki evrişim bloğunun sonunda 2×2 max pooling ([[stride|stride]] 2) kullanılır: 24×24 → 12×12 ve 8×8 → 4×4. Her biri değer sayısını dörtte birine indirir.</div>
         </div>
         <div class="t-demo">
           <div class="t-controls"><div class="seg" id="t-pool-seg" role="group" aria-label="Havuzlama türü" data-i18n-attr="aria-label=a.pool"></div></div>
@@ -420,10 +468,10 @@
       <article class="card t-section" id="t-drop">
         <div class="t-text">
           <div class="t-head"><span class="t-num">5</span><h2>Dropout</h2></div>
-          <p data-i18n="th.drop.p1">Dropout, <b>eğitim sırasında</b> her ileri geçişte değerlerin rastgele bir kısmını (oran <i>p</i>) sıfırlar. Her adımda farklı bir alt ağ eğitilmiş olur. Ağ tek tek nöronlara güvenemez, birbirini tamamlayan sağlam öznitelikler öğrenir; bu da ezberlemeyi (overfitting) azaltır.</p>
+          <p data-i18n="th.drop.p1">Dropout, <b>eğitim sırasında</b> her [[forward-pass|ileri geçişte]] değerlerin rastgele bir kısmını (oran <i>p</i>) sıfırlar. Her adımda farklı bir alt ağ eğitilmiş olur. Ağ tek tek nöronlara güvenemez, birbirini tamamlayan sağlam öznitelikler öğrenir; bu da ezberlemeyi ([[overfitting|overfitting]]) azaltır.</p>
           <div class="formula" data-i18n="th.drop.f">h̃ = 0 &nbsp;(olasılık p) &nbsp;&nbsp;·&nbsp;&nbsp; h̃ = h / (1 − p) &nbsp;(olasılık 1 − p)</div>
-          <p data-i18n="th.drop.p2">Kalan değerler 1/(1 − p) ile büyütülür; böylece ortalama aktivasyon değişmez ve <b>çıkarımda</b> Dropout hiçbir şey yapmaz, tüm değerler olduğu gibi geçer.</p>
-          <div class="in-model" data-i18n="th.drop.model"><b>SimpleCNN'de:</b> İlk havuzlamadan sonra p = 0,45, ikinciden sonra p = 0,35. Eğitim kaybının doğrulama kaybından yüksek görünmesinin bir nedeni de budur.</div>
+          <p data-i18n="th.drop.p2">Kalan değerler 1/(1 − p) ile büyütülür; böylece ortalama aktivasyon değişmez ve [[inference|<b>çıkarımda</b>]] Dropout hiçbir şey yapmaz, tüm değerler olduğu gibi geçer.</p>
+          <div class="in-model" data-i18n="th.drop.model"><b>SimpleCNN'de:</b> İlk havuzlamadan sonra p = 0,45, ikinciden sonra p = 0,35. Eğitim [[loss|kaybının]] [[val-set|doğrulama]] kaybından yüksek görünmesinin bir nedeni de budur.</div>
         </div>
         <div class="t-demo" data-needs-model>
           <p class="no-model-msg" data-i18n="th.nomodel">Bu örnek eğitilmiş modelin ağırlıklarını kullanır. Önce Eğitim sekmesinden modeli eğitin.</p>
@@ -445,13 +493,13 @@
       <article class="card t-section" id="t-softmax">
         <div class="t-text">
           <div class="t-head"><span class="t-num">6</span><h2 data-i18n="th.sm.h">Tam bağlı katman, Softmax ve kayıp</h2></div>
-          <p data-i18n="th.sm.p1">Son havuzlamanın çıktısı (64×4×4 = 1024 değer) tek bir vektöre düzleştirilir ve <b>tam bağlı</b> (fully connected) katmanlara verilir. Burada her çıkış nöronu, tüm girişlerin ağırlıklı toplamıdır:</p>
+          <p data-i18n="th.sm.p1">Son havuzlamanın çıktısı (64×4×4 = 1024 değer) tek bir vektöre [[flatten|düzleştirilir]] ve [[fully-connected|<b>tam bağlı</b>]] (fully connected) katmanlara verilir. Burada her çıkış nöronu, tüm girişlerin ağırlıklı toplamıdır:</p>
           <div class="formula">y<sub>j</sub> = h(Σ<sub>i</sub> w<sub>ji</sub> x<sub>i</sub> + b<sub>j</sub>)</div>
-          <p data-i18n="th.sm.p2">Son katman her rakam için bir <b>skor</b> (logit) üretir. <b>Softmax</b> bu skorları toplamı 1 olan olasılıklara çevirir; en yüksek skor en yüksek olasılığı alır:</p>
+          <p data-i18n="th.sm.p2">Son katman her rakam için bir [[logit|<b>skor</b>]] (logit) üretir. [[softmax|<b>Softmax</b>]] bu skorları toplamı 1 olan olasılıklara çevirir; en yüksek skor en yüksek olasılığı alır:</p>
           <div class="formula">p<sub>k</sub> = e<sup>z<sub>k</sub></sup> / Σ<sub>j</sub> e<sup>z<sub>j</sub></sup></div>
-          <p data-i18n="th.sm.p3"><b>Kayıp</b>, tahminin ne kadar yanlış olduğunu tek bir sayıyla ölçer. Sınıflandırmada <b>Cross-Entropy</b> kullanılır: doğru sınıfa verilen olasılık p ise kayıp −log p'dir. Doğru sınıftan emin olan model sıfıra yakın kayıp alır, doğru sınıfa düşük olasılık veren model büyük ceza alır.</p>
+          <p data-i18n="th.sm.p3">[[loss|<b>Kayıp</b>]], tahminin ne kadar yanlış olduğunu tek bir sayıyla ölçer. Sınıflandırmada [[cross-entropy|<b>Cross-Entropy</b>]] kullanılır: doğru sınıfa verilen olasılık p ise kayıp −log p'dir. Doğru sınıftan emin olan model sıfıra yakın kayıp alır, doğru sınıfa düşük olasılık veren model büyük ceza alır.</p>
           <div class="formula" data-i18n="th.sm.f">L = −log p<sub>doğru sınıf</sub><span class="formula-live" id="t-ce-live"></span></div>
-          <div class="in-model" data-i18n="th.sm.model"><b>SimpleCNN'de:</b> FC1 1024 → 512 (ReLU), FC2 512 → 10. Modelde ayrı bir Softmax katmanı yoktur; <code>nn.CrossEntropyLoss</code> softmax'ı kendi içinde uygular.</div>
+          <div class="in-model" data-i18n="th.sm.model"><b>SimpleCNN'de:</b> FC1 1024 → 512 ([[relu|ReLU]]), FC2 512 → 10. Modelde ayrı bir Softmax katmanı yoktur; <code>nn.CrossEntropyLoss</code> softmax'ı kendi içinde uygular.</div>
         </div>
         <div class="t-demo">
           <p class="sub" id="t-sm-sub">Skorlar, modelin seçili görüntü için ürettiği gerçek logit değerleriyle başlar. Kaydırıcılarla değiştirip olasılıkların ve kaybın nasıl tepki verdiğini izleyin.</p>
@@ -478,11 +526,11 @@
       <article class="card t-section" id="t-opt">
         <div class="t-text">
           <div class="t-head"><span class="t-num">7</span><h2 data-i18n="th.opt.h">Geri yayılım ve optimizasyon</h2></div>
-          <p data-i18n="th.opt.p1">Eğitim, kaybı en küçük yapan ağırlıkları arar. <b>Geri yayılım</b> (backpropagation), zincir kuralıyla kaybın her ağırlığa göre türevini, yani <b>gradyanı</b> hesaplar. Gradyan kaybın en hızlı arttığı yönü gösterir; <b>gradyan inişi</b> ağırlıkları bunun tersi yönünde küçük adımlarla günceller:</p>
+          <p data-i18n="th.opt.p1">Eğitim, [[loss|kaybı]] en küçük yapan [[parameter|ağırlıkları]] arar. [[backprop|<b>Geri yayılım</b>]] (backpropagation), zincir kuralıyla kaybın her ağırlığa göre türevini, yani [[gradient|<b>gradyanı</b>]] hesaplar. Gradyan kaybın en hızlı arttığı yönü gösterir; [[gradient-descent|<b>gradyan inişi</b>]] ağırlıkları bunun tersi yönünde küçük adımlarla günceller:</p>
           <div class="formula">θ ← θ − η · ∇L(θ)</div>
-          <p data-i18n="th.opt.p2">Adım büyüklüğünü <b>öğrenme oranı</b> η belirler: çok küçükse eğitim yavaş ilerler, çok büyükse minimumun etrafında salınır ya da ıraksar. <b>Momentum</b> geçmiş gradyanları biriktirerek tutarlı yönlerde hızlanır. <b>Adam</b> ise momentumu, her parametre için gradyanın büyüklüğüne göre ayarlanan bir adım boyuyla birleştirir:</p>
+          <p data-i18n="th.opt.p2">Adım büyüklüğünü [[learning-rate|<b>öğrenme oranı</b>]] η belirler: çok küçükse eğitim yavaş ilerler, çok büyükse minimumun etrafında salınır ya da ıraksar. [[momentum|<b>Momentum</b>]] geçmiş gradyanları biriktirerek tutarlı yönlerde hızlanır. [[adam|<b>Adam</b>]] ise momentumu, her parametre için gradyanın büyüklüğüne göre ayarlanan bir adım boyuyla birleştirir:</p>
           <div class="formula small">m<sub>t</sub> = β<sub>1</sub>m<sub>t−1</sub> + (1 − β<sub>1</sub>) g<sub>t</sub> &nbsp;·&nbsp; v<sub>t</sub> = β<sub>2</sub>v<sub>t−1</sub> + (1 − β<sub>2</sub>) g<sub>t</sub><sup>2</sup><br>θ ← θ − η · m̂<sub>t</sub> / (√v̂<sub>t</sub> + ε)</div>
-          <div class="in-model" data-i18n="th.opt.model"><b>SimpleCNN'de:</b> Adam, η = 0,001 ile kullanılır. Her batch'te <code>loss.backward()</code> gradyanları hesaplar, <code>optimizer.step()</code> ağırlıkları günceller (Eğitim sekmesindeki 5 adım).</div>
+          <div class="in-model" data-i18n="th.opt.model"><b>SimpleCNN'de:</b> [[adam|Adam]], η = 0,001 ile kullanılır. Her [[batch|batch]]'te <code>loss.backward()</code> gradyanları hesaplar, <code>optimizer.step()</code> ağırlıkları günceller (Eğitim sekmesindeki 5 adım).</div>
         </div>
         <div class="t-demo">
           <div class="t-controls">
