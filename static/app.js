@@ -265,7 +265,7 @@ function smooth(values, weight = 0.95) {
  */
 function lineChart(host, o) {
   host._render = () => lineChart(host, o);
-  if (!host.clientWidth) return;              // hidden tab: draw when it becomes visible
+  if (!host.clientWidth) { host._w = 0; return; }   // hidden: the resize observer redraws it once shown
   host._w = host.clientWidth;
   const W = host.clientWidth;
   const H = +host.dataset.height || 220;
@@ -350,7 +350,7 @@ function barPath(x, y, w, hgt, r = 4) {
 
 function probabilityChart(host, probabilities, prediction) {
   host._render = () => probabilityChart(host, probabilities, prediction);
-  if (!host.clientWidth) return;
+  if (!host.clientWidth) { host._w = 0; return; }   // hidden: the resize observer redraws it once shown
   host._w = host.clientWidth;
   const W = host.clientWidth;
   const rowH = 24;
@@ -1070,19 +1070,113 @@ const TABS = {
   code: { tab: "#tab-code", panel: "#panel-code", hash: "#kodlama" },
 };
 
-function selectTab(name) {
+// ---------------------------------------------------------------------
+// Navigation. Switching tabs and jumping to a section are real browser-history steps, so
+// Back / Forward return to the previous place at the same scroll position. The address
+// shows where you are (#teori/t-bn), so a reload or a shared link opens the same spot.
+// ---------------------------------------------------------------------
+history.scrollRestoration = "manual";   // restored here, once the tab's content is visible
+const nav = { tab: null, scroll: {} };  // current tab, last scroll position in each tab
+
+function parseHash(hash) {
+  const [base, section] = decodeURIComponent(hash || "").split("/");
+  const tab = Object.keys(TABS).find((key) => TABS[key].hash === base) || "train";
+  return { tab, section: section || null };
+}
+
+const hashFor = (tab, section) => TABS[tab].hash + (section ? `/${section}` : "");
+
+/** Shows a tab without touching the history. */
+function showTab(name) {
+  if (!TABS[name]) name = "train";
+  if (nav.tab && nav.tab !== name) nav.scroll[nav.tab] = window.scrollY;
+  nav.tab = name;
   document.body.dataset.tab = name;   // CSS shows the floating model switch only where it applies
   for (const [key, tab] of Object.entries(TABS)) {
-    $(tab.tab).setAttribute("aria-selected", String(key === name));
-    $(tab.panel).hidden = key !== name;
+    const active = key === name;
+    $(tab.tab).setAttribute("aria-selected", String(active));
+    $(tab.tab).tabIndex = active ? 0 : -1;   // arrow keys move between tabs (see below)
+    $(tab.panel).hidden = !active;
   }
-  history.replaceState(null, "", TABS[name].hash);
   hideTip();
+  if (zoom.dialog.open) zoom.dialog.close();
   if (name === "infer") syncInference();
   document.dispatchEvent(new CustomEvent("tab-shown", { detail: name }));
 }
 
-for (const [key, tab] of Object.entries(TABS)) $(tab.tab).addEventListener("click", () => selectTab(key));
+/** Scrolls to a position or a section as soon as it exists (Theory and Coding render lazily). */
+function scrollWhenReady({ y = null, section = null, smooth = false, flash = false }) {
+  const started = performance.now();
+  const attempt = () => {
+    const waited = performance.now() - started;
+    if (section) {
+      const target = document.getElementById(section);
+      if (target && target.getClientRects().length) {
+        target.scrollIntoView({ behavior: smooth ? "smooth" : "instant", block: "start" });
+        if (flash) {   // show where the jump landed
+          target.classList.remove("nav-flash");
+          void target.getBoundingClientRect();
+          target.classList.add("nav-flash");
+          setTimeout(() => target.classList.remove("nav-flash"), 1800);
+        }
+        return;
+      }
+    } else {
+      const room = document.documentElement.scrollHeight - window.innerHeight;
+      if (room >= y - 2 || waited > 2500) {
+        window.scrollTo({ top: y, behavior: "instant" });
+        return;
+      }
+    }
+    if (waited < 4000) requestAnimationFrame(attempt);
+  };
+  attempt();
+}
+
+/** Goes to a tab and, optionally, a section in it, as a new history step. */
+function navigate(tab, section = null) {
+  if (!TABS[tab] || (tab === nav.tab && !section)) return;
+  history.replaceState({ ...history.state, tab: nav.tab, scroll: window.scrollY }, "");   // where Back returns
+  history.pushState({ tab, section, scroll: null }, "", hashFor(tab, section));
+  const sameTab = tab === nav.tab;
+  showTab(tab);
+  if (section) scrollWhenReady({ section, smooth: sameTab, flash: !sameTab });
+  else scrollWhenReady({ y: nav.scroll[tab] ?? 0 });   // back where you were reading in that tab
+}
+
+/** The name the other scripts use to switch tabs. */
+const selectTab = (name) => navigate(name);
+
+window.addEventListener("popstate", (event) => {
+  const state = event.state || { ...parseHash(location.hash), scroll: null };
+  showTab(state.tab);
+  if (state.scroll != null) scrollWhenReady({ y: state.scroll });
+  else if (state.section) scrollWhenReady({ section: state.section });
+  else scrollWhenReady({ y: 0 });
+});
+
+// Keep the current history entry's scroll position up to date, so Forward also lands right
+let scrollSaveTimer = 0;
+window.addEventListener("scroll", () => {
+  clearTimeout(scrollSaveTimer);
+  scrollSaveTimer = setTimeout(() => {
+    if (nav.tab) history.replaceState({ ...history.state, tab: nav.tab, scroll: window.scrollY }, "");
+  }, 250);
+}, { passive: true });
+
+for (const [key, tab] of Object.entries(TABS)) $(tab.tab).addEventListener("click", () => navigate(key));
+
+// Tab list keyboard support: ← → Home End move between tabs
+$(".tabs").addEventListener("keydown", (event) => {
+  const keys = Object.keys(TABS);
+  const i = keys.indexOf(nav.tab);
+  const next = { ArrowRight: keys[(i + 1) % keys.length], ArrowLeft: keys[(i - 1 + keys.length) % keys.length],
+    Home: keys[0], End: keys[keys.length - 1] }[event.key];
+  if (!next) return;
+  event.preventDefault();
+  navigate(next);
+  $(TABS[next].tab).focus();
+});
 
 let pollTimer = null;
 let polling = false;
@@ -1265,7 +1359,10 @@ buildLayerRows();
 clearPad();
 resetPrediction();
 poll();
-// Wait for theory.js (loaded after this file) so it hears which tab opens first
+// Open the tab (and section) in the address. Waits for the other scripts, so they hear it.
 document.addEventListener("DOMContentLoaded", () => {
-  selectTab(Object.keys(TABS).find((key) => TABS[key].hash === location.hash) || "train");
+  const { tab, section } = parseHash(location.hash);
+  history.replaceState({ tab, section, scroll: null }, "", hashFor(tab, section));
+  showTab(tab);
+  if (section) scrollWhenReady({ section });
 });

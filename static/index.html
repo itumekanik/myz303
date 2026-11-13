@@ -52,13 +52,13 @@
     <section class="panel" id="panel-train" role="tabpanel" aria-labelledby="tab-train">
       <div class="row row-top">
         <form class="card controls" id="train-form" autocomplete="off">
-          <h2 data-i18n="train.settings">Ayarlar</h2>
+          <h2><span data-i18n="train.settings">Ayarlar</span> <button type="button" class="info-btn" data-info="settings" aria-expanded="false">i</button></h2>
           <p class="sub" data-i18n="train.defaults">Varsayılanlar <code>SimpleCNN.py</code> ile aynı; aynı seed aynı sonucu verir.</p>
           <div class="fields">
-            <label><span data-i18n="train.f.epochs">Epoch sayısı</span><input name="epochs" type="number" min="1" max="50" step="1" value="10" required></label>
-            <label><span data-i18n="train.f.lr">Öğrenme oranı</span><input name="lr" type="number" min="0.00001" max="1" step="any" value="0.001" required></label>
-            <label><span data-i18n="train.f.batch">Batch boyutu</span><input name="batch_size" type="number" min="8" max="4096" step="1" value="256" required></label>
-            <label>Seed<input name="seed" type="number" min="0" step="1" value="42" required></label>
+            <label><span class="label-row"><span data-i18n="train.f.epochs">Epoch sayısı</span> <button type="button" class="info-btn" data-info="epoch" aria-expanded="false">i</button></span><input name="epochs" type="number" min="1" max="50" step="1" value="10" required></label>
+            <label><span class="label-row"><span data-i18n="train.f.lr">Öğrenme oranı</span> <button type="button" class="info-btn" data-info="lr" aria-expanded="false">i</button></span><input name="lr" type="number" min="0.00001" max="1" step="any" value="0.001" required></label>
+            <label><span class="label-row"><span data-i18n="train.f.batch">Batch boyutu</span> <button type="button" class="info-btn" data-info="batch" aria-expanded="false">i</button></span><input name="batch_size" type="number" min="8" max="4096" step="1" value="256" required></label>
+            <label><span class="label-row"><span>Seed</span> <button type="button" class="info-btn" data-info="seed" aria-expanded="false">i</button></span><input name="seed" type="number" min="0" step="1" value="42" required></label>
           </div>
           <div class="buttons">
             <button type="submit" class="btn primary" id="btn-start">Eğitimi başlat</button>
@@ -69,15 +69,15 @@
 
         <div class="card stages">
           <div class="card-head">
-            <h2 data-i18n="train.stages">Aşamalar</h2>
+            <h2><span data-i18n="train.stages">Aşamalar</span> <button type="button" class="info-btn" data-info="stages" aria-expanded="false">i</button></h2>
             <span class="state-pill" id="state-pill">Hazır</span>
           </div>
           <ol class="stepper" id="stepper">
-            <li data-stage="loading"><span class="step-dot"><span>1</span></span><span class="step-label" data-i18n="stage.loading">Veri yükleme</span><span class="step-hint" data-hint>MNIST indirilir, bölünür</span></li>
-            <li data-stage="training"><span class="step-dot"><span>2</span></span><span class="step-label" data-i18n="stage.training">Eğitim</span><span class="step-hint" data-hint>Ağırlıklar güncellenir</span></li>
-            <li data-stage="validating"><span class="step-dot"><span>3</span></span><span class="step-label" data-i18n="stage.validating">Doğrulama</span><span class="step-hint" data-hint>Görülmemiş veride ölçüm</span></li>
-            <li data-stage="testing"><span class="step-dot"><span>4</span></span><span class="step-label" data-i18n="stage.testing">Test</span><span class="step-hint" data-hint>Son performans</span></li>
-            <li data-stage="saving"><span class="step-dot"><span>5</span></span><span class="step-label" data-i18n="stage.saving">Kayıt</span><span class="step-hint" data-hint>checkpoints/simple_cnn.pt</span></li>
+            <li data-stage="loading"><span class="step-dot"><span>1</span></span><span class="step-label"><span data-i18n="stage.loading">Veri yükleme</span> <button type="button" class="info-btn" data-info="stage.loading" aria-expanded="false">i</button></span><span class="step-hint" data-hint>MNIST indirilir, bölünür</span></li>
+            <li data-stage="training"><span class="step-dot"><span>2</span></span><span class="step-label"><span data-i18n="stage.training">Eğitim</span> <button type="button" class="info-btn" data-info="stage.training" aria-expanded="false">i</button></span><span class="step-hint" data-hint>Ağırlıklar güncellenir</span></li>
+            <li data-stage="validating"><span class="step-dot"><span>3</span></span><span class="step-label"><span data-i18n="stage.validating">Doğrulama</span> <button type="button" class="info-btn" data-info="stage.validating" aria-expanded="false">i</button></span><span class="step-hint" data-hint>Görülmemiş veride ölçüm</span></li>
+            <li data-stage="testing"><span class="step-dot"><span>4</span></span><span class="step-label"><span data-i18n="stage.testing">Test</span> <button type="button" class="info-btn" data-info="stage.testing" aria-expanded="false">i</button></span><span class="step-hint" data-hint>Son performans</span></li>
+            <li data-stage="saving"><span class="step-dot"><span>5</span></span><span class="step-label"><span data-i18n="stage.saving">Kayıt</span> <button type="button" class="info-btn" data-info="stage.saving" aria-expanded="false">i</button></span><span class="step-hint" data-hint>checkpoints/simple_cnn.pt</span></li>
           </ol>
           <div class="loop-note" aria-hidden="true"><span data-i18n="train.loopnote">↻ 2 ve 3 her epoch'ta tekrarlanır</span></div>
 
@@ -88,7 +88,7 @@
               <span class="progress-value" id="epoch-progress-value">—</span>
             </div>
             <div class="progress-row">
-              <span class="progress-label" data-i18n="train.total">Toplam</span>
+              <span class="progress-label"><span data-i18n="train.total">Toplam</span> <button type="button" class="info-btn" data-info="progress" aria-expanded="false">i</button></span>
               <div class="meter" role="progressbar" aria-label="Toplam ilerleme" id="total-meter" data-i18n-attr="aria-label=a.totalprog"><div class="meter-fill" id="total-progress"></div></div>
               <span class="progress-value" id="total-progress-value">—</span>
             </div>
@@ -96,15 +96,15 @@
 
           <div class="loop" id="train-loop">
             <div class="loop-head">
-              <span data-i18n="train.loophead">Her batch'te çalışan eğitim adımı</span>
+              <span><span data-i18n="train.loophead">Her batch'te çalışan eğitim adımı</span> <button type="button" class="info-btn" data-info="trainstep" aria-expanded="false">i</button></span>
               <span class="loop-count" id="step-count">Toplam adım: 0</span>
             </div>
             <ol class="chips">
-              <li class="chip"><code>optimizer.zero_grad()</code><span data-i18n="chip.zero">Gradyanları sıfırla</span></li>
-              <li class="chip"><code>model(x)</code><span data-i18n="chip.forward">İleri yayılım</span></li>
-              <li class="chip"><code>criterion(out, y)</code><span data-i18n="chip.loss">Kaybı hesapla</span></li>
-              <li class="chip"><code>loss.backward()</code><span data-i18n="chip.backward">Geri yayılım</span></li>
-              <li class="chip"><code>optimizer.step()</code><span data-i18n="chip.step">Ağırlıkları güncelle</span></li>
+              <li class="chip"><code>optimizer.zero_grad()</code><span data-i18n="chip.zero">Gradyanları sıfırla</span><button type="button" class="info-btn" data-info="chip.zero" aria-expanded="false">i</button></li>
+              <li class="chip"><code>model(x)</code><span data-i18n="chip.forward">İleri yayılım</span><button type="button" class="info-btn" data-info="chip.forward" aria-expanded="false">i</button></li>
+              <li class="chip"><code>criterion(out, y)</code><span data-i18n="chip.loss">Kaybı hesapla</span><button type="button" class="info-btn" data-info="chip.loss" aria-expanded="false">i</button></li>
+              <li class="chip"><code>loss.backward()</code><span data-i18n="chip.backward">Geri yayılım</span><button type="button" class="info-btn" data-info="chip.backward" aria-expanded="false">i</button></li>
+              <li class="chip"><code>optimizer.step()</code><span data-i18n="chip.step">Ağırlıkları güncelle</span><button type="button" class="info-btn" data-info="chip.step" aria-expanded="false">i</button></li>
             </ol>
           </div>
         </div>
@@ -113,17 +113,17 @@
       <div class="banner inline" id="run-banner" hidden></div>
 
       <div class="tiles">
-        <div class="tile"><span class="tile-label">Epoch</span><span class="tile-value" id="tile-epoch">—</span><span class="tile-sub" id="tile-epoch-sub">henüz başlamadı</span></div>
-        <div class="tile"><span class="tile-label" data-i18n="tile.loss">Eğitim kaybı</span><span class="tile-value" id="tile-loss">—</span><span class="tile-sub" data-i18n="tile.loss.sub">son batch'lerin ortalaması</span></div>
-        <div class="tile"><span class="tile-label" data-i18n="tile.val">Doğrulama doğruluğu</span><span class="tile-value" id="tile-val">—</span><span class="tile-sub" id="tile-val-sub">her epoch sonunda</span></div>
-        <div class="tile"><span class="tile-label" data-i18n="tile.test">Test doğruluğu</span><span class="tile-value" id="tile-test">—</span><span class="tile-sub" id="tile-test-sub">eğitim bitince ölçülür</span></div>
-        <div class="tile"><span class="tile-label" data-i18n="tile.time">Süre</span><span class="tile-value" id="tile-time">—</span><span class="tile-sub" id="tile-time-sub">&nbsp;</span></div>
+        <div class="tile"><span class="tile-label">Epoch <button type="button" class="info-btn" data-info="epoch" aria-expanded="false">i</button></span><span class="tile-value" id="tile-epoch">—</span><span class="tile-sub" id="tile-epoch-sub">henüz başlamadı</span></div>
+        <div class="tile"><span class="tile-label"><span data-i18n="tile.loss">Eğitim kaybı</span> <button type="button" class="info-btn" data-info="tile.loss" aria-expanded="false">i</button></span><span class="tile-value" id="tile-loss">—</span><span class="tile-sub" data-i18n="tile.loss.sub">son batch'lerin ortalaması</span></div>
+        <div class="tile"><span class="tile-label"><span data-i18n="tile.val">Doğrulama doğruluğu</span> <button type="button" class="info-btn" data-info="tile.val" aria-expanded="false">i</button></span><span class="tile-value" id="tile-val">—</span><span class="tile-sub" id="tile-val-sub">her epoch sonunda</span></div>
+        <div class="tile"><span class="tile-label"><span data-i18n="tile.test">Test doğruluğu</span> <button type="button" class="info-btn" data-info="tile.test" aria-expanded="false">i</button></span><span class="tile-value" id="tile-test">—</span><span class="tile-sub" id="tile-test-sub">eğitim bitince ölçülür</span></div>
+        <div class="tile"><span class="tile-label"><span data-i18n="tile.time">Süre</span> <button type="button" class="info-btn" data-info="tile.time" aria-expanded="false">i</button></span><span class="tile-value" id="tile-time">—</span><span class="tile-sub" id="tile-time-sub">&nbsp;</span></div>
       </div>
 
       <div class="card chart-card">
         <div class="card-head">
           <div>
-            <h2 data-i18n="chart.batch">Batch kaybı</h2>
+            <h2><span data-i18n="chart.batch">Batch kaybı</span> <button type="button" class="info-btn" data-info="batchloss" aria-expanded="false">i</button></h2>
             <p class="sub" data-i18n="chart.batch.sub">Her batch'ten sonraki eğitim kaybı · logaritmik eksen · alt eksen epoch</p>
           </div>
           <div class="legend">
@@ -137,7 +137,7 @@
       <div class="row two">
         <div class="card chart-card">
           <div class="card-head">
-            <div><h2 data-i18n="chart.loss">Kayıp</h2><p class="sub" data-i18n="chart.loss.sub">Epoch sonunda ortalama kayıp</p></div>
+            <div><h2><span data-i18n="chart.loss">Kayıp</span> <button type="button" class="info-btn" data-info="losscurve" aria-expanded="false">i</button></h2><p class="sub" data-i18n="chart.loss.sub">Epoch sonunda ortalama kayıp</p></div>
             <div class="legend">
               <span class="legend-item" data-i18n="legend.train"><span class="key-line s1"></span>Eğitim</span>
               <span class="legend-item" data-i18n="legend.val"><span class="key-line s2"></span>Doğrulama</span>
@@ -147,7 +147,7 @@
         </div>
         <div class="card chart-card">
           <div class="card-head">
-            <div><h2 data-i18n="chart.acc">Doğruluk</h2><p class="sub" data-i18n="chart.acc.sub">Doğru sınıflandırılan görüntü oranı</p></div>
+            <div><h2><span data-i18n="chart.acc">Doğruluk</span> <button type="button" class="info-btn" data-info="accuracy" aria-expanded="false">i</button></h2><p class="sub" data-i18n="chart.acc.sub">Doğru sınıflandırılan görüntü oranı</p></div>
             <div class="legend">
               <span class="legend-item" data-i18n="legend.train"><span class="key-line s1"></span>Eğitim</span>
               <span class="legend-item" data-i18n="legend.val"><span class="key-line s2"></span>Doğrulama</span>
@@ -161,7 +161,7 @@
       <div class="row two">
         <div class="card">
           <div class="card-head">
-            <div><h2 data-i18n="train.filters">Conv1 filtreleri</h2><p class="sub" data-i18n="train.filters.sub">İlk katmanın 32 adet 5×5 filtresi. Rastgele başlar ve her adımda güncellenir; her biri görüntüde farklı bir deseni (kenar, köşe, çizgi) arar.</p></div>
+            <div><h2><span data-i18n="train.filters">Conv1 filtreleri</span> <button type="button" class="info-btn" data-info="filters" aria-expanded="false">i</button></h2><p class="sub" data-i18n="train.filters.sub">İlk katmanın 32 adet 5×5 filtresi. Rastgele başlar ve her adımda güncellenir; her biri görüntüde farklı bir deseni (kenar, köşe, çizgi) arar.</p></div>
           </div>
           <div class="filter-grid" id="filters"></div>
           <div class="scale-legend">
@@ -170,7 +170,7 @@
         </div>
         <div class="card">
           <div class="card-head">
-            <div><h2 data-i18n="train.samples">Doğrulama örnekleri</h2><p class="sub" id="samples-sub">Eğitim başlayınca 16 sabit doğrulama görüntüsü burada tahmin edilir.</p></div>
+            <div><h2><span data-i18n="train.samples">Doğrulama örnekleri</span> <button type="button" class="info-btn" data-info="samples" aria-expanded="false">i</button></h2><p class="sub" id="samples-sub">Eğitim başlayınca 16 sabit doğrulama görüntüsü burada tahmin edilir.</p></div>
           </div>
           <div class="sample-grid" id="samples"></div>
         </div>
@@ -178,7 +178,7 @@
 
       <div class="row two">
         <div class="card">
-          <h2 data-i18n="train.table">Epoch tablosu</h2>
+          <h2><span data-i18n="train.table">Epoch tablosu</span> <button type="button" class="info-btn" data-info="table" aria-expanded="false">i</button></h2>
           <div class="table-wrap">
             <table class="data-table" id="history-table">
               <thead><tr data-i18n="train.table.head"><th>Epoch</th><th>Eğitim kaybı</th><th>Eğitim doğr.</th><th>Doğrulama kaybı</th><th>Doğrulama doğr.</th><th>Süre</th></tr></thead>
@@ -187,7 +187,7 @@
           </div>
         </div>
         <div class="card">
-          <h2 data-i18n="train.log">Kayıt</h2>
+          <h2><span data-i18n="train.log">Kayıt</span> <button type="button" class="info-btn" data-info="log" aria-expanded="false">i</button></h2>
           <pre class="log" id="log" aria-live="polite">Eğitim başladığında çıktılar burada görünür.</pre>
         </div>
       </div>
@@ -542,5 +542,6 @@
   <script src="/static/app.js"></script>
   <script src="/static/theory.js"></script>
   <script src="/static/tutorial.js"></script>
+  <script src="/static/help.js"></script>
 </body>
 </html>

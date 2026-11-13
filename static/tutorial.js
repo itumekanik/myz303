@@ -117,8 +117,7 @@ function rich(text) {
       const link = h("a", { href: "#", class: "tut-link", text: label });
       link.addEventListener("click", (e) => {
         e.preventDefault();
-        selectTab(tab);
-        if (section) setTimeout(() => document.getElementById(section)?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
+        navigate(tab, section || null);
       });
       fragment.append(link);
     } else if (part.startsWith("*") && part.endsWith("*") && part.length > 2) fragment.append(h("em", { text: part.slice(1, -1) }));
@@ -1153,9 +1152,8 @@ function renderBlock(block) {
   return null;
 }
 
-function goToStep(id) {
-  document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
+/** Jumps to a step as a history step, so Back returns to where you were reading. */
+const goToStep = (id) => navigate("code", id);
 
 function renderTutorial() {
   const main = $("#tut-main");

@@ -827,3 +827,47 @@ code.ic {
   .code-dots { display: none; }
   .code-gutter { width: 40px; padding-right: 12px; }
 }
+
+/* ---------- Info buttons and their popup (Training tab) ---------- */
+.info-btn {
+  display: inline-grid; place-items: center; flex: none; vertical-align: 1px;
+  width: 17px; height: 17px; margin-left: 4px; padding: 0; border-radius: 50%;
+  border: 1px solid var(--axis); background: var(--surface); color: var(--text-2);
+  font: italic 700 11px/1 Georgia, "Times New Roman", serif; cursor: pointer;
+}
+.info-btn:hover, .info-btn[aria-expanded="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-strong); }
+.info-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+h2 > .info-btn { vertical-align: 2px; }
+.label-row { display: inline-flex; align-items: center; gap: 2px; }
+.chip { padding-right: 28px; }
+.chip > .info-btn { position: absolute; top: 7px; right: 7px; margin: 0; }
+.stepper .step-label { display: inline-flex; align-items: center; justify-content: center; flex-wrap: wrap; }
+
+.info-pop {
+  position: absolute; z-index: 60; width: min(360px, calc(100vw - 24px));
+  padding: 14px 16px 12px; border-radius: 12px;
+  background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow);
+  color: var(--text-2); font-size: 13.5px; line-height: 1.55;
+}
+.info-pop-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.info-pop-title { color: var(--text); font-size: 14.5px; line-height: 1.35; padding-top: 2px; }
+.info-pop-body p { margin: 0 0 8px; }
+.info-pop-body b { color: var(--text); font-weight: 600; }
+.info-pop-body code { padding: 0 4px; border-radius: 4px; background: var(--surface-2); color: var(--text); font-family: var(--mono); font-size: 0.88em; }
+.info-pop .info-formula {
+  padding: 6px 10px; border-radius: 6px; background: var(--surface-2); color: var(--text);
+  font-family: "Cambria Math", "STIX Two Math", "Times New Roman", serif; font-size: 15px;
+}
+.info-pop-live { margin: 2px 0 8px; padding: 7px 10px; border-radius: 8px; background: var(--accent-soft); color: var(--text); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.info-pop-more { display: inline-block; margin-top: 2px; color: var(--accent-strong); font-weight: 600; text-decoration: none; }
+.info-pop-more:hover { text-decoration: underline; }
+
+/* ---------- Navigation ---------- */
+#t-schematic { scroll-margin-top: calc(var(--topbar-h, 59px) + 90px); }
+/* Briefly marks where a link from another tab landed */
+.nav-flash { animation: nav-flash 1.8s ease-out; border-radius: var(--radius); }
+@keyframes nav-flash {
+  0%, 35% { box-shadow: 0 0 0 3px var(--accent); }
+  100% { box-shadow: 0 0 0 3px transparent; }
+}
+@media (prefers-reduced-motion: reduce) { .nav-flash { animation: none; } }

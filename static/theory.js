@@ -156,7 +156,7 @@ function setPressed(host, index) {
 /** A function curve with a crosshair; o.marker draws a highlighted point on the curve. */
 function curvePlot(host, o) {
   host._render = () => curvePlot(host, o);
-  if (!host.clientWidth) return;
+  if (!host.clientWidth) { host._w = 0; return; }   // hidden: the resize observer redraws it once shown
   host._w = host.clientWidth;
   const W = host.clientWidth;
   const H = +host.dataset.height || 180;
@@ -225,7 +225,7 @@ function columnPath(x, y, w, hgt, r = 4) {
 /** Histogram on a shared x range; a bar far taller than the rest is cut and labelled. */
 function histogram(host, values, lo, hi, mean) {
   host._render = () => histogram(host, values, lo, hi, mean);
-  if (!host.clientWidth) return;
+  if (!host.clientWidth) { host._w = 0; return; }   // hidden: the resize observer redraws it once shown
   host._w = host.clientWidth;
   const W = host.clientWidth;
   const H = +host.dataset.height || 150;
@@ -1043,16 +1043,15 @@ function pixelsURL(face) {
   return canvas.toDataURL();
 }
 
-function goToSection(id) {
-  document.getElementById(id).scrollIntoView({ behavior: "smooth", block: "start" });
-}
+/** Jumps to a section of this tab as a history step (Back returns to the diagram). */
+const jumpToTheory = (id) => navigate("theory", id);
 
 function makeLink(node, target, label) {
   node.setAttribute("tabindex", "0");
   node.setAttribute("role", "link");
   node.setAttribute("aria-label", label);
-  node.addEventListener("click", () => goToSection(target));
-  node.addEventListener("keydown", (e) => { if (e.key === "Enter") goToSection(target); });
+  node.addEventListener("click", () => jumpToTheory(target));
+  node.addEventListener("keydown", (e) => { if (e.key === "Enter") jumpToTheory(target); });
 }
 
 /** The real output of every stage for the selected image (what the front faces show). */
