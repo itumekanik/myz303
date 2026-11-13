@@ -1125,29 +1125,180 @@ function updateSoftmax() {
 }
 
 // =====================================================================
-// 7 · Gradient descent: SGD vs Momentum vs Adam
+// 7 · Gradient descent: SGD vs Momentum vs Adam on a 3D loss surface
+// The surface is drawn on a 2D canvas (shaded quads, back to front) with its contour map
+// on the floor below; drag to turn it, click a point to start from there.
 // =====================================================================
-const SURFACE = { f: (a, b) => (a * a) / 20 + b * b, grad: (a, b) => [a / 10, 2 * b], x: [-10, 10], y: [-5, 5] };
+const SURFACES = {
+  valley: {
+    name: { tr: "Dar vadi", en: "Narrow valley" },
+    f: (a, b) => (a * a) / 20 + b * b,
+    grad: (a, b) => [a / 10, 2 * b],
+    start: [-8.5, 3.6], lr: 0.3,
+    tex: String.raw`L = \theta_1^2/20 + \theta_2^2`,
+  },
+  saddle: {
+    name: { tr: "Eyer noktası", en: "Saddle point" },
+    f: (a, b) => (a * a) / 20 - (b * b) / 2 + b ** 4 / 40,
+    grad: (a, b) => [a / 10, -b + b ** 3 / 10],
+    start: [-8.5, 0.002], lr: 0.1,
+    tex: String.raw`L = \theta_1^2/20 - \theta_2^2/2 + \theta_2^4/40`,
+    saddle: [0, 0],
+  },
+  wells: {
+    name: { tr: "İki çukur", en: "Two valleys" },
+    f: (a, b) => { const u = a / 6; return 3 * (u * u - 1) ** 2 - 0.6 * u + 0.4 * b * b; },
+    grad: (a, b) => { const u = a / 6; return [2 * u * (u * u - 1) - 0.1, 0.8 * b]; },
+    start: [-9.5, 2.5], lr: 0.25,
+    tex: String.raw`L = 3\bigl((\theta_1/6)^2 - 1\bigr)^2 - 0{,}1\,\theta_1 + 0{,}4\,\theta_2^2`,
+    texEn: String.raw`L = 3\bigl((\theta_1/6)^2 - 1\bigr)^2 - 0.1\,\theta_1 + 0.4\,\theta_2^2`,
+  },
+};
+const OPT_RANGE = { x: [-10, 10], y: [-5, 5] };
 const OPTIMIZERS = [
   { key: "sgd", label: "SGD", color: "var(--series-1)" },
   { key: "momentum", label: "Momentum", color: "var(--series-2)" },
   { key: "adam", label: "Adam", color: "var(--series-3)" },
 ];
-const opt = { lr: 0.3, start: [-8.5, 3.6], steps: 80, data: null, shown: 80, anim: 0 };
+const VIEWS = {
+  "3d": { az: -0.55, el: 0.95, label: { tr: "3B", en: "3D" } },
+  top: { az: 0, el: Math.PI / 2 - 1e-4, label: { tr: "Üstten", en: "From above" } },
+  side: { az: 0, el: 0.06, label: { tr: "θ₁ boyunca kesit", en: "Along θ₁" } },
+};
+const opt = {
+  surface: "valley", lr: 0.3, start: [-8.5, 3.6], steps: 100, data: null, shown: 100, anim: 0,
+  hidden: new Set(), view: { ...VIEWS["3d"] }, viewName: "3d", mesh: null, floor: null,
+};
+
+const OPT_TEXT = {
+  methods: [
+    {
+      key: "sgd",
+      sub: { tr: "Stokastik gradyan inişi", en: "Stochastic gradient descent" },
+      tex: String.raw`\theta_t = \theta_{t-1} - \eta\, g_t`,
+      idea: {
+        tr: "Yalnızca o anki eğime bakar: sisli bir dağda ayağının altındaki eğime göre adım atan bir yürüyüşçü gibi. Adım gradyanla orantılıdır: dik yerde büyük, düz yerde küçük.",
+        en: "It only looks at the current slope, like a hiker in fog stepping by the slope under their feet. The step is proportional to the gradient: big on steep ground, small on flat ground.",
+      },
+      pros: [
+        { tr: "Basittir, ek bellek gerektirmez; iyi ayarlandığında hâlâ çok güçlüdür.", en: "Simple, needs no extra memory; still very strong when tuned well." },
+      ],
+      cons: [
+        { tr: "Dar bir vadide duvardan duvara zikzak çizer, vadinin tabanı boyunca sürünür.", en: "Zigzags from wall to wall in a narrow valley and crawls along its floor." },
+        { tr: "Gradyanın sıfıra yaklaştığı eyer noktalarında uzun süre bekler.", en: "Waits a long time at saddle points, where the gradient is nearly zero." },
+        { tr: "Uygun η'yi bulmak zordur: biraz büyük olunca ıraksar.", en: "The right η is hard to find: a little too large and it diverges." },
+      ],
+      look: {
+        tr: "<b>Animasyonda:</b> dar vadide mavi yolun θ₂ yönündeki salınımına ve θ₁ yönündeki yavaşlığına bakın. η'yi 1'in üzerine çıkarınca salınım büyür ve yol ıraksar.",
+        en: "<b>In the animation:</b> in the narrow valley, watch the blue path oscillate along θ₂ and crawl along θ₁. Raise η above 1 and the oscillation grows until the path diverges.",
+      },
+    },
+    {
+      key: "momentum",
+      sub: { tr: "Ağır bir top", en: "A heavy ball" },
+      tex: String.raw`\mathbf{v}_t = \mu\,\mathbf{v}_{t-1} + g_t \qquad \theta_t = \theta_{t-1} - \eta\,\mathbf{v}_t`,
+      idea: {
+        tr: String.raw`Yokuş aşağı yuvarlanan ağır bir top gibi hız biriktirir (burada \(\mu = 0{,}9\)). Hız, geçmiş gradyanların üstel ağırlıklı toplamıdır: hep aynı yönü gösteren bileşenler toplanıp büyür (en fazla \(1/(1-\mu) = 10\) kat), yön değiştirenler birbirini götürür.`,
+        en: String.raw`Like a heavy ball rolling downhill it builds up velocity (here \(\mu = 0.9\)). The velocity is an exponentially weighted sum of past gradients: components that keep pointing the same way add up (up to \(1/(1-\mu) = 10\) times), those that flip cancel out.`,
+      },
+      pros: [
+        { tr: "Vadinin tabanı gibi tutarlı yönlerde hızlanır, zikzakları söndürür.", en: "Speeds up in consistent directions such as a valley floor and damps zigzags." },
+        { tr: "Biriktirdiği hızla sığ çukurlardan ve eyer noktalarından kurtulabilir.", en: "Its velocity can carry it out of shallow dips and away from saddle points." },
+      ],
+      cons: [
+        { tr: "Hızı yüzünden minimumu geçer, birkaç kez salınarak durur.", en: "Its speed makes it overshoot the minimum and settle only after a few swings." },
+        { tr: "η ile μ birlikte ayarlanmalıdır.", en: "η and μ have to be tuned together." },
+      ],
+      look: {
+        tr: "<b>Animasyonda:</b> iki çukur yüzeyinde turuncu top tepeyi aşıp derin çukura ulaşır; SGD ve Adam ilk çukurda kalır.",
+        en: "<b>In the animation:</b> on the two-valley surface the orange ball rolls over the hill into the deeper valley; SGD and Adam stay in the first one.",
+      },
+    },
+    {
+      key: "adam",
+      sub: { tr: "Parametre başına uyarlanan adım", en: "A step adapted per parameter" },
+      tex: String.raw`\theta_t = \theta_{t-1} - \eta\,\frac{\hat{m}_t}{\sqrt{\hat{v}_t}+\epsilon}`,
+      idea: {
+        tr: String.raw`Gradyanın hareketli ortalamasını (\(\hat m\)), gradyan karelerinin hareketli ortalamasının köküne (\(\sqrt{\hat v}\)) böler. Böylece her parametrenin adımı kabaca η olur: gradyanı büyük olan yönde adım küçülür, küçük olan yönde büyür.`,
+        en: String.raw`It divides the moving average of the gradient (\(\hat m\)) by the root of the moving average of its square (\(\sqrt{\hat v}\)). So every parameter's step is roughly η: smaller where the gradient is large, larger where it is small.`,
+      },
+      pros: [
+        { tr: "Dar vadide iki yönde de aynı hızla ilerler; ölçekleri çok farklı parametreler için tek bir η yeter.", en: "Moves equally fast in both directions of a narrow valley; one η suits parameters of very different scales." },
+        { tr: "Gradyanın çok küçük olduğu düz bölgelerde ve eyer noktalarında takılmaz.", en: "Does not get stuck on flat ground or at saddle points, where the gradient is tiny." },
+        { tr: "Derin ağlarda en yaygın seçimdir; SimpleCNN de onu kullanır.", en: "The most common choice for deep networks; SimpleCNN uses it too." },
+      ],
+      cons: [
+        { tr: "Adımı hep yaklaşık η olduğu için minimumun yakınında küçük salınımlar yapar.", en: "Its step stays near η, so it jitters a little close to the minimum." },
+        { tr: "Momentum kadar hız biriktirmediğinden sığ bir çukurdan kaçamayabilir.", en: "It builds up less speed than Momentum, so it may not escape a shallow dip." },
+      ],
+      look: {
+        tr: "<b>Animasyonda:</b> dar vadide yeşil yol neredeyse düz bir çizgidir; eyer noktasında ilk kaçan odur.",
+        en: "<b>In the animation:</b> in the narrow valley the green path is almost a straight line; at the saddle point it is the first to escape.",
+      },
+    },
+  ],
+  notes: {
+    valley: {
+      tr: "θ₂ yönünde θ₁'e göre 20 kat daha dik, uzun ve dar bir vadi. Derin ağların kayıp yüzeyleri de böyle \"kötü koşulludur\": bazı yönlerde çok dik, bazılarında neredeyse düz. SGD dik yönde salınır, düz yönde sürünür; Momentum vadinin tabanında hız kazanır; Adam iki yönü dengeler.",
+      en: "A long, narrow valley, 20 times steeper along θ₂ than along θ₁. The loss surfaces of deep networks are \"ill-conditioned\" like this too: very steep in some directions, almost flat in others. SGD oscillates in the steep direction and crawls in the flat one; Momentum picks up speed along the valley floor; Adam balances the two directions.",
+    },
+    saddle: {
+      tr: "Ortada bir eyer noktası var: θ₁ yönünde çukur, θ₂ yönünde tepe. Gerçek minimumlar θ₂ = ±3,16'dadır. Çok boyutlu ağlarda eyer noktaları yerel minimumlardan çok daha yaygındır. Sırttan başlayan SGD, gradyan neredeyse sıfır olduğu için eyerde uzun süre bekler; Adam küçük gradyanı büyüterek ilk kaçan olur.",
+      en: "There is a saddle point in the middle: a dip along θ₁, a hill along θ₂. The real minima are at θ₂ = ±3.16. In high-dimensional networks saddle points are far more common than local minima. Starting on the ridge, SGD waits at the saddle for a long time because the gradient is almost zero; Adam scales the tiny gradient up and escapes first.",
+    },
+    wells: {
+      tr: "Solda sığ bir yerel minimum, sağda daha derin bir global minimum, arada bir tepe. Gradyan yalnızca yakın çevreyi görür: SGD ilk bulduğu çukurda kalır, Momentum biriktirdiği hızla tepeyi aşar. η'yi değiştirip sonucun nasıl değiştiğine bakın; gerçek eğitimde de başlangıç noktası ve öğrenme oranı hangi çukura düşüleceğini etkiler.",
+      en: "A shallow local minimum on the left, a deeper global minimum on the right, a hill in between. The gradient only sees the neighborhood: SGD stays in the first valley it finds, Momentum's speed carries it over the hill. Change η and see how the outcome changes; in real training too, the starting point and the learning rate decide which valley you end up in.",
+    },
+  },
+};
+
+const surf = () => SURFACES[opt.surface];
+
+/** The surface's lowest value (found once by a grid search and gradient descent), and its minima. */
+function surfaceInfo(s) {
+  if (s.info) return s.info;
+  let best = Infinity;
+  const seeds = [];
+  for (let i = 0; i <= 200; i++) {
+    for (let j = 0; j <= 100; j++) {
+      const a = OPT_RANGE.x[0] + (i / 200) * 20;
+      const b = OPT_RANGE.y[0] + (j / 100) * 10;
+      const v = s.f(a, b);
+      best = Math.min(best, v);
+      const g = s.grad(a, b);
+      if (Math.hypot(...g) < 0.08 && v < s.f(0, 0) + 3) seeds.push([a, b]);
+    }
+  }
+  const minima = [];
+  for (const seed of seeds) {
+    let p = seed;
+    for (let k = 0; k < 3000; k++) { const g = s.grad(...p); p = [p[0] - 0.05 * g[0], p[1] - 0.05 * g[1]]; }
+    const isMin = Math.hypot(...s.grad(...p)) < 1e-6 && s.f(p[0] + 0.01, p[1]) > s.f(...p) && s.f(p[0], p[1] + 0.01) > s.f(...p);
+    if (isMin && !minima.some((q) => Math.hypot(q[0] - p[0], q[1] - p[1]) < 0.1)) minima.push(p);
+  }
+  let fmax = -Infinity;
+  for (let i = 0; i <= 40; i++) for (let j = 0; j <= 20; j++) fmax = Math.max(fmax, s.f(OPT_RANGE.x[0] + i / 2, OPT_RANGE.y[0] + j / 2));
+  const fmin = Math.min(best, ...minima.map((p) => s.f(...p)));
+  s.info = { fmin, fmax, minima, global: minima.reduce((g, p) => (s.f(...p) < s.f(...g) ? p : g), minima[0]) };
+  return s.info;
+}
 
 function runOptimizers() {
+  const s = surf();
   const lr = opt.lr;
   return OPTIMIZERS.map((o) => {
     let p = [...opt.start];
     let v = [0, 0];
     let m = [0, 0];
-    let s = [0, 0];
+    let q = [0, 0];
     let diverged = false;
     const path = [[...p]];
-    const losses = [SURFACE.f(...p)];
+    const grads = [s.grad(...p)];
+    const losses = [s.f(...p)];
     for (let t = 1; t <= opt.steps; t++) {
       if (!diverged) {
-        const g = SURFACE.grad(...p);
+        const g = s.grad(...p);
         let next;
         if (o.key === "sgd") {
           next = [p[0] - lr * g[0], p[1] - lr * g[1]];
@@ -1156,19 +1307,79 @@ function runOptimizers() {
           next = [p[0] - lr * v[0], p[1] - lr * v[1]];
         } else {
           m = [0.9 * m[0] + 0.1 * g[0], 0.9 * m[1] + 0.1 * g[1]];
-          s = [0.999 * s[0] + 0.001 * g[0] ** 2, 0.999 * s[1] + 0.001 * g[1] ** 2];
-          const mHat = m.map((q) => q / (1 - 0.9 ** t));
-          const sHat = s.map((q) => q / (1 - 0.999 ** t));
-          next = [p[0] - (lr * mHat[0]) / (Math.sqrt(sHat[0]) + 1e-8), p[1] - (lr * mHat[1]) / (Math.sqrt(sHat[1]) + 1e-8)];
+          q = [0.999 * q[0] + 0.001 * g[0] ** 2, 0.999 * q[1] + 0.001 * g[1] ** 2];
+          const mHat = m.map((x) => x / (1 - 0.9 ** t));
+          const qHat = q.map((x) => x / (1 - 0.999 ** t));
+          next = [p[0] - (lr * mHat[0]) / (Math.sqrt(qHat[0]) + 1e-8), p[1] - (lr * mHat[1]) / (Math.sqrt(qHat[1]) + 1e-8)];
         }
-        if (next.every((q) => Number.isFinite(q) && Math.abs(q) < 1e3)) p = next;
+        if (next.every((x) => Number.isFinite(x) && Math.abs(x) < 1e3)) p = next;
         else diverged = true;
       }
       path.push([...p]);
-      losses.push(SURFACE.f(...p));
+      grads.push(s.grad(...p));
+      losses.push(s.f(...p));
     }
-    return { ...o, path, losses, diverged };
+    return { ...o, path, grads, losses, diverged };
   });
+}
+
+// ---------------------------------------------------------------------
+// Texts and controls
+// ---------------------------------------------------------------------
+function fillOptText() {
+  const methods = $("#t-opt-methods");
+  methods.replaceChildren(...OPT_TEXT.methods.map((mth) => {
+    const o = OPTIMIZERS.find((x) => x.key === mth.key);
+    const card = h("div", { class: "opt-method", style: `--c:${o.color}` });
+    card.innerHTML = termify(`
+      <div class="opt-method-head"><span class="opt-method-key"></span><strong>${o.label}</strong><span class="opt-method-sub">${L(mth.sub)}</span>
+        <a href="#" class="opt-method-math" data-go="math:m-opt">${L({ tr: "∑ Matematiği", en: "∑ The math" })}</a></div>
+      <div class="formula small">\\(\\displaystyle ${mth.tex}\\)</div>
+      <p>${L(mth.idea)}</p>
+      <ul class="opt-pc">${mth.pros.map((x) => `<li class="pro">${L(x)}</li>`).join("")}${mth.cons.map((x) => `<li class="con">${L(x)}</li>`).join("")}</ul>
+      <p class="opt-look">${L(mth.look)}</p>`);   // static, author-written markup
+    return card;
+  }));
+
+  const surfaces = $("#t-opt-surfaces");
+  surfaces.replaceChildren(h("span", { class: "opt-ctl-label", text: L({ tr: "Kayıp yüzeyi", en: "Loss surface" }) }),
+    seg3(Object.entries(SURFACES).map(([k, s]) => [k, L(s.name)]), opt.surface, (k) => selectSurface(k)));
+  const views = $("#t-opt-views");
+  views.replaceChildren(seg3(Object.entries(VIEWS).map(([k, v]) => [k, L(v.label)]), opt.viewName, (k) => {
+    opt.viewName = k;
+    opt.view = { ...VIEWS[k] };
+    fillOptText();
+    drawSurface3d();
+  }));
+  const s = surf();
+  $("#t-opt-note").innerHTML = termify(`<span class="opt-note-formula">\\(${I18N.lang === "en" && s.texEn ? s.texEn : s.tex}\\)</span> ${L(OPT_TEXT.notes[opt.surface])}`);
+  $("#t-opt-hint").textContent = L({ tr: "Sürükleyerek döndürün · bir noktaya tıklayıp oradan başlatın", en: "Drag to turn · click a point to start there" });
+  $("#t-opt-canvas").setAttribute("aria-label", L({ tr: "Kayıp yüzeyinin 3B görünümü ve üç yöntemin yolu; ok tuşlarıyla döndürülür", en: "3D view of the loss surface and the three methods' paths; arrow keys turn it" }));
+  $("#t-opt-step-label").textContent = L({ tr: "Adım", en: "Step" });
+  $("#t-opt-loss-title").innerHTML = L({ tr: "Adım başına kayıp farkı \\(L - L_{\\min}\\) (logaritmik eksen)", en: "Loss gap per step, \\(L - L_{\\min}\\) (logarithmic axis)" });
+}
+
+/** A segmented control (aria-pressed buttons). */
+function seg3(options, current, onPick) {
+  const box = h("div", { class: "seg" });
+  for (const [value, label] of options) {
+    const b = h("button", { type: "button", "aria-pressed": String(value === current), text: label });
+    b.addEventListener("click", () => onPick(value));
+    box.append(b);
+  }
+  return box;
+}
+
+function selectSurface(key) {
+  opt.surface = key;
+  const s = surf();
+  opt.start = [...s.start];
+  opt.lr = s.lr;
+  $("#t-opt-lr").value = Math.log10(opt.lr);
+  stopOptAnim();
+  paintSurface();
+  fillOptText();
+  recomputeOpt();
 }
 
 function setupOptimization() {
@@ -1179,37 +1390,348 @@ function setupOptimization() {
     stopOptAnim();
     recomputeOpt();
   });
-  $("#t-opt-play").addEventListener("click", () => (opt.anim ? stopOptAnim() : playOpt()));
-  $("#t-opt-stage").addEventListener("click", (e) => {
-    const box = e.currentTarget.getBoundingClientRect();
-    const fx = (e.clientX - box.left) / box.width;
-    const fy = (e.clientY - box.top) / box.height;
-    opt.start = [SURFACE.x[0] + fx * (SURFACE.x[1] - SURFACE.x[0]), SURFACE.y[1] - fy * (SURFACE.y[1] - SURFACE.y[0])];
+  const step = $("#t-opt-step");
+  step.max = String(opt.steps);
+  step.addEventListener("input", () => {
     stopOptAnim();
-    recomputeOpt();
-    playOpt();
+    opt.shown = Number(step.value);
+    drawOpt();
   });
+  $("#t-opt-play").addEventListener("click", () => (opt.anim ? stopOptAnim() : playOpt()));
+  setupSurfaceInput();
+  new ResizeObserver(() => drawSurface3d()).observe($("#t-opt-stage"));
+  fillOptText();
   paintSurface();
   recomputeOpt();
 }
 
-/** Neutral banded background: each band is a range of equal loss. */
+// ---------------------------------------------------------------------
+// 3D drawing
+// ---------------------------------------------------------------------
+const OPT_Z = { floor: -0.2, top: 0.62 };
+/** Parameter space → world: θ₁ ∈ [-10, 10] → x ∈ [-1, 1], θ₂ ∈ [-5, 5] → y ∈ [-0.5, 0.5], loss → z. */
+const toWorld = (a, b, f) => [a / 10, b / 10, heightOf(f)];
+function heightOf(f) {
+  const { fmin, fmax } = surfaceInfo(surf());
+  return (Math.min(f, fmax) - fmin) / (fmax - fmin) * OPT_Z.top;
+}
+
+/** Orthographic camera: turn by the azimuth, tilt by the elevation, fit the box into the canvas. */
+function camera(width, height) {
+  const { az, el } = opt.view;
+  const ca = Math.cos(az), sa = Math.sin(az), ce = Math.cos(el), se = Math.sin(el);
+  const raw = (x, y, z) => {
+    const xr = x * ca - y * sa;
+    const yr = x * sa + y * ca;
+    return [xr, -(z * ce + yr * se), yr * ce - z * se];
+  };
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (const x of [-1, 1]) for (const y of [-0.5, 0.5]) for (const z of [OPT_Z.floor, OPT_Z.top]) {
+    const [px, py] = raw(x, y, z);
+    x0 = Math.min(x0, px); x1 = Math.max(x1, px); y0 = Math.min(y0, py); y1 = Math.max(y1, py);
+  }
+  const pad = 26;
+  const scale = Math.min((width - 2 * pad) / Math.max(x1 - x0, 2.1), (height - 2 * pad) / Math.max(y1 - y0, 0.3));
+  const ox = width / 2 - ((x0 + x1) / 2) * scale;
+  const oy = height / 2 - ((y0 + y1) / 2) * scale;
+  return (x, y, z) => {
+    const [px, py, depth] = raw(x, y, z);
+    return [ox + px * scale, oy + py * scale, depth];
+  };
+}
+
+/** Rebuilds what depends on the surface and the theme: the mesh heights and the floor contour image. */
 function paintSurface() {
-  const cols = 240;
-  const rows = 120;
-  const fMax = SURFACE.f(SURFACE.x[1], SURFACE.y[1]);
+  const s = surf();
+  const info = surfaceInfo(s);
+  const NX = 46, NY = 24;
+  const verts = [];
+  for (let j = 0; j <= NY; j++) {
+    for (let i = 0; i <= NX; i++) {
+      const a = OPT_RANGE.x[0] + (i / NX) * 20;
+      const b = OPT_RANGE.y[0] + (j / NY) * 10;
+      const f = s.f(a, b);
+      verts.push({ a, b, f, w: toWorld(a, b, f) });
+    }
+  }
+  opt.mesh = { NX, NY, verts };
+  // Floor: equal-loss bands seen from above (same look as the old flat view)
+  const cols = 240, rows = 120;
   const values = new Array(cols * rows);
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      const a = SURFACE.x[0] + ((c + 0.5) / cols) * (SURFACE.x[1] - SURFACE.x[0]);
-      const b = SURFACE.y[1] - ((r + 0.5) / rows) * (SURFACE.y[1] - SURFACE.y[0]);
-      const level = Math.sqrt(SURFACE.f(a, b) / fMax);
-      values[r * cols + c] = Math.round((Math.min(Math.floor(level * 12), 11) / 11) * 255);
+      const a = OPT_RANGE.x[0] + ((c + 0.5) / cols) * 20;
+      const b = OPT_RANGE.y[1] - ((r + 0.5) / rows) * 10;
+      const level = Math.sqrt(Math.max(0, Math.min(1, (s.f(a, b) - info.fmin) / (info.fmax - info.fmin))));
+      values[r * cols + c] = Math.round((Math.min(Math.floor(level * 14), 13) / 13) * 255);
     }
   }
-  paint($("#t-opt-surface"), values, cols, rows, "ramp");
+  opt.floor ??= document.createElement("canvas");
+  paint(opt.floor, values, cols, rows, "ramp");
+  opt.floor._paint = null;   // not a page canvas: theme changes repaint it through paintSurface()
 }
 
+
+function drawSurface3d() {
+  const canvas = $("#t-opt-canvas");
+  const stage = $("#t-opt-stage");
+  if (!opt.mesh || !opt.data || !stage.clientWidth) return;
+  const W = stage.clientWidth;
+  const H = stage.clientHeight;
+  const dpr = window.devicePixelRatio || 1;
+  if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+  }
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  const P = camera(W, H);
+  opt.project = P;
+  const s = surf();
+  const info = surfaceInfo(s);
+  const z0 = OPT_Z.floor;
+  const dark = document.documentElement.dataset.theme === "dark" || (!document.documentElement.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
+  const text = cssVar("--text-2");
+
+  // Floor with the contour image, mapped by an affine transform (orthographic view of a plane)
+  const [ax, ay] = P(-1, 0.5, z0), [bx, by] = P(1, 0.5, z0), [cx, cy] = P(-1, -0.5, z0), [dx, dy] = P(1, -0.5, z0);
+  ctx.save();
+  ctx.globalAlpha = 0.9;
+  ctx.setTransform(dpr * (bx - ax) / opt.floor.width, dpr * (by - ay) / opt.floor.width, dpr * (cx - ax) / opt.floor.height, dpr * (cy - ay) / opt.floor.height, dpr * ax, dpr * ay);
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(opt.floor, 0, 0);
+  ctx.restore();
+  ctx.strokeStyle = cssVar("--axis");
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.lineTo(dx, dy); ctx.lineTo(cx, cy); ctx.closePath(); ctx.stroke();
+
+  // Shadows of the paths on the floor
+  const shown = opt.data.filter((o) => !opt.hidden.has(o.key));
+  const colors = Object.fromEntries(OPTIMIZERS.map((o) => [o.key, cssVar(o.color.slice(4, -1))]));
+  for (const o of shown) {
+    ctx.strokeStyle = colors[o.key];
+    ctx.globalAlpha = 0.5;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    o.path.slice(0, opt.shown + 1).forEach(([a, b], k) => {
+      const [px, py] = P(clamp(a, -10, 10) / 10, clamp(b, -5, 5) / 10, z0);
+      if (k) ctx.lineTo(px, py); else ctx.moveTo(px, py);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+  }
+  // Minima on the floor
+  for (const m of info.minima) {
+    const [px, py] = P(m[0] / 10, m[1] / 10, z0);
+    ctx.strokeStyle = cssVar("--text");
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(px - 5, py); ctx.lineTo(px + 5, py); ctx.moveTo(px, py - 5); ctx.lineTo(px, py + 5); ctx.stroke();
+  }
+
+  // Paths, balls and start point live on the surface. Everything is drawn back to front in one
+  // list (painter's algorithm), so a valley wall in front hides the part of a path behind it.
+  const lift = 0.012;
+  const onSurface = (a, b) => P(clamp(a, -10, 10) / 10, clamp(b, -5, 5) / 10, heightOf(s.f(clamp(a, -10, 10), clamp(b, -5, 5))) + lift);
+  // A step is a straight line in parameter space; on the curved surface it is split into short
+  // pieces, so the path hugs the surface instead of cutting through the air
+  const along = (path) => {
+    const pts = [onSurface(...path[0])];
+    for (let k = 1; k < path.length; k++) {
+      const [a0, b0] = path[k - 1];
+      const [a1, b1] = path[k];
+      const pieces = Math.min(24, Math.max(1, Math.ceil(Math.hypot(a1 - a0, b1 - b0) / 0.35)));
+      for (let q = 1; q <= pieces; q++) pts.push(onSurface(a0 + ((a1 - a0) * q) / pieces, b0 + ((b1 - b0) * q) / pieces));
+    }
+    return pts;
+  };
+  const items = [];
+
+  // Drop lines from each ball to the floor: under the surface, so drawn before it
+  for (const o of shown) {
+    const [a, b] = o.path[opt.shown];
+    const [px, py] = onSurface(a, b);
+    const [fx, fy] = P(clamp(a, -10, 10) / 10, clamp(b, -5, 5) / 10, z0);
+    ctx.strokeStyle = colors[o.key];
+    ctx.globalAlpha = 0.6;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2, 3]);
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(fx, fy); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+  }
+
+  // The surface: quads colored by height and lit from the upper left
+  const { NX, NY, verts } = opt.mesh;
+  const proj = verts.map((v) => P(...v.w));
+  const lut = LUTS.seq;
+  const light = [-0.45, 0.35, 0.82];
+  const ln = Math.hypot(...light);
+  const dxw = 2 / NX, dyw = 1 / NY;
+  for (let j = 0; j < NY; j++) {
+    for (let i = 0; i < NX; i++) {
+      const k = j * (NX + 1) + i;
+      const ids = [k, k + 1, k + NX + 2, k + NX + 1];
+      const depth = (proj[ids[0]][2] + proj[ids[1]][2] + proj[ids[2]][2] + proj[ids[3]][2]) / 4;
+      const z = ids.map((q) => verts[q].w[2]);
+      const dzdx = ((z[1] - z[0]) + (z[2] - z[3])) / 2;
+      const dzdy = ((z[3] - z[0]) + (z[2] - z[1])) / 2;
+      const n = [-dzdx * dyw, -dzdy * dxw, dxw * dyw];
+      const lambert = Math.max(0, (n[0] * light[0] + n[1] * light[1] + n[2] * light[2]) / (Math.hypot(...n) * ln));
+      const shade = 0.55 + 0.5 * lambert;
+      const c = Math.round(clamp(0.18 + ((z[0] + z[1] + z[2] + z[3]) / 4 / OPT_Z.top) * 0.78, 0, 1) * 255) * 3;
+      const r = Math.min(255, lut[c] * shade), g = Math.min(255, lut[c + 1] * shade), b = Math.min(255, lut[c + 2] * shade);
+      items.push({ depth, draw: () => {
+        ctx.fillStyle = `rgb(${r | 0},${g | 0},${b | 0})`;
+        ctx.strokeStyle = `rgba(${(r * 0.72) | 0},${(g * 0.72) | 0},${(b * 0.72) | 0},0.9)`;
+        ctx.lineWidth = 0.6;
+        ctx.beginPath();
+        ids.forEach((id, q) => (q ? ctx.lineTo(proj[id][0], proj[id][1]) : ctx.moveTo(proj[id][0], proj[id][1])));
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      } });
+    }
+  }
+
+  // Path pieces, a little in front of the surface under them, with a halo so they stand out
+  const halo = dark ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.85)";
+  for (const o of shown) {
+    const pts = along(o.path.slice(0, opt.shown + 1));
+    for (let k = 1; k < pts.length; k++) {
+      const p0 = pts[k - 1], p1 = pts[k];
+      // The halo goes a little further back than the colored line, so neighbouring pieces'
+      // halos are all drawn before their colors and the line stays unbroken
+      const d = (p0[2] + p1[2]) / 2;
+      for (const [width, color, bias] of [[4.5, halo, 0.03], [2.2, colors[o.key], 0.08]]) {
+        items.push({ depth: d - bias, draw: () => {
+          ctx.lineCap = "round";
+          ctx.strokeStyle = color;
+          ctx.lineWidth = width;
+          ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.stroke();
+          ctx.lineCap = "butt";
+        } });
+      }
+    }
+  }
+  // Start point and the balls at the current step
+  const [sx, sy, sd] = onSurface(...opt.start);
+  items.push({ depth: sd - 0.1, draw: () => {
+    ctx.fillStyle = cssVar("--surface");
+    ctx.strokeStyle = cssVar("--text");
+    ctx.lineWidth = 1.8;
+    ctx.beginPath(); ctx.arc(sx, sy, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  } });
+  for (const o of shown) {
+    const [px, py, pd] = onSurface(...o.path[opt.shown]);
+    items.push({ depth: pd - 0.12, draw: () => {
+      const grad = ctx.createRadialGradient(px - 2, py - 2, 1, px, py, 7);
+      grad.addColorStop(0, "#ffffff");
+      grad.addColorStop(0.35, colors[o.key]);
+      grad.addColorStop(1, colors[o.key]);
+      ctx.fillStyle = grad;
+      ctx.strokeStyle = dark ? "#000" : "#fff";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(px, py, 6.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    } });
+  }
+  items.sort((p, q) => q.depth - p.depth);
+  for (const item of items) item.draw();
+
+  // Axis labels on the floor edges and the loss axis at the back corner
+  ctx.fillStyle = text;
+  ctx.font = "italic 13px Georgia, 'Times New Roman', serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const label = (x, y, z, str, dx = 0, dy = 0) => { const [px, py] = P(x, y, z); ctx.fillText(str, px + dx, py + dy); };
+  const front = P(0, -0.5, z0)[2] < P(0, 0.5, z0)[2] ? -0.5 : 0.5;   // the floor edge nearer the viewer
+  const side = P(-1, 0, z0)[2] < P(1, 0, z0)[2] ? -1 : 1;
+  if (opt.viewName !== "side") label(0, front * 1.16, z0, "θ₁", 0, 6);
+  label(side * 1.08, 0, z0, "θ₂", side * 6, 0);
+  const back = [-side, -front];
+  const [lx0, ly0] = P(back[0], back[1], z0);
+  const [lx1, ly1] = P(back[0], back[1], OPT_Z.top);
+  if (opt.viewName !== "top") {
+    ctx.strokeStyle = cssVar("--axis");
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(lx0, ly0); ctx.lineTo(lx1, ly1); ctx.stroke();
+    ctx.fillText("L", lx1, ly1 - 9);
+  }
+}
+
+// ---------------------------------------------------------------------
+// Turning the surface and picking a start point
+// ---------------------------------------------------------------------
+function setupSurfaceInput() {
+  const canvas = $("#t-opt-canvas");
+  let drag = null;
+  canvas.addEventListener("pointerdown", (e) => {
+    drag = { x: e.clientX, y: e.clientY, az: opt.view.az, el: opt.view.el, moved: false };
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x;
+    const dy = e.clientY - drag.y;
+    if (Math.hypot(dx, dy) > 4) drag.moved = true;
+    if (!drag.moved) return;
+    opt.view.az = drag.az + dx * 0.008;
+    opt.view.el = clamp(drag.el + dy * 0.006, 0.05, Math.PI / 2 - 1e-4);
+    markCustomView();
+    drawSurface3d();
+  });
+  canvas.addEventListener("pointerup", (e) => {
+    if (drag && !drag.moved) pickStart(e);
+    drag = null;
+  });
+  canvas.addEventListener("pointercancel", () => { drag = null; });
+  canvas.addEventListener("keydown", (e) => {
+    const turn = { ArrowLeft: [-0.12, 0], ArrowRight: [0.12, 0], ArrowUp: [0, 0.08], ArrowDown: [0, -0.08] }[e.key];
+    if (!turn) return;
+    e.preventDefault();
+    opt.view.az += turn[0];
+    opt.view.el = clamp(opt.view.el + turn[1], 0.05, Math.PI / 2 - 1e-4);
+    markCustomView();
+    drawSurface3d();
+  });
+}
+
+function markCustomView() {
+  if (opt.viewName === null) return;
+  opt.viewName = null;
+  for (const b of $("#t-opt-views").querySelectorAll("button")) b.setAttribute("aria-pressed", "false");
+}
+
+/** The surface point under the cursor: among nearby projected samples, the one nearest the viewer. */
+function pickStart(e) {
+  const P = opt.project;
+  if (!P) return;
+  const box = $("#t-opt-canvas").getBoundingClientRect();
+  const mx = e.clientX - box.left;
+  const my = e.clientY - box.top;
+  const s = surf();
+  let best = null;
+  for (let i = 0; i <= 100; i++) {
+    for (let j = 0; j <= 50; j++) {
+      const a = -10 + i / 5;
+      const b = -5 + j / 5;
+      const [px, py, depth] = P(a / 10, b / 10, heightOf(s.f(a, b)));
+      const d = Math.hypot(px - mx, py - my);
+      if (d < 9 && (!best || depth < best.depth - 0.02 || (Math.abs(depth - best.depth) <= 0.02 && d < best.d))) best = { a, b, depth, d };
+    }
+  }
+  if (!best) return;
+  opt.start = [best.a, best.b];
+  stopOptAnim();
+  recomputeOpt();
+  playOpt();
+}
+
+// ---------------------------------------------------------------------
+// Everything else around the picture
+// ---------------------------------------------------------------------
 function recomputeOpt() {
   opt.data = runOptimizers();
   opt.shown = opt.steps;
@@ -1225,32 +1747,57 @@ function fmtLoss(v) {
   const e = Math.floor(Math.log10(v));
   return `${fmtNum(v / 10 ** e, 1)}×10${toSup(String(e))}`;
 }
+const vec = (p, d = 2) => `(${fmtNum(p[0], d)}; ${fmtNum(p[1], d)})`;
 
 function drawOpt() {
   const n = opt.shown;
-  const X = (a) => ((a - SURFACE.x[0]) / (SURFACE.x[1] - SURFACE.x[0])) * 200;
-  const Y = (b) => ((SURFACE.y[1] - b) / (SURFACE.y[1] - SURFACE.y[0])) * 100;
-  const parts = [svg("path", { d: `M${X(0) - 3},${Y(0)}h6M${X(0)},${Y(0) - 3}v6`, class: "opt-min" })];
-  for (const o of opt.data) {
-    const points = o.path.slice(0, n + 1).map(([a, b]) => `${X(a).toFixed(2)},${Y(b).toFixed(2)}`).join(" ");
-    parts.push(svg("polyline", { points, class: "opt-path", style: `stroke:${o.color}` }));
-  }
-  parts.push(svg("circle", { cx: X(opt.start[0]), cy: Y(opt.start[1]), r: 2.2, class: "opt-start" }));
-  for (const o of opt.data) {
-    const [a, b] = o.path[n];
-    parts.push(svg("circle", { cx: X(a), cy: Y(b), r: 2.4, class: "opt-dot", style: `fill:${o.color}` }));
-  }
-  $("#t-opt-svg").replaceChildren(...parts);
+  const info = surfaceInfo(surf());
+  $("#t-opt-step").value = String(n);
+  $("#t-opt-step-v").textContent = `${n} / ${opt.steps}`;
+  drawSurface3d();
 
-  $("#t-opt-legend").replaceChildren(...opt.data.map((o) => h("span", { class: "legend-item" },
-    h("span", { class: "key-line", style: `background:${o.color}` }),
-    `${o.label} · ${t("th.opt.after", { n })} `,
-    h("strong", { text: fmtLoss(o.losses[n]) }),
-    o.diverged ? ` · ${t("th.opt.diverged")}` : "")));
+  // Legend: each method can be hidden; the text tells where it ended up
+  const where = (o) => {
+    const p = o.path[n];
+    const minimum = info.minima.find((m) => Math.hypot(m[0] - p[0], m[1] - p[1]) < 0.6);
+    if (o.diverged && n === opt.steps) return L({ tr: "ıraksadı", en: "diverged" });
+    if (!minimum) return "";
+    const isGlobal = minimum === info.global;
+    return info.minima.length > 1 && !isGlobal ? L({ tr: "yerel minimumda", en: "in the local minimum" }) : L({ tr: "minimumda", en: "at the minimum" });
+  };
+  $("#t-opt-legend").replaceChildren(...opt.data.map((o) => {
+    const b = h("button", { type: "button", class: "legend-item opt-toggle", "aria-pressed": String(!opt.hidden.has(o.key)) },
+      h("span", { class: "key-line", style: `background:${o.color}` }),
+      `${o.label} · ${t("th.opt.after", { n })} `,
+      h("strong", { text: fmtLoss(o.losses[n] - info.fmin) }),
+      where(o) ? ` · ${where(o)}` : "");
+    b.title = L({ tr: "Göster / gizle", en: "Show / hide" });
+    b.addEventListener("click", () => {
+      if (opt.hidden.has(o.key)) opt.hidden.delete(o.key); else opt.hidden.add(o.key);
+      drawOpt();
+    });
+    return b;
+  }));
 
-  // Loss per step on a log axis (x = step + 1 so the shared chart helper can index it)
-  const series = opt.data.map((o) => ({ name: o.label, color: o.color, points: o.losses.slice(0, n + 1).map((v, i) => [i + 1, Math.max(v, 1e-6)]) }));
+  // What each method sees and does at this step
+  const head = [L({ tr: "Yöntem", en: "Method" }), "θ", "∇L(θ)", L({ tr: "Sonraki adım Δθ", en: "Next step Δθ" }), "|Δθ|", "L"];
+  const rows = opt.data.filter((o) => !opt.hidden.has(o.key)).map((o) => {
+    const p = o.path[n];
+    const next = o.path[Math.min(n + 1, opt.steps)];
+    const d = [next[0] - p[0], next[1] - p[1]];
+    return h("tr", {},
+      h("td", {}, h("span", { class: "key-line", style: `background:${o.color}` }), ` ${o.label}`),
+      h("td", { text: vec(p) }), h("td", { text: vec(o.grads[n], 3) }),
+      h("td", { text: n < opt.steps ? vec(d, 3) : "—" }), h("td", { text: n < opt.steps ? fmtNum(Math.hypot(...d), 3) : "—" }),
+      h("td", { text: fmtNum(o.losses[n], 3) }));
+  });
+  $("#t-opt-table").replaceChildren(h("thead", {}, h("tr", {}, ...head.map((c) => h("th", { text: c })))), h("tbody", {}, ...rows));
+
+  // Loss gap per step on a log axis (x = step + 1 so the shared chart helper can index it)
+  const series = opt.data.filter((o) => !opt.hidden.has(o.key))
+    .map((o) => ({ name: o.label, color: o.color, points: o.losses.slice(0, n + 1).map((v, i) => [i + 1, Math.max(v - info.fmin, 1e-6)]) }));
   const all = series.flatMap((s) => s.points.map((p) => p[1]));
+  if (!all.length) all.push(1);
   const yMin = 10 ** Math.floor(Math.log10(Math.max(Math.min(...all), 1e-6)));
   const yMax = 10 ** Math.ceil(Math.log10(Math.max(...all)));
   const yTicks = [];
@@ -1261,14 +1808,14 @@ function drawOpt() {
     yTicks.push({ v: 10 ** e, label: e >= -2 ? fmtTick(10 ** e) : `10${toSup(String(e))}` });
   }
   const xTicks = [];
-  for (let s = 0; s <= opt.steps; s += 20) xTicks.push({ v: s + 1, label: String(s) });
+  for (let st = 0; st <= opt.steps; st += 20) xTicks.push({ v: st + 1, label: String(st) });
   lineChart($("#t-opt-loss"), {
     label: t("th.opt.label"),
     empty: "",
     x: { min: 1, max: opt.steps + 1, ticks: xTicks },
     y: { log: true, min: yMin, max: yMax, ticks: yTicks },
     series,
-    tooltip: (i) => ({ title: t("th.opt.step", { i }), rows: opt.data.map((o) => ({ value: fmtLoss(o.losses[i]), label: o.label, color: o.color })) }),
+    tooltip: (i) => ({ title: t("th.opt.step", { i }), rows: opt.data.map((o) => ({ value: fmtLoss(o.losses[i] - info.fmin), label: o.label, color: o.color })) }),
   });
 }
 
@@ -1278,7 +1825,7 @@ function playOpt() {
   $("#t-opt-play").textContent = t("th.stop");
   let last = 0;
   const frame = (time) => {
-    if (time - last > 45) {
+    if (time - last > 70) {
       last = time;
       opt.shown++;
       drawOpt();
@@ -1681,6 +2228,7 @@ document.addEventListener("lang-change", () => {
   if (!T.started) return;
   fillKernelOptions();
   fillBnText();
+  fillOptText();
   const dropButtons = $("#t-drop-seg").children;
   if (dropButtons.length === 2) {
     dropButtons[0].textContent = t("th.drop.train");

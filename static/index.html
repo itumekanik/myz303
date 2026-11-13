@@ -524,25 +524,32 @@
         </div>
       </article>
 
-      <!-- 7 · Backpropagation & optimization -->
+      <!-- 7 · Backpropagation & optimization (method cards and surface notes: theory.js, OPT_TEXT) -->
       <article class="card t-section" id="t-opt">
         <div class="t-text">
           <div class="t-head"><span class="t-num">7</span><h2 data-i18n="th.opt.h">Geri yayılım ve optimizasyon</h2></div>
           <p data-i18n="th.opt.p1">Eğitim, [[loss|kaybı]] en küçük yapan [[parameter|ağırlıkları]] arar. [[backprop|<b>Geri yayılım</b>]] (backpropagation), zincir kuralıyla kaybın her ağırlığa göre türevini, yani [[gradient|<b>gradyanı</b>]] hesaplar. Gradyan kaybın en hızlı arttığı yönü gösterir; [[gradient-descent|<b>gradyan inişi</b>]] ağırlıkları bunun tersi yönünde küçük adımlarla günceller:</p>
           <div class="formula">\(\displaystyle \theta \leftarrow \theta - \eta\, \nabla L(\theta)\)</div>
-          <p data-i18n="th.opt.p2">Adım büyüklüğünü [[learning-rate|<b>öğrenme oranı</b>]] η belirler: çok küçükse eğitim yavaş ilerler, çok büyükse minimumun etrafında salınır ya da ıraksar. [[momentum|<b>Momentum</b>]] geçmiş gradyanları biriktirerek tutarlı yönlerde hızlanır. [[adam|<b>Adam</b>]] ise momentumu, her parametre için gradyanın büyüklüğüne göre ayarlanan bir adım boyuyla birleştirir:</p>
-          <div class="formula small">\(\displaystyle m_t = \beta_1 m_{t-1} + (1-\beta_1)\, g_t \qquad v_t = \beta_2 v_{t-1} + (1-\beta_2)\, g_t^2\)<br>\(\displaystyle \theta \leftarrow \theta - \eta\, \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \varepsilon}\)</div>
+          <p data-i18n="th.opt.p2">Üç yöntem de aynı gradyanı kullanır ama adımı farklı hesaplar. Adımın ölçeğini [[learning-rate|<b>öğrenme oranı</b>]] η belirler. Sağda üçünü aynı kayıp yüzeyinde yarıştırın: yüzeyi sürükleyerek döndürün, bir noktasına tıklayıp oradan başlatın, adım kaydırıcısıyla zamanda ileri geri gidin.</p>
+          <div class="opt-methods" id="t-opt-methods"></div>
           <div class="in-model" data-i18n="th.opt.model"><b>SimpleCNN'de:</b> [[adam|Adam]], η = 0,001 ile kullanılır. Her [[batch|batch]]'te <code>loss.backward()</code> gradyanları hesaplar, <code>optimizer.step()</code> ağırlıkları günceller (Eğitim sekmesindeki 5 adım).</div>
         </div>
         <div class="t-demo">
+          <div class="t-controls" id="t-opt-surfaces"></div>
+          <p class="opt-note" id="t-opt-note"></p>
           <div class="t-controls">
             <label><span data-i18n="th.opt.lr">Öğrenme oranı η</span> <input type="range" id="t-opt-lr" min="-2" max="0.08" step="0.01"><output id="t-opt-lr-v"></output></label>
             <button type="button" class="btn small primary" id="t-opt-play">▶ Oynat</button>
+            <label class="opt-scrub"><span id="t-opt-step-label">Adım</span> <input type="range" id="t-opt-step" min="0" max="100" step="1"><output id="t-opt-step-v"></output></label>
           </div>
-          <p class="sub" data-i18n="th.opt.sub">İki parametreli bir kayıp yüzeyi: \(L(\theta_1, \theta_2) = \theta_1^2/20 + \theta_2^2\). Gri bantlar eşit kayıp bölgeleridir; kenarlara doğru kayıp artar, minimum ortadaki + işaretidir. Başlangıç noktasını değiştirmek için yüzeye tıklayın.</p>
-          <div class="opt-stage" id="t-opt-stage"><canvas id="t-opt-surface" aria-hidden="true"></canvas><svg id="t-opt-svg" viewBox="0 0 200 100" role="img" aria-label="Üç optimizerın kayıp yüzeyindeki yolu" data-i18n-attr="aria-label=a.opt"></svg></div>
+          <div class="opt3d" id="t-opt-stage">
+            <canvas id="t-opt-canvas" tabindex="0" role="img"></canvas>
+            <div class="opt3d-views" id="t-opt-views"></div>
+            <span class="opt3d-hint" id="t-opt-hint"></span>
+          </div>
           <div class="opt-legend" id="t-opt-legend"></div>
-          <div><div class="mini-title" data-i18n="th.opt.loss">Adım başına kayıp (logaritmik eksen)</div><div class="chart" id="t-opt-loss" data-height="170"></div></div>
+          <div class="table-wrap"><table class="data-table compact opt-table" id="t-opt-table"></table></div>
+          <div><div class="mini-title" id="t-opt-loss-title"></div><div class="chart" id="t-opt-loss" data-height="170"></div></div>
         </div>
       </article>
     </section>
