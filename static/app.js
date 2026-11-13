@@ -1137,7 +1137,7 @@ function scrollWhenReady({ y = null, section = null, smooth = false, flash = fal
 function navigate(tab, section = null) {
   if (!TABS[tab] || (tab === nav.tab && !section)) return;
   history.replaceState({ ...history.state, tab: nav.tab, scroll: window.scrollY }, "");   // where Back returns
-  history.pushState({ tab, section, scroll: null }, "", hashFor(tab, section));
+  history.pushState({ tab, section, scroll: null, glossary: glossaryIsOpen() }, "", hashFor(tab, section));   // an open glossary panel stays open
   const sameTab = tab === nav.tab;
   showTab(tab);
   if (section) scrollWhenReady({ section, smooth: sameTab, flash: !sameTab });
@@ -1149,6 +1149,9 @@ const selectTab = (name) => navigate(name);
 
 window.addEventListener("popstate", (event) => {
   const state = event.state || { ...parseHash(location.hash), scroll: null };
+  const panelOnly = state.tab === nav.tab && Boolean(state.glossary) !== glossaryIsOpen();
+  syncGlossary(state);   // the glossary panel (glossary.js) opens or closes with the history entry
+  if (panelOnly) return;   // only the panel changed: the page stays where it is
   showTab(state.tab);
   if (state.scroll != null) scrollWhenReady({ y: state.scroll });
   else if (state.section) scrollWhenReady({ section: state.section });

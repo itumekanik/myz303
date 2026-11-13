@@ -334,10 +334,13 @@ The model performances are evaluated mainly by the *Loss*. Loss is the key measu
 python dashboard.py          # opens http://127.0.0.1:8000 in your browser
 ```
 
-* **Training tab** - a stage tracker (data loading → training → validation → test → saving), live batch loss, epoch loss and accuracy curves, the conv1 filters as they are updated, and predictions on 16 fixed validation images after every epoch.
+* **Training tab** - a stage tracker (data loading → training → validation → test → saving), live batch loss, epoch loss and accuracy curves, the conv1 filters as they are updated, and predictions on 16 fixed validation images after every epoch. Every part has an (i) button that explains it.
 * **Inference tab** - draw a digit with the mouse or pick an image from the test set, and see the class probabilities together with the feature maps of every layer (Conv1 → MaxPool → Conv2 → MaxPool → FC1 → FC2).
 * **Theory tab** - the building blocks of the network (convolution, batch normalization, activation functions, pooling, dropout, softmax and cross-entropy, backpropagation and Adam), each explained next to a live demo that runs on a real MNIST image and the trained model's own weights: slide a kernel over the image step by step, compare the distributions before and after BatchNorm, drop units with a chosen rate, adjust the logits and watch the loss, or race SGD, Momentum and Adam on a loss surface.
 * **Coding tab** - a step-by-step tutorial (in Turkish) that writes `SimpleCNN.py` from scratch: setup, imports, hyperparameters, data, the model, `forward`, the training and evaluation loops, saving the model and predicting, plus exercises. Code excerpts are read live from `SimpleCNN.py` with editor-style syntax highlighting, real line numbers and numbered line notes.
+* **Glossary** - the Glossary button in the top bar opens a searchable list of about 50 key terms (epoch, gradient, overfitting, receptive field, …), each with a short definition, what it looks like in SimpleCNN, and a link to the Theory or Coding section that shows it. Terms underlined with dots in the explanations open the same definition in a small card.
+
+The whole dashboard can be switched between Turkish and English.
 
 The trained model is saved to `checkpoints/simple_cnn.pt` and loaded automatically the next time the dashboard starts. With the default settings, a dashboard run gives exactly the same result as `python SimpleCNN.py`.
 
