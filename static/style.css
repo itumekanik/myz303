@@ -1032,7 +1032,7 @@ h2 > .info-btn { vertical-align: 2px; }
 .bn-calc-row:first-child .calc-cap::before {
   content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 5px; border-radius: 50%; background: var(--series-2);
 }
-.bn-expr { font-family: "Cambria Math", "STIX Two Math", "Times New Roman", serif; font-size: 14.5px; color: var(--text); }
+.bn-expr { font-size: 13.5px; color: var(--text); }
 .bn-calc-row strong { font-size: 15px; color: var(--text); }
 
 .hist-band { fill: var(--accent-soft); }
@@ -1086,3 +1086,13 @@ h2 > .info-btn { vertical-align: 2px; }
   .bn-calc-row .calc-cap { min-width: 0; flex-basis: 100%; }
   .bn-arrow { display: none; }
 }
+
+/* ---------- Math (KaTeX, see math.js) ---------- */
+.katex { font-size: 1.08em; }
+.formula { font-size: 16px; line-height: 1.6; padding: 10px 14px; }
+.formula .katex { font-size: 1.12em; }
+.formula.small { line-height: 2.1; }
+.formula-live { margin-left: 4px; }
+.formula-live .katex { color: var(--accent-strong); }
+.bn-chip b .katex { font-size: 1em; }
+.bn-calc-row .katex { font-size: 1.05em; }

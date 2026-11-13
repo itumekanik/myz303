@@ -114,8 +114,8 @@ const GLOSSARY = {
     name: { tr: "Çapraz entropi (cross-entropy)", en: "Cross-entropy" },
     aka: ["CrossEntropyLoss", "log loss", "negative log likelihood", "nll", "capraz entropi"],
     def: {
-      tr: "Sınıflandırmanın standart kayıp fonksiyonu: doğru sınıfa verilen olasılığın negatif logaritması, <span class=\"g-formula\">L = −log p<sub>doğru</sub></span>. Doğru sınıfa 0,9 olasılık verilirse kayıp 0,11; 0,1 verilirse 2,3'tür. Yanlış bir sınıftan emin olmak en ağır cezayı alır.",
-      en: "The standard loss for classification: the negative logarithm of the probability given to the correct class, <span class=\"g-formula\">L = −log p<sub>correct</sub></span>. A probability of 0.9 on the correct class gives a loss of 0.11; 0.1 gives 2.3. Being sure of a wrong class is punished hardest.",
+      tr: "Sınıflandırmanın standart kayıp fonksiyonu: doğru sınıfa verilen olasılığın negatif logaritması, <span class=\"g-formula\">\\(L = -\\log p_{\\text{doğru}}\\)</span>. Doğru sınıfa 0,9 olasılık verilirse kayıp 0,11; 0,1 verilirse 2,3'tür. Yanlış bir sınıftan emin olmak en ağır cezayı alır.",
+      en: "The standard loss for classification: the negative logarithm of the probability given to the correct class, <span class=\"g-formula\">\\(L = -\\log p_{\\text{correct}}\\)</span>. A probability of 0.9 on the correct class gives a loss of 0.11; 0.1 gives 2.3. Being sure of a wrong class is punished hardest.",
     },
     model: {
       tr: "PyTorch'un <code>nn.CrossEntropyLoss</code>'u [[softmax|softmax]]'i kendi içinde uygular; bu yüzden model ham [[logit|logit]] döndürür.",
@@ -157,8 +157,8 @@ const GLOSSARY = {
     name: { tr: "Gradyan inişi", en: "Gradient descent" },
     aka: ["gradient descent", "iniş", "descent", "eğim inişi"],
     def: {
-      tr: "Ağırlıkları [[gradient|gradyanın]] tersi yönünde küçük adımlarla kaydırarak kaybı azaltma yöntemi: <span class=\"g-formula\">θ ← θ − η · ∇L</span>. Adımın büyüklüğünü [[learning-rate|öğrenme oranı]] η belirler. Bir vadiden aşağı, her an en dik iniş yönünde yürümeye benzer.",
-      en: "Lowering the loss by moving the weights in small steps opposite to the [[gradient|gradient]]: <span class=\"g-formula\">θ ← θ − η · ∇L</span>. The [[learning-rate|learning rate]] η sets the step size. It is like walking down a valley, always in the steepest downhill direction.",
+      tr: "Ağırlıkları [[gradient|gradyanın]] tersi yönünde küçük adımlarla kaydırarak kaybı azaltma yöntemi: <span class=\"g-formula\">\\(\\theta \\leftarrow \\theta - \\eta\\, \\nabla L\\)</span>. Adımın büyüklüğünü [[learning-rate|öğrenme oranı]] η belirler. Bir vadiden aşağı, her an en dik iniş yönünde yürümeye benzer.",
+      en: "Lowering the loss by moving the weights in small steps opposite to the [[gradient|gradient]]: <span class=\"g-formula\">\\(\\theta \\leftarrow \\theta - \\eta\\, \\nabla L\\)</span>. The [[learning-rate|learning rate]] η sets the step size. It is like walking down a valley, always in the steepest downhill direction.",
     },
     see: ["sgd", "adam"],
     link: { tab: "theory", section: "t-opt" },
@@ -230,8 +230,8 @@ const GLOSSARY = {
     name: { tr: "Hareketli ortalama", en: "Moving average" },
     aka: ["EMA", "üstel hareketli ortalama", "exponential moving average", "yumuşatma", "smoothing", "ortalama", "average"],
     def: {
-      tr: "Gürültülü bir dizinin genel eğilimini görmek için her noktada son değerlerin ortalamasını almak. Burada kullanılan <b>üstel</b> hareketli ortalamada her yeni değer ortalamaya küçük bir payla katılır, eski değerlerin etkisi giderek azalır: <span class=\"g-formula\">m ← 0,95 · m + 0,05 · x</span>",
-      en: "Averaging the most recent values at each point to see the overall trend of a noisy series. In the <b>exponential</b> moving average used here, each new value enters with a small share and older values fade away gradually: <span class=\"g-formula\">m ← 0.95 · m + 0.05 · x</span>",
+      tr: "Gürültülü bir dizinin genel eğilimini görmek için her noktada son değerlerin ortalamasını almak. Burada kullanılan <b>üstel</b> hareketli ortalamada her yeni değer ortalamaya küçük bir payla katılır, eski değerlerin etkisi giderek azalır: <span class=\"g-formula\">\\(m \\leftarrow 0{,}95\\, m + 0{,}05\\, x\\)</span>",
+      en: "Averaging the most recent values at each point to see the overall trend of a noisy series. In the <b>exponential</b> moving average used here, each new value enters with a small share and older values fade away gradually: <span class=\"g-formula\">\\(m \\leftarrow 0.95\\, m + 0.05\\, x\\)</span>",
     },
     model: {
       tr: "Eğitim sekmesindeki <b>eğitim kaybı</b> kutusu ve batch kaybı grafiğindeki <b>mavi çizgi</b> bu ortalamadır. İlk değerlerdeki sıfıra çekilme düzeltilir (TensorBoard'daki gibi).",
@@ -544,8 +544,8 @@ const GLOSSARY = {
     name: { tr: "ReLU", en: "ReLU" },
     aka: ["rectified linear unit", "doğrultulmuş doğrusal birim", "F.relu"],
     def: {
-      tr: "En basit ve en yaygın [[activation|aktivasyon fonksiyonu]]: <span class=\"g-formula\">ReLU(x) = max(0, x)</span>. Negatif değerleri sıfırlar, pozitifleri olduğu gibi bırakır. Hesabı çok ucuzdur ve pozitif bölgede gradyanı 1 olduğu için derin ağlar onunla hızlı öğrenir.",
-      en: "The simplest and most common [[activation|activation function]]: <span class=\"g-formula\">ReLU(x) = max(0, x)</span>. It sets negative values to zero and leaves positive ones unchanged. It is very cheap to compute, and since its gradient is 1 for positive inputs, deep networks learn quickly with it.",
+      tr: "En basit ve en yaygın [[activation|aktivasyon fonksiyonu]]: <span class=\"g-formula\">\\(\\mathrm{ReLU}(x) = \\max(0, x)\\)</span>. Negatif değerleri sıfırlar, pozitifleri olduğu gibi bırakır. Hesabı çok ucuzdur ve pozitif bölgede gradyanı 1 olduğu için derin ağlar onunla hızlı öğrenir.",
+      en: "The simplest and most common [[activation|activation function]]: <span class=\"g-formula\">\\(\\mathrm{ReLU}(x) = \\max(0, x)\\)</span>. It sets negative values to zero and leaves positive ones unchanged. It is very cheap to compute, and since its gradient is 1 for positive inputs, deep networks learn quickly with it.",
     },
     model: {
       tr: "Her [[batchnorm|BatchNorm]]'dan sonra ve FC1'den sonra.",
@@ -601,8 +601,8 @@ const GLOSSARY = {
     name: { tr: "Tam bağlı katman (fully connected)", en: "Fully connected layer" },
     aka: ["linear", "dense", "fc", "nn.Linear", "yoğun katman", "tam bağlantılı", "doğrusal katman"],
     def: {
-      tr: "Her çıkış nöronunun tüm girişlere bağlı olduğu katman: her çıkış, girişlerin ağırlıklı toplamı artı bir bias'tır, <span class=\"g-formula\">y = Wx + b</span>. CNN'de evrişim bloklarının bulduğu öznitelikleri birleştirir ve sınıfa karar verir.",
-      en: "A layer where every output neuron is connected to every input: each output is a weighted sum of the inputs plus a bias, <span class=\"g-formula\">y = Wx + b</span>. In a CNN it combines the features found by the convolution blocks and decides the class.",
+      tr: "Her çıkış nöronunun tüm girişlere bağlı olduğu katman: her çıkış, girişlerin ağırlıklı toplamı artı bir bias'tır, <span class=\"g-formula\">\\(y = Wx + b\\)</span>. CNN'de evrişim bloklarının bulduğu öznitelikleri birleştirir ve sınıfa karar verir.",
+      en: "A layer where every output neuron is connected to every input: each output is a weighted sum of the inputs plus a bias, <span class=\"g-formula\">\\(y = Wx + b\\)</span>. In a CNN it combines the features found by the convolution blocks and decides the class.",
     },
     model: {
       tr: "FC1: 1024 → 512 (ardından ReLU), FC2: 512 → 10 [[logit|logit]].",
@@ -631,8 +631,8 @@ const GLOSSARY = {
     name: { tr: "Softmax", en: "Softmax" },
     aka: ["olasılık", "probability", "probabilities", "olasılıklar"],
     def: {
-      tr: "[[logit|Logitleri]], toplamı 1 olan olasılıklara çeviren fonksiyon: <span class=\"g-formula\">p<sub>i</sub> = e<sup>z<sub>i</sub></sup> / Σ<sub>j</sub> e<sup>z<sub>j</sub></sup></span>. Üstel fonksiyon büyük logitleri daha da öne çıkarır; sıralama değişmez, bu yüzden tahmin edilen sınıf da değişmez.",
-      en: "The function that turns [[logit|logits]] into probabilities that add up to 1: <span class=\"g-formula\">p<sub>i</sub> = e<sup>z<sub>i</sub></sup> / Σ<sub>j</sub> e<sup>z<sub>j</sub></sup></span>. The exponential makes large logits stand out even more; the order does not change, and so neither does the predicted class.",
+      tr: "[[logit|Logitleri]], toplamı 1 olan olasılıklara çeviren fonksiyon: <span class=\"g-formula\">\\(p_i = e^{z_i} \\big/ \\textstyle\\sum_j e^{z_j}\\)</span>. Üstel fonksiyon büyük logitleri daha da öne çıkarır; sıralama değişmez, bu yüzden tahmin edilen sınıf da değişmez.",
+      en: "The function that turns [[logit|logits]] into probabilities that add up to 1: <span class=\"g-formula\">\\(p_i = e^{z_i} \\big/ \\textstyle\\sum_j e^{z_j}\\)</span>. The exponential makes large logits stand out even more; the order does not change, and so neither does the predicted class.",
     },
     model: {
       tr: "Çıkarım sekmesindeki olasılık çubukları softmax çıktısıdır.",

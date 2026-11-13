@@ -351,7 +351,7 @@ function updateConv() {
 
   renderKernel(ker);
   $("#t-conv-out-cap").textContent = t("th.conv.out", { s: `${oh}×${ow}` });
-  $("#t-conv-size").textContent = ` = ⌊(28 − ${ker.k} + 2·${P}) / ${conv.stride}⌋ + 1 = ${oh}`;
+  $("#t-conv-size").textContent = ` \\(\\displaystyle = \\left\\lfloor \\frac{28 - ${ker.k} + 2\\cdot ${P}}{${conv.stride}} \\right\\rfloor + 1 = ${oh}\\)`;
   paintConvOut();
 
   // Start on the strongest response, so the calculation shows something interesting
@@ -487,13 +487,14 @@ function stopConvAnim() {
 // test images, exactly as BatchNorm2d does in training mode (biased variance, ε from the model).
 // =====================================================================
 const BN_MOMENTUM = 0.1;   // PyTorch's default; SimpleCNN does not change it
+const tn = (value, digits) => texNum(fmtNum(value, digits));   // a number inside a TeX formula (math.js)
 
 const BN_TEXT = {
   lead: {
     tr: "Batch Normalization (BatchNorm), bir katmanın çıktısını sonraki katmana vermeden önce <b>her [[channel|kanalı]] ayrı ayrı</b> standart bir ölçeğe getirir: önce değerleri ortalaması 0, standart sapması 1 olacak şekilde kaydırıp ölçekler, sonra öğrenilen iki sayıyla (γ ve β) ağın ihtiyaç duyduğu ölçeğe taşır. Aşağıda bunu adım adım, seçili filtrenin gerçek test görüntülerindeki çıktısı üzerinde izleyebilirsiniz.",
     en: "Batch normalization (BatchNorm) brings <b>each [[channel|channel]] separately</b> to a standard scale before passing a layer's output on: it first shifts and scales the values to mean 0 and standard deviation 1, then moves them to whatever scale the network needs with two learned numbers (γ and β). Below you can follow it step by step on the selected filter's real output for test images.",
   },
-  "flow.x": { tr: "evrişim çıktısı", en: "convolution output" },
+  "flow.x": { tr: "Conv1'in çıktısı: filtre tepkileri", en: "Conv1's output: filter responses" },
   "flow.stats": { tr: "kanalın batch ortalaması ve std. sapması", en: "the channel's batch mean and std. dev." },
   "flow.norm": { tr: "normalleştir", en: "normalize" },
   "flow.affine": { tr: "öğrenilen ölçek ve kayma", en: "learned scale and shift" },
@@ -501,8 +502,8 @@ const BN_TEXT = {
 
   "s1.h": { tr: "Sorun: her kanal farklı bir ölçekte", en: "The problem: every channel has its own scale" },
   "s1.p": {
-    tr: "<p>Conv1'in 32 filtresinin her biri farklı bir desene bakar ve çıktıları farklı aralıklarda olur: kiminin değerleri dar bir aralıkta toplanır, kimininki geniş bir aralığa yayılır; kiminin ortalaması pozitif, kiminin negatiftir. Üstelik ağırlıklar her adımda değiştiği için bu aralıklar eğitim boyunca kayar; sonraki katman sürekli kayan girdilere uyum sağlamak zorunda kalır. Eğitim yavaşlar ve [[learning-rate|öğrenme oranını]] küçük tutmak gerekir.</p><p>BatchNorm her kanalı aynı başlangıç ölçeğine çeker. Grafikte her çubuk, bir kanalın bu batch'teki değer aralığıdır (ortalama ± 1 standart sapma). Mavi bant, normalleştirmeden sonra <b>bütün kanalların</b> geleceği aralıktır: dar kanallar genişler, geniş olanlar daralır, kaymış olanlar ortalanır.</p>",
-    en: "<p>Each of Conv1's 32 filters looks for a different pattern, and their outputs fall in different ranges: some channels' values stay in a narrow range, others spread widely; some have a positive mean, others a negative one. And since the weights change at every step, these ranges drift during training; the next layer has to keep adapting to inputs that keep moving. Training slows down and the [[learning-rate|learning rate]] has to stay small.</p><p>BatchNorm brings every channel to the same starting scale. In the chart, each bar is one channel's range in this batch (mean ± 1 standard deviation). The blue band is where <b>every channel</b> ends up after normalization: narrow channels are widened, wide ones narrowed, shifted ones centered.</p>",
+    tr: "<p><b>BatchNorm neyi normalleştirir?</b> SimpleCNN'de sıra <b>Conv1 → BatchNorm → ReLU</b>'dur; yani BatchNorm'un girdisi \\(x\\), Conv1'in çıktısıdır. Conv1'in bir [[kernel|filtresi]] 28×28 görüntünün üzerinde kaydırılır ve 24×24 konumun her birinde <b>tek bir sayı</b> üretir: 5×5 filtre ile altındaki 5×5 pikselin çarpımlarının toplamı, artı bias. Bu sayı, filtrenin aradığı desenin o konumda ne kadar güçlü bulunduğunu söyler: büyük pozitif değer \"desen burada var\", negatif değer \"burada tersi var\" demektir. Bu 576 sayı bir [[feature-map|öznitelik haritası]] oluşturur; 2. adımdaki kırmızı-mavi haritalar tam olarak bunlardır. Hesabın kendisi 1. bölümde (Evrişim) adım adım gösteriliyor.</p><p>Conv1'in 32 filtresinin her biri farklı bir desene bakar ve çıktıları farklı aralıklarda olur: kiminin değerleri dar bir aralıkta toplanır, kimininki geniş bir aralığa yayılır; kiminin ortalaması pozitif, kiminin negatiftir. Üstelik ağırlıklar her adımda değiştiği için bu aralıklar eğitim boyunca kayar; sonraki katman sürekli kayan girdilere uyum sağlamak zorunda kalır. Eğitim yavaşlar ve [[learning-rate|öğrenme oranını]] küçük tutmak gerekir.</p><p>BatchNorm her kanalı aynı başlangıç ölçeğine çeker. Grafikte her çubuk, bir kanalın bu batch'teki değer aralığıdır (ortalama ± 1 standart sapma). Mavi bant, normalleştirmeden sonra <b>bütün kanalların</b> geleceği aralıktır: dar kanallar genişler, geniş olanlar daralır, kaymış olanlar ortalanır.</p>",
+    en: "<p><b>What does BatchNorm normalize?</b> In SimpleCNN the order is <b>Conv1 → BatchNorm → ReLU</b>, so BatchNorm's input \\(x\\) is Conv1's output. One Conv1 [[kernel|filter]] slides over the 28×28 image and produces <b>a single number</b> at each of the 24×24 positions: the sum of the products of the 5×5 filter and the 5×5 pixels under it, plus a bias. That number says how strongly the pattern the filter looks for is present at that position: a large positive value means \"the pattern is here\", a negative one \"its opposite is here\". These 576 numbers form a [[feature-map|feature map]]; the red and blue maps in step 2 are exactly these. Section 1 (Convolution) shows the calculation step by step.</p><p>Each of Conv1's 32 filters looks for a different pattern, and their outputs fall in different ranges: some channels' values stay in a narrow range, others spread widely; some have a positive mean, others a negative one. And since the weights change at every step, these ranges drift during training; the next layer has to keep adapting to inputs that keep moving. Training slows down and the [[learning-rate|learning rate]] has to stay small.</p><p>BatchNorm brings every channel to the same starting scale. In the chart, each bar is one channel's range in this batch (mean ± 1 standard deviation). The blue band is where <b>every channel</b> ends up after normalization: narrow channels are widened, wide ones narrowed, shifted ones centered.</p>",
   },
   "s1.cap": { tr: "Bir çubuğa tıklayarak o filtreyi seçin; sonraki adımlar seçili filtre için hesaplanır.", en: "Click a bar to select that filter; the next steps are computed for the selected filter." },
 
@@ -521,29 +522,29 @@ const BN_TEXT = {
 
   "s3.h": { tr: "Kanalın ortalamasını ve standart sapmasını hesapla", en: "Compute the channel's mean and standard deviation" },
   "s3.p": {
-    tr: "<p>Havuzdaki <i>m</i> değerin ortalaması μ<sub>B</sub> ve varyansı σ<sub>B</sub><sup>2</sup> hesaplanır (B: batch):</p><div class=\"formula small\">μ<sub>B</sub> = (1/m) Σ x<sub>i</sub> &nbsp;&nbsp; σ<sub>B</sub><sup>2</sup> = (1/m) Σ (x<sub>i</sub> − μ<sub>B</sub>)<sup>2</sup></div><p>Bunlar <b>bu batch'in</b> istatistikleridir; başka bir batch'te biraz farklı çıkarlar. Yukarıdaki <b>Yeni batch</b> düğmesiyle deneyin.</p>",
-    en: "<p>The mean μ<sub>B</sub> and variance σ<sub>B</sub><sup>2</sup> of the <i>m</i> pooled values are computed (B: batch):</p><div class=\"formula small\">μ<sub>B</sub> = (1/m) Σ x<sub>i</sub> &nbsp;&nbsp; σ<sub>B</sub><sup>2</sup> = (1/m) Σ (x<sub>i</sub> − μ<sub>B</sub>)<sup>2</sup></div><p>These are <b>this batch's</b> statistics; another batch gives slightly different ones. Try the <b>New batch</b> button above.</p>",
+    tr: "<p>Havuzdaki \\(m\\) değerin ortalaması \\(\\mu_B\\) ve varyansı \\(\\sigma_B^2\\) hesaplanır (B: batch):</p><div class=\"formula small\">\\(\\displaystyle \\mu_B = \\frac{1}{m}\\sum_{i=1}^{m} x_i \\qquad \\sigma_B^2 = \\frac{1}{m}\\sum_{i=1}^{m} (x_i - \\mu_B)^2\\)</div><p>Bunlar <b>bu batch'in</b> istatistikleridir; başka bir batch'te biraz farklı çıkarlar. Yukarıdaki <b>Yeni batch</b> düğmesiyle deneyin.</p>",
+    en: "<p>The mean \\(\\mu_B\\) and variance \\(\\sigma_B^2\\) of the \\(m\\) pooled values are computed (B: batch):</p><div class=\"formula small\">\\(\\displaystyle \\mu_B = \\frac{1}{m}\\sum_{i=1}^{m} x_i \\qquad \\sigma_B^2 = \\frac{1}{m}\\sum_{i=1}^{m} (x_i - \\mu_B)^2\\)</div><p>These are <b>this batch's</b> statistics; another batch gives slightly different ones. Try the <b>New batch</b> button above.</p>",
   },
-  h1: { tr: "Evrişim çıktısı x · gölgeli alan μ ± σ", en: "Convolution output x · shaded area μ ± σ" },
+  h1: { tr: "BatchNorm'un girdisi x (Conv1'in çıktısı) · gölgeli alan μ ± σ", en: "BatchNorm's input x (Conv1's output) · shaded area μ ± σ" },
 
   "s4.h": { tr: "Normalleştir: ortalamayı çıkar, standart sapmaya böl", en: "Normalize: subtract the mean, divide by the standard deviation" },
   "s4.p": {
-    tr: "<div class=\"formula small\">x̂ = (x − μ<sub>B</sub>) / √(σ<sub>B</sub><sup>2</sup> + ε)</div><p>Her değerden kanal ortalaması çıkarılır (dağılım 0'a kayar) ve standart sapmaya bölünür (genişliği 1 olur: σ'sı 1'den küçük olan bir kanal genişler, büyük olan daralır). Dağılımın <b>şekli değişmez</b>, yalnızca yeri ve genişliği değişir: üstteki ve alttaki histogramlar aynı eksende çizildi.</p><p>ε çok küçük bir sayıdır (0,00001); σ sıfıra çok yakın olduğunda sıfıra bölmeyi önler.</p><p class=\"bn-note\">İlginç bir sonuç: evrişimin bias'ı her değere aynı sabiti ekler ve ortalama çıkarılırken bu sabit de silinir. Bu yüzden BatchNorm'dan önce gelen katmanlarda bias çoğu zaman kapatılır (<code>bias=False</code>).</p>",
-    en: "<div class=\"formula small\">x̂ = (x − μ<sub>B</sub>) / √(σ<sub>B</sub><sup>2</sup> + ε)</div><p>The channel mean is subtracted from every value (the distribution moves to 0) and the result is divided by the standard deviation (its width becomes 1: a channel with σ below 1 gets wider, one above 1 narrower). The <b>shape</b> of the distribution <b>does not change</b>, only its position and width: the histograms above and below use the same axis.</p><p>ε is a tiny number (0.00001) that prevents dividing by zero when σ is very close to zero.</p><p class=\"bn-note\">A neat consequence: the convolution's bias adds the same constant to every value, and subtracting the mean removes that constant too. That is why layers right before a BatchNorm often have their bias turned off (<code>bias=False</code>).</p>",
+    tr: "<div class=\"formula small\">\\(\\displaystyle \\hat{x} = \\frac{x - \\mu_B}{\\sqrt{\\sigma_B^2 + \\varepsilon}}\\)</div><p>Her değerden kanal ortalaması çıkarılır (dağılım 0'a kayar) ve standart sapmaya bölünür (genişliği 1 olur: σ'sı 1'den küçük olan bir kanal genişler, büyük olan daralır). Dağılımın <b>şekli değişmez</b>, yalnızca yeri ve genişliği değişir: üstteki ve alttaki histogramlar aynı eksende çizildi.</p><p>ε çok küçük bir sayıdır (0,00001); σ sıfıra çok yakın olduğunda sıfıra bölmeyi önler.</p><p class=\"bn-note\">İlginç bir sonuç: evrişimin bias'ı her değere aynı sabiti ekler ve ortalama çıkarılırken bu sabit de silinir. Bu yüzden BatchNorm'dan önce gelen katmanlarda bias çoğu zaman kapatılır (<code>bias=False</code>).</p>",
+    en: "<div class=\"formula small\">\\(\\displaystyle \\hat{x} = \\frac{x - \\mu_B}{\\sqrt{\\sigma_B^2 + \\varepsilon}}\\)</div><p>The channel mean is subtracted from every value (the distribution moves to 0) and the result is divided by the standard deviation (its width becomes 1: a channel with σ below 1 gets wider, one above 1 narrower). The <b>shape</b> of the distribution <b>does not change</b>, only its position and width: the histograms above and below use the same axis.</p><p>ε is a tiny number (0.00001) that prevents dividing by zero when σ is very close to zero.</p><p class=\"bn-note\">A neat consequence: the convolution's bias adds the same constant to every value, and subtracting the mean removes that constant too. That is why layers right before a BatchNorm often have their bias turned off (<code>bias=False</code>).</p>",
   },
   h2: { tr: "Normalleştirilmiş x̂ · gölgeli alan −1 … 1", en: "Normalized x̂ · shaded area −1 … 1" },
 
   "s5.h": { tr: "Ölçekle ve kaydır: γ ve β", en: "Scale and shift: γ and β" },
   "s5.p": {
-    tr: "<div class=\"formula small\">y = γ · x̂ + β</div><p>Her kanalı zorla ortalama 0, standart sapma 1'de tutmak ağı kısıtlayabilir: örneğin bir kanalın [[relu|ReLU]]'dan önce çoğunlukla negatif kalması, yani yalnızca güçlü desenlerde \"yanması\" daha yararlı olabilir. Bu yüzden her kanalın öğrenilen iki parametresi vardır: <b>γ</b> (ölçek) dağılımı genişletir ya da daraltır, <b>β</b> (kayma) sağa ya da sola kaydırır.</p><p>γ ve β da ağırlıklar gibi [[backprop|geri yayılımla]] öğrenilir. Ağ isterse γ = σ ve β = μ seçerek normalleştirmeyi tamamen geri alabilir; yani BatchNorm ağdan bir şey eksiltmez, yalnızca öğrenmeyi kolaylaştırır.</p><p>Kaydırıcılarla deneyin; <b>Modelin γ, β değerleri</b> düğmesi eğitimin bulduğu değerlere döner.</p>",
-    en: "<div class=\"formula small\">y = γ · x̂ + β</div><p>Forcing every channel to mean 0 and standard deviation 1 could restrict the network: it may be more useful for a channel to stay mostly negative before [[relu|ReLU]], so that it only \"fires\" on strong patterns. That is why every channel has two learned parameters: <b>γ</b> (scale) widens or narrows the distribution, <b>β</b> (shift) moves it left or right.</p><p>γ and β are learned with [[backprop|backpropagation]] just like the weights. If it helps, the network can choose γ = σ and β = μ and undo the normalization completely; BatchNorm takes nothing away from the network, it only makes learning easier.</p><p>Try the sliders; the <b>Model's γ and β</b> button goes back to the values training found.</p>",
+    tr: "<div class=\"formula small\">\\(\\displaystyle y = \\gamma\\, \\hat{x} + \\beta\\)</div><p>Her kanalı zorla ortalama 0, standart sapma 1'de tutmak ağı kısıtlayabilir: örneğin bir kanalın [[relu|ReLU]]'dan önce çoğunlukla negatif kalması, yani yalnızca güçlü desenlerde \"yanması\" daha yararlı olabilir. Bu yüzden her kanalın öğrenilen iki parametresi vardır: <b>γ</b> (ölçek) dağılımı genişletir ya da daraltır, <b>β</b> (kayma) sağa ya da sola kaydırır.</p><p>γ ve β da ağırlıklar gibi [[backprop|geri yayılımla]] öğrenilir. Ağ isterse γ = σ ve β = μ seçerek normalleştirmeyi tamamen geri alabilir; yani BatchNorm ağdan bir şey eksiltmez, yalnızca öğrenmeyi kolaylaştırır.</p><p>Kaydırıcılarla deneyin; <b>Modelin γ, β değerleri</b> düğmesi eğitimin bulduğu değerlere döner.</p>",
+    en: "<div class=\"formula small\">\\(\\displaystyle y = \\gamma\\, \\hat{x} + \\beta\\)</div><p>Forcing every channel to mean 0 and standard deviation 1 could restrict the network: it may be more useful for a channel to stay mostly negative before [[relu|ReLU]], so that it only \"fires\" on strong patterns. That is why every channel has two learned parameters: <b>γ</b> (scale) widens or narrows the distribution, <b>β</b> (shift) moves it left or right.</p><p>γ and β are learned with [[backprop|backpropagation]] just like the weights. If it helps, the network can choose γ = σ and β = μ and undo the normalization completely; BatchNorm takes nothing away from the network, it only makes learning easier.</p><p>Try the sliders; the <b>Model's γ and β</b> button goes back to the values training found.</p>",
   },
   h3: { tr: "BatchNorm çıktısı y · sağdaki kısım ReLU'dan geçer", en: "BatchNorm output y · the part right of 0 passes ReLU" },
 
   "s6.h": { tr: "Eğitimde ve çıkarımda farklı çalışır", en: "It works differently in training and at inference" },
   "s6.p": {
-    tr: "<p>Yukarıdaki μ<sub>B</sub> ve σ<sub>B</sub> bu batch'ten hesaplandı; eğitimde ([[train-eval|<code>model.train()</code>]]) tam olarak böyle çalışır. Ama [[inference|çıkarımda]] tek bir görüntü gelebilir ve bir görüntünün sonucunun yanındaki başka görüntülere bağlı olması istenmez.</p><p>Bu yüzden BatchNorm, eğitimin her adımında batch istatistiklerinin [[moving-average|hareketli ortalamasını]] günceller ve çıkarımda (<code>model.eval()</code>) bunları kullanır. Bu ortalamalar öğrenilmez, yalnızca biriktirilir ve [[checkpoint|checkpoint]]'e γ ve β ile birlikte kaydedilir.</p>",
-    en: "<p>The μ<sub>B</sub> and σ<sub>B</sub> above were computed from this batch; that is exactly how it works in training ([[train-eval|<code>model.train()</code>]]). But at [[inference|inference]] a single image may come in, and an image's result should not depend on the other images next to it.</p><p>That is why, at every training step, BatchNorm updates a [[moving-average|moving average]] of the batch statistics, and uses those at inference (<code>model.eval()</code>). They are not learned, only accumulated, and they are saved in the [[checkpoint|checkpoint]] together with γ and β.</p>",
+    tr: "<p>Yukarıdaki \\(\\mu_B\\) ve \\(\\sigma_B\\) bu batch'ten hesaplandı; eğitimde ([[train-eval|<code>model.train()</code>]]) tam olarak böyle çalışır. Ama [[inference|çıkarımda]] tek bir görüntü gelebilir ve bir görüntünün sonucunun yanındaki başka görüntülere bağlı olması istenmez.</p><p>Bu yüzden BatchNorm, eğitimin her adımında batch istatistiklerinin [[moving-average|hareketli ortalamasını]] günceller ve çıkarımda (<code>model.eval()</code>) bunları kullanır. Bu ortalamalar öğrenilmez, yalnızca biriktirilir ve [[checkpoint|checkpoint]]'e γ ve β ile birlikte kaydedilir.</p>",
+    en: "<p>The \\(\\mu_B\\) and \\(\\sigma_B\\) above were computed from this batch; that is exactly how it works in training ([[train-eval|<code>model.train()</code>]]). But at [[inference|inference]] a single image may come in, and an image's result should not depend on the other images next to it.</p><p>That is why, at every training step, BatchNorm updates a [[moving-average|moving average]] of the batch statistics, and uses those at inference (<code>model.eval()</code>). They are not learned, only accumulated, and they are saved in the [[checkpoint|checkpoint]] together with γ and β.</p>",
   },
 
   model: {
@@ -788,24 +789,24 @@ function updateBN() {
 
   const where = L({ tr: `görüntü ${pick.img + 1}, satır ${pick.r + 1}, sütun ${pick.c + 1}`, en: `image ${pick.img + 1}, row ${pick.r + 1}, column ${pick.c + 1}` });
   $("#t-bn-stats").replaceChildren(
-    h("span", {}, "m = ", h("strong", { text: fmtInt(z.length) })),
-    h("span", {}, "μ", h("sub", { text: "B" }), " = ", h("strong", { text: fmtNum(mu, 4) })),
-    h("span", {}, "σ", h("sub", { text: "B" }), " = ", h("strong", { text: fmtNum(sd, 4) })));
+    h("span", { text: `\\(m = ${texNum(fmtInt(z.length))}\\)` }),
+    h("span", { text: `\\(\\mu_B = ${tn(mu, 4)}\\)` }),
+    h("span", { text: `\\(\\sigma_B = ${tn(sd, 4)}\\)` }));
   bnCalc($("#t-bn-c1"), [
-    [L({ tr: "İzlenen değer", en: "Traced value" }), `x = ${fmtNum(x, 4)}`, null],
+    [L({ tr: "İzlenen değer", en: "Traced value" }), `\\(x = ${tn(x, 4)}\\)`, null],
     ["", where, null],
   ]);
   bnCalc($("#t-bn-c2"), [
     [L({ tr: "İzlenen değer", en: "Traced value" }),
-      `x̂ = (${fmtNum(x, 4)} − ${fmtNum(mu, 4)}) / √(${fmtNum(sd, 4)}² + ${fmtNum(eps, 5)})`, `= ${fmtNum(xn, 3)}`],
+      `\\(\\hat{x} = \\dfrac{${tn(x, 4)} - ${tn(mu, 4)}}{\\sqrt{${tn(sd, 4)}^2 + ${tn(eps, 5)}}} = \\mathbf{${tn(xn, 3)}}\\)`, null],
     [L({ tr: "Bütün kanal", en: "Whole channel" }),
       L({ tr: `ortalama ${fmtNum(meanOf(xh), 3)}, std. sapma ${fmtNum(stdOf(xh), 3)}`, en: `mean ${fmtNum(meanOf(xh), 3)}, std. dev. ${fmtNum(stdOf(xh), 3)}` }), null],
   ]);
   const active = ys.reduce((count, v) => count + (v > 0), 0) / ys.length;
   bnCalc($("#t-bn-c3"), [
     [L({ tr: "İzlenen değer", en: "Traced value" }),
-      `y = ${fmtNum(gamma, 2)} · ${fmtNum(xn, 3)} + (${fmtNum(beta, 2)})`, `= ${fmtNum(y, 3)}`],
-    ["ReLU", `max(0, ${fmtNum(y, 3)})`, `= ${fmtNum(Math.max(0, y), 3)}`],
+      `\\(y = ${tn(gamma, 2)} \\cdot ${tn(xn, 3)} + (${tn(beta, 2)}) = \\mathbf{${tn(y, 3)}}\\)`, null],
+    ["ReLU", `\\(\\max(0,\\ ${tn(y, 3)}) = \\mathbf{${tn(Math.max(0, y), 3)}}\\)`, null],
     [L({ tr: "Bütün kanal", en: "Whole channel" }),
       L({ tr: `ortalama ${fmtNum(yMean, 3)}, std. sapma ${fmtNum(stdOf(ys, yMean), 3)} · ReLU'dan geçen (y > 0): ${fmtPct(active * 100, 1)}`,
         en: `mean ${fmtNum(yMean, 3)}, std. dev. ${fmtNum(stdOf(ys, yMean), 3)} · passing ReLU (y > 0): ${fmtPct(active * 100, 1)}` }), null],
@@ -825,8 +826,7 @@ function updateBN() {
     modeCard("train", L({ tr: "Eğitimde", en: "In training" }), "model.train()", [
       stat(L({ tr: "kullanılan μ, σ", en: "μ, σ used" }), `${fmtNum(mu, 4)}, ${fmtNum(sd, 4)}`),
       L({ tr: "Bu batch'ten hesaplanır; her batch'te biraz değişir.", en: "Computed from this batch; changes a little with every batch." }),
-      h("div", { class: "formula small" }, "μ", h("sub", { text: "run" }), ` ← ${fmtNum(1 - BN_MOMENTUM, 1)} · μ`, h("sub", { text: "run" }),
-        ` + ${fmtNum(BN_MOMENTUM, 1)} · μ`, h("sub", { text: "B" })),
+      h("div", { class: "formula small", text: `\\(\\mu_{\\text{run}} \\leftarrow ${tn(1 - BN_MOMENTUM, 1)}\\, \\mu_{\\text{run}} + ${tn(BN_MOMENTUM, 1)}\\, \\mu_B\\)` }),
       L({ tr: "Her adımda hareketli ortalama da güncellenir (aynısı varyans için).", en: "At every step the running average is updated too (the same for the variance)." }),
       stat(L({ tr: "izlenen değer → y", en: "traced value → y" }), fmtNum(y, 3)),
     ]),
@@ -846,28 +846,28 @@ function updateBN() {
 const ACTIVATIONS = {
   relu: {
     label: "ReLU", f: (x) => Math.max(0, x), y: [-1, 4],
-    formula: "ReLU(<i>x</i>) = max(0, <i>x</i>)",
+    formula: "\\(\\displaystyle \\mathrm{ReLU}(x) = \\max(0,\\, x)\\)",
     desc: { tr: "Negatif değerleri 0 yapar, pozitifleri olduğu gibi geçirir. Haritada mavi (negatif) bölgelerin tamamen kaybolduğuna dikkat edin.",
       en: "Sets negative values to 0 and passes positive values unchanged. Notice how the blue (negative) regions disappear completely from the map." },
   },
   leaky: {
     label: "Leaky ReLU", f: (x) => (x > 0 ? x : 0.01 * x), y: [-1, 4],
     formula: {
-      tr: "LReLU(<i>x</i>) = <i>x</i> (<i>x</i> &gt; 0 ise), 0,01·<i>x</i> (aksi halde)",
-      en: "LReLU(<i>x</i>) = <i>x</i> (if <i>x</i> &gt; 0), 0.01·<i>x</i> (otherwise)",
+      tr: "\\(\\displaystyle \\mathrm{LReLU}(x) = \\begin{cases} x & x > 0 \\text{ ise} \\\\ 0{,}01\\, x & \\text{aksi hâlde} \\end{cases}\\)",
+      en: "\\(\\displaystyle \\mathrm{LReLU}(x) = \\begin{cases} x & \\text{if } x > 0 \\\\ 0.01\\, x & \\text{otherwise} \\end{cases}\\)",
     },
     desc: { tr: "ReLU gibidir ama negatif tarafta küçük bir eğim (0,01) bırakır; böylece negatif girişlerde de [[gradient|gradyan]] tamamen sıfırlanmaz.",
       en: "Like ReLU, but keeps a small slope (0.01) on the negative side, so the [[gradient|gradient]] does not vanish entirely for negative inputs." },
   },
   sigmoid: {
     label: "Sigmoid", f: (x) => 1 / (1 + Math.exp(-x)), y: [-0.25, 1.25],
-    formula: "σ(<i>x</i>) = 1 / (1 + e<sup>−<i>x</i></sup>)",
+    formula: "\\(\\displaystyle \\sigma(x) = \\frac{1}{1 + e^{-x}}\\)",
     desc: { tr: "Her değeri 0 ile 1 arasına sıkıştırır. |x| büyüdükçe eğimi sıfıra yaklaşır; derin ağlarda [[gradient|gradyanın]] sönümlenmesine yol açabilir.",
       en: "Squeezes every value into the range 0 to 1. Its slope approaches zero as |x| grows, which can make [[gradient|gradients]] vanish in deep networks." },
   },
   tanh: {
     label: "Tanh", f: Math.tanh, y: [-1.25, 1.25],
-    formula: "tanh(<i>x</i>) = (e<sup><i>x</i></sup> − e<sup>−<i>x</i></sup>) / (e<sup><i>x</i></sup> + e<sup>−<i>x</i></sup>)",
+    formula: "\\(\\displaystyle \\tanh(x) = \\frac{e^{x} - e^{-x}}{e^{x} + e^{-x}}\\)",
     desc: { tr: "Değerleri −1 ile 1 arasına sıkıştırır ve 0 etrafında simetriktir. Sigmoid gibi uç değerlerde doyuma ulaşır.",
       en: "Squeezes values into the range −1 to 1 and is symmetric around 0. Like the sigmoid, it saturates at extreme values." },
   },
@@ -1114,7 +1114,7 @@ function updateSoftmax() {
   const p = probs[sm.label];
   const loss = -Math.log(Math.max(p, 1e-12));
   $("#t-ce-value").textContent = fmtNum(loss, 3);
-  $("#t-ce-live").textContent = ` = −log(${fmtNum(p, 4)}) = ${fmtNum(loss, 3)}`;
+  $("#t-ce-live").textContent = ` \\(= -\\log(${texNum(fmtNum(p, 4))}) = ${texNum(fmtNum(loss, 3))}\\)`;
   curvePlot($("#t-ce-plot"), {
     label: t("th.ce.plot"),
     x: [0.001, 1], y: [0, 7], fn: (q) => -Math.log(q), marker: clamp(p, 0.001, 1),

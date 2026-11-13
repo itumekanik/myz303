@@ -12,6 +12,7 @@
       if (saved === "light" || saved === "dark") document.documentElement.dataset.theme = saved;
     } catch (e) { /* storage blocked: follow the system setting */ }
   </script>
+  <link rel="stylesheet" href="/static/vendor/katex/katex.min.css">
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -301,10 +302,10 @@
         <div class="t-text">
           <div class="t-head"><span class="t-num">1</span><h2 data-i18n="th.conv.h">Evrişim (Convolution)</h2></div>
           <p data-i18n="th.conv.p1">Evrişim katmanı, [[kernel|<b>çekirdek</b>]] (kernel, filtre) denen küçük bir ağırlık matrisini görüntünün üzerinde kaydırır. Her konumda çekirdek ile altındaki piksellerin eleman eleman çarpımları toplanır ve [[parameter|bias]] eklenir; sonuç, çıktının bir pikseli olur. Ortaya çıkan [[feature-map|<b>öznitelik haritası</b>]], filtrenin aradığı desenin görüntünün <i>neresinde</i> bulunduğunu gösterir.</p>
-          <div class="formula">y<sub>i,j</sub> = Σ<sub>m</sub> Σ<sub>n</sub> x<sub>i·s+m, j·s+n</sub> · w<sub>m,n</sub> + b</div>
+          <div class="formula">\(\displaystyle y_{i,j} = \sum_{m}\sum_{n} x_{i\cdot s+m,\; j\cdot s+n}\, w_{m,n} + b\)</div>
           <p data-i18n="th.conv.p2">Aynı çekirdek görüntünün her yerinde kullanılır (<b>ağırlık paylaşımı</b>). Böylece az [[parameter|parametreyle]], desen nerede olursa olsun yakalanır. Filtre değerleri elle seçilmez, eğitimde öğrenilir.</p>
           <p data-i18n="th.conv.p3">Çıktı boyutunu çekirdek boyutu <i>k</i>, [[padding|dolgu]] (padding) <i>p</i> ve [[stride|adım]] (stride) <i>s</i> belirler:</p>
-          <div class="formula">H<sub>out</sub> = ⌊(H<sub>in</sub> − k + 2p) / s⌋ + 1<span class="formula-live" id="t-conv-size"></span></div>
+          <div class="formula">\(\displaystyle H_{\text{out}} = \left\lfloor \frac{H_{\text{in}} - k + 2p}{s} \right\rfloor + 1\)<span class="formula-live" id="t-conv-size"></span></div>
           <div class="in-model" data-i18n="th.conv.model"><b>SimpleCNN'de:</b> Conv1, 32 adet 5×5 filtreyle 28×28 girişten 32 harita (24×24) üretir. Conv2, 64 filtreyle 12×12'den 8×8'e iner. Conv1'in toplam [[parameter|parametre]] sayısı yalnızca 32·(5·5) + 32 = 832'dir.</div>
         </div>
         <div class="t-demo">
@@ -338,13 +339,13 @@
           <div class="t-head"><span class="t-num">2</span><h2>Batch Normalization</h2></div>
           <p class="bn-lead" data-bn="lead"></p>
           <div class="bn-flow" aria-hidden="true">
-            <span class="bn-chip"><b>x</b><small data-bn="flow.x"></small></span>
+            <span class="bn-chip"><b>\(x\)</b><small data-bn="flow.x"></small></span>
             <span class="bn-arrow">→</span>
-            <span class="bn-chip"><b>μ<sub>B</sub>, σ<sub>B</sub></b><small data-bn="flow.stats"></small></span>
+            <span class="bn-chip"><b>\(\mu_B,\ \sigma_B\)</b><small data-bn="flow.stats"></small></span>
             <span class="bn-arrow">→</span>
-            <span class="bn-chip"><b>x̂ = (x − μ<sub>B</sub>) / σ<sub>B</sub></b><small data-bn="flow.norm"></small></span>
+            <span class="bn-chip"><b>\(\hat{x} = (x - \mu_B) / \sigma_B\)</b><small data-bn="flow.norm"></small></span>
             <span class="bn-arrow">→</span>
-            <span class="bn-chip"><b>y = γ · x̂ + β</b><small data-bn="flow.affine"></small></span>
+            <span class="bn-chip"><b>\(y = \gamma\, \hat{x} + \beta\)</b><small data-bn="flow.affine"></small></span>
             <span class="bn-arrow">→</span>
             <span class="bn-chip muted"><b>ReLU</b><small data-bn="flow.relu"></small></span>
           </div>
@@ -442,7 +443,7 @@
         <div class="t-text">
           <div class="t-head"><span class="t-num">4</span><h2 data-i18n="th.pool.h">Havuzlama (Pooling)</h2></div>
           <p data-i18n="th.pool.p1">Havuzlama katmanı [[feature-map|öznitelik haritasını]] küçültür. Harita çakışmayan küçük bölgelere ayrılır ve her bölgeden tek bir değer alınır: <b>max pooling</b> en büyük değeri, <b>average pooling</b> ortalamayı seçer.</p>
-          <div class="formula">y<sub>i,j</sub> = max<sub>m,n ∈ {0,1}</sub> x<sub>2i+m, 2j+n</sub></div>
+          <div class="formula">\(\displaystyle y_{i,j} = \max_{m,n \in \{0,1\}} x_{2i+m,\; 2j+n}\)</div>
           <p data-i18n="th.pool.p2">Böylece sonraki katmanların hesap yükü azalır ve desenin birkaç piksel kayması sonucu pek değiştirmez (küçük kaymalara dayanıklılık). Ayrıca sonraki katmanların [[receptive-field|algı alanı]] büyür. Havuzlamanın öğrenilen bir [[parameter|parametresi]] yoktur.</p>
           <div class="in-model" data-i18n="th.pool.model"><b>SimpleCNN'de:</b> İki evrişim bloğunun sonunda 2×2 max pooling ([[stride|stride]] 2) kullanılır: 24×24 → 12×12 ve 8×8 → 4×4. Her biri değer sayısını dörtte birine indirir.</div>
         </div>
@@ -469,7 +470,7 @@
         <div class="t-text">
           <div class="t-head"><span class="t-num">5</span><h2>Dropout</h2></div>
           <p data-i18n="th.drop.p1">Dropout, <b>eğitim sırasında</b> her [[forward-pass|ileri geçişte]] değerlerin rastgele bir kısmını (oran <i>p</i>) sıfırlar. Her adımda farklı bir alt ağ eğitilmiş olur. Ağ tek tek nöronlara güvenemez, birbirini tamamlayan sağlam öznitelikler öğrenir; bu da ezberlemeyi ([[overfitting|overfitting]]) azaltır.</p>
-          <div class="formula" data-i18n="th.drop.f">h̃ = 0 &nbsp;(olasılık p) &nbsp;&nbsp;·&nbsp;&nbsp; h̃ = h / (1 − p) &nbsp;(olasılık 1 − p)</div>
+          <div class="formula" data-i18n="th.drop.f">\(\displaystyle \tilde{h} = \begin{cases} 0 & \text{olasılık } p \\ \dfrac{h}{1-p} & \text{olasılık } 1-p \end{cases}\)</div>
           <p data-i18n="th.drop.p2">Kalan değerler 1/(1 − p) ile büyütülür; böylece ortalama aktivasyon değişmez ve [[inference|<b>çıkarımda</b>]] Dropout hiçbir şey yapmaz, tüm değerler olduğu gibi geçer.</p>
           <div class="in-model" data-i18n="th.drop.model"><b>SimpleCNN'de:</b> İlk havuzlamadan sonra p = 0,45, ikinciden sonra p = 0,35. Eğitim [[loss|kaybının]] [[val-set|doğrulama]] kaybından yüksek görünmesinin bir nedeni de budur.</div>
         </div>
@@ -494,11 +495,11 @@
         <div class="t-text">
           <div class="t-head"><span class="t-num">6</span><h2 data-i18n="th.sm.h">Tam bağlı katman, Softmax ve kayıp</h2></div>
           <p data-i18n="th.sm.p1">Son havuzlamanın çıktısı (64×4×4 = 1024 değer) tek bir vektöre [[flatten|düzleştirilir]] ve [[fully-connected|<b>tam bağlı</b>]] (fully connected) katmanlara verilir. Burada her çıkış nöronu, tüm girişlerin ağırlıklı toplamıdır:</p>
-          <div class="formula">y<sub>j</sub> = h(Σ<sub>i</sub> w<sub>ji</sub> x<sub>i</sub> + b<sub>j</sub>)</div>
+          <div class="formula">\(\displaystyle y_j = h\Big(\sum_i w_{ji}\, x_i + b_j\Big)\)</div>
           <p data-i18n="th.sm.p2">Son katman her rakam için bir [[logit|<b>skor</b>]] (logit) üretir. [[softmax|<b>Softmax</b>]] bu skorları toplamı 1 olan olasılıklara çevirir; en yüksek skor en yüksek olasılığı alır:</p>
-          <div class="formula">p<sub>k</sub> = e<sup>z<sub>k</sub></sup> / Σ<sub>j</sub> e<sup>z<sub>j</sub></sup></div>
+          <div class="formula">\(\displaystyle p_k = \frac{e^{z_k}}{\sum_j e^{z_j}}\)</div>
           <p data-i18n="th.sm.p3">[[loss|<b>Kayıp</b>]], tahminin ne kadar yanlış olduğunu tek bir sayıyla ölçer. Sınıflandırmada [[cross-entropy|<b>Cross-Entropy</b>]] kullanılır: doğru sınıfa verilen olasılık p ise kayıp −log p'dir. Doğru sınıftan emin olan model sıfıra yakın kayıp alır, doğru sınıfa düşük olasılık veren model büyük ceza alır.</p>
-          <div class="formula" data-i18n="th.sm.f">L = −log p<sub>doğru sınıf</sub><span class="formula-live" id="t-ce-live"></span></div>
+          <div class="formula" data-i18n="th.sm.f">\(\displaystyle L = -\log p_{\text{doğru sınıf}}\)<span class="formula-live" id="t-ce-live"></span></div>
           <div class="in-model" data-i18n="th.sm.model"><b>SimpleCNN'de:</b> FC1 1024 → 512 ([[relu|ReLU]]), FC2 512 → 10. Modelde ayrı bir Softmax katmanı yoktur; <code>nn.CrossEntropyLoss</code> softmax'ı kendi içinde uygular.</div>
         </div>
         <div class="t-demo">
@@ -517,7 +518,7 @@
               <div class="seg digits" id="t-ce-label" role="group" aria-label="Doğru sınıf" data-i18n-attr="aria-label=a.cls"></div>
               <div class="ce-value"><span data-i18n="th.sm.ce">Cross-Entropy kaybı</span><strong id="t-ce-value">—</strong></div>
             </div>
-            <div><div class="mini-title" data-i18n="th.sm.plot">Kayıp = −log p, doğru sınıfın olasılığına göre (turuncu nokta: şu anki durum)</div><div class="chart" id="t-ce-plot" data-height="170"></div></div>
+            <div><div class="mini-title" data-i18n="th.sm.plot">Kayıp \(= -\log p\), doğru sınıfın olasılığına göre (turuncu nokta: şu anki durum)</div><div class="chart" id="t-ce-plot" data-height="170"></div></div>
           </div>
         </div>
       </article>
@@ -527,9 +528,9 @@
         <div class="t-text">
           <div class="t-head"><span class="t-num">7</span><h2 data-i18n="th.opt.h">Geri yayılım ve optimizasyon</h2></div>
           <p data-i18n="th.opt.p1">Eğitim, [[loss|kaybı]] en küçük yapan [[parameter|ağırlıkları]] arar. [[backprop|<b>Geri yayılım</b>]] (backpropagation), zincir kuralıyla kaybın her ağırlığa göre türevini, yani [[gradient|<b>gradyanı</b>]] hesaplar. Gradyan kaybın en hızlı arttığı yönü gösterir; [[gradient-descent|<b>gradyan inişi</b>]] ağırlıkları bunun tersi yönünde küçük adımlarla günceller:</p>
-          <div class="formula">θ ← θ − η · ∇L(θ)</div>
+          <div class="formula">\(\displaystyle \theta \leftarrow \theta - \eta\, \nabla L(\theta)\)</div>
           <p data-i18n="th.opt.p2">Adım büyüklüğünü [[learning-rate|<b>öğrenme oranı</b>]] η belirler: çok küçükse eğitim yavaş ilerler, çok büyükse minimumun etrafında salınır ya da ıraksar. [[momentum|<b>Momentum</b>]] geçmiş gradyanları biriktirerek tutarlı yönlerde hızlanır. [[adam|<b>Adam</b>]] ise momentumu, her parametre için gradyanın büyüklüğüne göre ayarlanan bir adım boyuyla birleştirir:</p>
-          <div class="formula small">m<sub>t</sub> = β<sub>1</sub>m<sub>t−1</sub> + (1 − β<sub>1</sub>) g<sub>t</sub> &nbsp;·&nbsp; v<sub>t</sub> = β<sub>2</sub>v<sub>t−1</sub> + (1 − β<sub>2</sub>) g<sub>t</sub><sup>2</sup><br>θ ← θ − η · m̂<sub>t</sub> / (√v̂<sub>t</sub> + ε)</div>
+          <div class="formula small">\(\displaystyle m_t = \beta_1 m_{t-1} + (1-\beta_1)\, g_t \qquad v_t = \beta_2 v_{t-1} + (1-\beta_2)\, g_t^2\)<br>\(\displaystyle \theta \leftarrow \theta - \eta\, \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \varepsilon}\)</div>
           <div class="in-model" data-i18n="th.opt.model"><b>SimpleCNN'de:</b> [[adam|Adam]], η = 0,001 ile kullanılır. Her [[batch|batch]]'te <code>loss.backward()</code> gradyanları hesaplar, <code>optimizer.step()</code> ağırlıkları günceller (Eğitim sekmesindeki 5 adım).</div>
         </div>
         <div class="t-demo">
@@ -537,7 +538,7 @@
             <label><span data-i18n="th.opt.lr">Öğrenme oranı η</span> <input type="range" id="t-opt-lr" min="-2" max="0.08" step="0.01"><output id="t-opt-lr-v"></output></label>
             <button type="button" class="btn small primary" id="t-opt-play">▶ Oynat</button>
           </div>
-          <p class="sub" data-i18n="th.opt.sub">İki parametreli bir kayıp yüzeyi: L(θ₁, θ₂) = θ₁²/20 + θ₂². Gri bantlar eşit kayıp bölgeleridir; kenarlara doğru kayıp artar, minimum ortadaki + işaretidir. Başlangıç noktasını değiştirmek için yüzeye tıklayın.</p>
+          <p class="sub" data-i18n="th.opt.sub">İki parametreli bir kayıp yüzeyi: \(L(\theta_1, \theta_2) = \theta_1^2/20 + \theta_2^2\). Gri bantlar eşit kayıp bölgeleridir; kenarlara doğru kayıp artar, minimum ortadaki + işaretidir. Başlangıç noktasını değiştirmek için yüzeye tıklayın.</p>
           <div class="opt-stage" id="t-opt-stage"><canvas id="t-opt-surface" aria-hidden="true"></canvas><svg id="t-opt-svg" viewBox="0 0 200 100" role="img" aria-label="Üç optimizerın kayıp yüzeyindeki yolu" data-i18n-attr="aria-label=a.opt"></svg></div>
           <div class="opt-legend" id="t-opt-legend"></div>
           <div><div class="mini-title" data-i18n="th.opt.loss">Adım başına kayıp (logaritmik eksen)</div><div class="chart" id="t-opt-loss" data-height="170"></div></div>
@@ -590,11 +591,14 @@
   </dialog>
 
   <div class="tooltip" id="tooltip" role="tooltip" hidden></div>
+  <script src="/static/vendor/katex/katex.min.js"></script>
+  <script src="/static/vendor/katex/auto-render.min.js"></script>
   <script src="/static/i18n.js"></script>
   <script src="/static/app.js"></script>
   <script src="/static/theory.js"></script>
   <script src="/static/tutorial.js"></script>
   <script src="/static/glossary.js"></script>
   <script src="/static/help.js"></script>
+  <script src="/static/math.js"></script>
 </body>
 </html>

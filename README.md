@@ -340,7 +340,7 @@ python dashboard.py          # opens http://127.0.0.1:8000 in your browser
 * **Coding tab** - a step-by-step tutorial (in Turkish) that writes `SimpleCNN.py` from scratch: setup, imports, hyperparameters, data, the model, `forward`, the training and evaluation loops, saving the model and predicting, plus exercises. Code excerpts are read live from `SimpleCNN.py` with editor-style syntax highlighting, real line numbers and numbered line notes.
 * **Glossary** - the Glossary button in the top bar opens a searchable list of about 50 key terms (epoch, gradient, overfitting, receptive field, …), each with a short definition, what it looks like in SimpleCNN, and a link to the Theory or Coding section that shows it. Terms underlined with dots in the explanations open the same definition in a small card.
 
-The whole dashboard can be switched between Turkish and English.
+The whole dashboard can be switched between Turkish and English. Formulas are written in LaTeX and typeset with [KaTeX](https://katex.org) (MIT license), which is bundled in `static/vendor/katex`, so the dashboard also works without an internet connection.
 
 The trained model is saved to `checkpoints/simple_cnn.pt` and loaded automatically the next time the dashboard starts. With the default settings, a dashboard run gives exactly the same result as `python SimpleCNN.py`.
 

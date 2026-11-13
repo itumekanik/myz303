@@ -36,8 +36,8 @@ const INFO = {
   lr: {
     title: { tr: "Öğrenme oranı (learning rate)", en: "Learning rate" },
     body: {
-      tr: "<p>[[optimizer|Optimizer]]'ın her adımda ağırlıkları ne kadar değiştireceğini belirler:</p><p class=\"info-formula\">θ ← θ − η · ∇L</p><p>Çok küçükse eğitim yavaş ilerler; çok büyükse [[loss|kayıp]] salınır ya da hiç düşmez (ıraksar). SimpleCNN, [[adam|<b>Adam</b>]] optimizer ile 0,001 kullanır. Adam her ağırlığın adımını ayrıca ölçeklediği için bu değer güvenli bir başlangıçtır.</p>",
-      en: "<p>Sets how much the [[optimizer|optimizer]] changes the weights at every step:</p><p class=\"info-formula\">θ ← θ − η · ∇L</p><p>Too small and training crawls; too large and the [[loss|loss]] oscillates or never goes down (diverges). SimpleCNN uses 0.001 with the [[adam|<b>Adam</b>]] optimizer. Adam scales each weight's step separately, which makes this value a safe starting point.</p>",
+      tr: "<p>[[optimizer|Optimizer]]'ın her adımda ağırlıkları ne kadar değiştireceğini belirler:</p><p class=\"info-formula\">\\(\\displaystyle \\theta \\leftarrow \\theta - \\eta\\, \\nabla L\\)</p><p>Çok küçükse eğitim yavaş ilerler; çok büyükse [[loss|kayıp]] salınır ya da hiç düşmez (ıraksar). SimpleCNN, [[adam|<b>Adam</b>]] optimizer ile 0,001 kullanır. Adam her ağırlığın adımını ayrıca ölçeklediği için bu değer güvenli bir başlangıçtır.</p>",
+      en: "<p>Sets how much the [[optimizer|optimizer]] changes the weights at every step:</p><p class=\"info-formula\">\\(\\displaystyle \\theta \\leftarrow \\theta - \\eta\\, \\nabla L\\)</p><p>Too small and training crawls; too large and the [[loss|loss]] oscillates or never goes down (diverges). SimpleCNN uses 0.001 with the [[adam|<b>Adam</b>]] optimizer. Adam scales each weight's step separately, which makes this value a safe starting point.</p>",
     },
     live: () => {
       const lr = (Number(form.elements.lr.value) || 0).toLocaleString(locale(), { maximumFractionDigits: 6 });
@@ -150,8 +150,8 @@ const INFO = {
   "chip.loss": {
     title: { tr: "3 · Kaybı hesapla: criterion(out, y)", en: "3 · Compute the loss: criterion(out, y)" },
     body: {
-      tr: "<p><b>Cross-Entropy kaybı</b>, doğru sınıfa verilen [[softmax|olasılığın]] negatif logaritmasıdır:</p><p class=\"info-formula\">L = −log p<sub>doğru sınıf</sub></p><p>Model doğru rakamdan eminse kayıp 0'a yakındır; yanlış bir rakamdan eminse büyüktür. Batch'teki 256 görüntünün ortalaması alınır.</p>",
-      en: "<p>The <b>cross-entropy loss</b> is the negative logarithm of the [[softmax|probability]] given to the correct class:</p><p class=\"info-formula\">L = −log p<sub>correct class</sub></p><p>If the model is sure of the right digit the loss is close to 0; if it is sure of a wrong one the loss is large. It is averaged over the 256 images of the batch.</p>",
+      tr: "<p><b>Cross-Entropy kaybı</b>, doğru sınıfa verilen [[softmax|olasılığın]] negatif logaritmasıdır:</p><p class=\"info-formula\">\\(\\displaystyle L = -\\log p_{\\text{doğru sınıf}}\\)</p><p>Model doğru rakamdan eminse kayıp 0'a yakındır; yanlış bir rakamdan eminse büyüktür. Batch'teki 256 görüntünün ortalaması alınır.</p>",
+      en: "<p>The <b>cross-entropy loss</b> is the negative logarithm of the [[softmax|probability]] given to the correct class:</p><p class=\"info-formula\">\\(\\displaystyle L = -\\log p_{\\text{correct class}}\\)</p><p>If the model is sure of the right digit the loss is close to 0; if it is sure of a wrong one the loss is large. It is averaged over the 256 images of the batch.</p>",
     },
     link: { tab: "theory", section: "t-softmax", label: { tr: "Teori → Softmax ve kayıp", en: "Theory → Softmax and loss" } },
   },
