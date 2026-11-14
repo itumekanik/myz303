@@ -417,7 +417,11 @@ function renderStatus(st) {
   const last = st.history[st.history.length - 1];
 
   // Header badges
-  $("#device-badge").textContent = st.device;
+  // "GPU · NVIDIA GeForce RTX 2060": narrow top bars show only "GPU", the full name is in the tooltip
+  const [deviceKind, ...deviceName] = String(st.device).split(" · ");
+  $("#device-badge").replaceChildren(h("span", { class: "badge-short", text: deviceKind }),
+    deviceName.length ? h("span", { class: "badge-long", text: ` · ${deviceName.join(" · ")}` }) : "");
+  $("#device-badge").title = `${L({ tr: "Eğitimin çalıştığı cihaz", en: "Device training runs on" })}: ${st.device}`;
   renderModelBadge(st.model);
 
   // Form: opens with the SimpleCNN.py defaults; only a run in progress shows its own settings
@@ -500,12 +504,12 @@ function renderStatus(st) {
 function renderModelBadge(model) {
   const badge = $("#model-badge");
   badge.classList.toggle("ready", model.ready);
-  let text = t("model.none");
-  if (model.ready) {
-    text = modelSourceText(model);
-    if (model.meta?.test_acc != null) text += ` · test ${fmtPct(model.meta.test_acc)}`;
+  // Narrow top bars keep only the accuracy; the model's source is in the long part
+  if (model.ready && model.meta?.test_acc != null) {
+    $("#model-badge-text").replaceChildren(h("span", { class: "badge-long", text: `${modelSourceText(model)} · ` }), `test ${fmtPct(model.meta.test_acc)}`);
+  } else {
+    $("#model-badge-text").textContent = model.ready ? modelSourceText(model) : t("model.none");
   }
-  $("#model-badge-text").textContent = text;
   badge.title = model.meta?.trained_at
     ? t("model.trainedat", { d: new Date(model.meta.trained_at).toLocaleString(locale()), n: model.meta.epochs })
     : t("model.used");
@@ -1158,6 +1162,18 @@ window.addEventListener("popstate", (event) => {
   else if (state.section) scrollWhenReady({ section: state.section });
   else scrollWhenReady({ y: 0 });
 });
+
+// Phones: the top bar slides away while scrolling down (reading) and comes back on the way up
+const phoneWidth = matchMedia("(max-width: 720px)");
+let lastScrollY = window.scrollY;
+window.addEventListener("scroll", () => {
+  const y = window.scrollY;
+  const bar = $(".topbar").offsetHeight;
+  if (!phoneWidth.matches || y <= bar) document.body.classList.remove("topbar-away");
+  else if (y > lastScrollY + 6) document.body.classList.add("topbar-away");
+  else if (y < lastScrollY - 6) document.body.classList.remove("topbar-away");
+  lastScrollY = y;
+}, { passive: true });
 
 // Keep the current history entry's scroll position up to date, so Forward also lands right
 let scrollSaveTimer = 0;

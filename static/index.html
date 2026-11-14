@@ -20,7 +20,7 @@
     <div class="brand">
       <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7"/><g><rect x="7" y="7" width="5" height="5" rx="1"/><rect x="14" y="7" width="5" height="5" rx="1" opacity=".6"/><rect x="21" y="7" width="4" height="5" rx="1" opacity=".3"/><rect x="7" y="14" width="5" height="5" rx="1" opacity=".6"/><rect x="14" y="14" width="5" height="5" rx="1"/><rect x="7" y="21" width="5" height="4" rx="1" opacity=".3"/><rect x="21" y="21" width="4" height="4" rx="1"/></g></svg>
       <div>
-        <h1 data-i18n="top.title">SimpleCNN Paneli</h1>
+        <h1 data-i18n="top.title">SimpleCNN<span class="h1-tail"> Paneli</span></h1>
         <p class="brand-sub" data-i18n="top.sub">MNIST el yazısı rakamlar · eğitim ve çıkarım</p>
       </div>
     </div>
@@ -41,11 +41,11 @@
         <button type="button" data-lang="en" aria-pressed="false">EN</button>
       </div>
       <div class="theme-switch" id="theme-switch" role="group" aria-label="Tema" data-i18n-attr="aria-label=a.theme">
-        <button type="button" data-theme-choice="light" aria-pressed="false" data-i18n="theme.light">Açık</button>
-        <button type="button" data-theme-choice="dark" aria-pressed="false" data-i18n="theme.dark">Koyu</button>
-        <button type="button" data-theme-choice="system" aria-pressed="false" data-i18n="theme.system">Sistem</button>
+        <button type="button" data-theme-choice="light" aria-pressed="false" title="Açık" aria-label="Açık" data-i18n-attr="title=theme.light,aria-label=theme.light"><svg class="theme-icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.6"/><path d="M10 1.8v2.1M10 16.1v2.1M1.8 10h2.1M16.1 10h2.1M4.2 4.2l1.5 1.5M14.3 14.3l1.5 1.5M4.2 15.8l1.5-1.5M14.3 5.7l1.5-1.5"/></svg></button>
+        <button type="button" data-theme-choice="dark" aria-pressed="false" title="Koyu" aria-label="Koyu" data-i18n-attr="title=theme.dark,aria-label=theme.dark"><svg class="theme-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M16.5 12.6A7 7 0 0 1 7.4 3.5a7 7 0 1 0 9.1 9.1Z"/></svg></button>
+        <button type="button" data-theme-choice="system" aria-pressed="false" title="Sistem teması" aria-label="Sistem teması" data-i18n-attr="title=theme.system,aria-label=theme.system"><svg class="theme-icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="3.5" width="15" height="10.5" rx="1.5"/><path d="M7 17.5h6M10 14v3.5"/></svg></button>
       </div>
-      <span class="badge" id="device-badge" title="Eğitimin çalıştığı cihaz" data-i18n-attr="title=a.device">—</span>
+      <span class="badge" id="device-badge" title="Eğitimin çalıştığı cihaz">—</span>
       <span class="badge" id="model-badge" title="Çıkarımda kullanılan model"><span class="badge-dot"></span><span id="model-badge-text">Model yok</span></span>
     </div>
   </header>
@@ -106,11 +106,11 @@
               <span class="loop-count" id="step-count">Toplam adım: 0</span>
             </div>
             <ol class="chips">
-              <li class="chip"><code>optimizer.zero_grad()</code><span data-i18n="chip.zero">Gradyanları sıfırla</span><button type="button" class="info-btn" data-info="chip.zero" aria-expanded="false">i</button></li>
+              <li class="chip"><code>optimizer.<wbr>zero_grad()</code><span data-i18n="chip.zero">Gradyanları sıfırla</span><button type="button" class="info-btn" data-info="chip.zero" aria-expanded="false">i</button></li>
               <li class="chip"><code>model(x)</code><span data-i18n="chip.forward">İleri yayılım</span><button type="button" class="info-btn" data-info="chip.forward" aria-expanded="false">i</button></li>
-              <li class="chip"><code>criterion(out, y)</code><span data-i18n="chip.loss">Kaybı hesapla</span><button type="button" class="info-btn" data-info="chip.loss" aria-expanded="false">i</button></li>
-              <li class="chip"><code>loss.backward()</code><span data-i18n="chip.backward">Geri yayılım</span><button type="button" class="info-btn" data-info="chip.backward" aria-expanded="false">i</button></li>
-              <li class="chip"><code>optimizer.step()</code><span data-i18n="chip.step">Ağırlıkları güncelle</span><button type="button" class="info-btn" data-info="chip.step" aria-expanded="false">i</button></li>
+              <li class="chip"><code>criterion(out,&nbsp;y)</code><span data-i18n="chip.loss">Kaybı hesapla</span><button type="button" class="info-btn" data-info="chip.loss" aria-expanded="false">i</button></li>
+              <li class="chip"><code>loss.<wbr>backward()</code><span data-i18n="chip.backward">Geri yayılım</span><button type="button" class="info-btn" data-info="chip.backward" aria-expanded="false">i</button></li>
+              <li class="chip"><code>optimizer.<wbr>step()</code><span data-i18n="chip.step">Ağırlıkları güncelle</span><button type="button" class="info-btn" data-info="chip.step" aria-expanded="false">i</button></li>
             </ol>
           </div>
         </div>
@@ -212,7 +212,7 @@
             <button type="button" class="btn small" id="btn-clear" data-i18n="infer.clear">Temizle</button>
           </div>
           <canvas id="draw" width="280" height="280" aria-label="Çizim alanı" data-i18n-attr="aria-label=a.draw"></canvas>
-          <p class="sub" data-i18n="infer.draw.sub">Fareyle 0–9 arası bir rakam çizin; çizerken tahmin güncellenir.</p>
+          <p class="sub" data-i18n="infer.draw.sub">Fareyle ya da parmağınızla 0–9 arası bir rakam çizin; çizerken tahmin güncellenir.</p>
         </div>
 
         <div class="card result-card">
