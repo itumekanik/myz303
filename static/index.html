@@ -583,11 +583,8 @@
   </main>
 
   <!-- Model switch: fixed to the window, so it stays reachable while scrolling (Inference and Theory tabs) -->
+  <!-- Just the toggle; what the selected model is shows as its tooltip (app.js, describeModels) -->
   <aside class="model-float" aria-label="Gösterilen model" data-i18n-attr="aria-label=a.float">
-    <div class="model-float-text">
-      <span class="tb-label" data-i18n="float.label">Gösterilen model</span>
-      <span class="model-float-desc" data-model-desc></span>
-    </div>
         <div class="seg model-switch" role="group" aria-label="Gösterilen model" data-i18n-attr="aria-label=a.float">
           <button type="button" data-model="initial" aria-pressed="false" data-i18n="model.initial">Eğitim öncesi</button>
           <button type="button" data-model="trained" aria-pressed="true" data-i18n="model.trained">Eğitilmiş</button>

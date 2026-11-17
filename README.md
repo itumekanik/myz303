@@ -343,7 +343,7 @@ python dashboard.py          # opens http://127.0.0.1:8000 in your browser
 
 The whole dashboard can be switched between Turkish and English. Formulas are written in LaTeX and typeset with [KaTeX](https://katex.org) (MIT license), which is bundled in `static/vendor/katex`, so the dashboard also works without an internet connection.
 
-The trained model is saved to `checkpoints/simple_cnn.pt` and loaded automatically the next time the dashboard starts. With the default settings, a dashboard run gives exactly the same result as `python SimpleCNN.py`.
+The trained model is saved to `checkpoints/simple_cnn.pt` and loaded automatically the next time the dashboard starts. The run that produced it (loss curves, epoch table, filters, validation samples and log) is saved next to it in `checkpoints/simple_cnn_run.json`, so the Training tab shows the last run again after a restart. With the default settings, a dashboard run gives exactly the same result as `python SimpleCNN.py`.
 
 ## References
 [The Back Propagation Method for CNN](https://ieeexplore.ieee.org/abstract/document/409626)

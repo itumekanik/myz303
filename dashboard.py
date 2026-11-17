@@ -59,8 +59,13 @@ import SimpleCNN as cnn
 ROOT = Path(__file__).resolve().parent
 STATIC_DIR = ROOT / "static"
 CHECKPOINT = ROOT / "checkpoints" / "simple_cnn.pt"
+# The finished run that produced the checkpoint (curves, filters, samples, log), so the
+# Training tab can show it again after a restart
+RUN_FILE = CHECKPOINT.with_name("simple_cnn_run.json")
+RUN_FIELDS = ("config", "epoch", "batch", "batches", "step", "dataset_sizes", "batch_losses", "history",
+              "test", "filters", "samples", "sample_predictions", "log", "started_at", "finished_at")
 # Bumped when the page needs a newer server API; the page warns when an older server is still running
-SERVER_VERSION = 3
+SERVER_VERSION = 4
 
 NUM_SAMPLES = 16      # Validation images whose predictions are shown while training
 FILTER_EVERY = 10     # Refresh the conv1 filter snapshot every N batches
@@ -372,6 +377,7 @@ class TrainingSession:
         self.log = []
         self.started_at = None
         self.finished_at = None
+        self.restored = None         # {"trained_at": ...} when the run was loaded from RUN_FILE
 
     def is_running(self) -> bool:
         return self.thread is not None and self.thread.is_alive()
@@ -473,7 +479,8 @@ class TrainingSession:
             self.engine.save_checkpoint(model.state_dict(), meta, initial_state)
             self.engine.load_state(model.state_dict(), "Yeni eğitilen model", meta)
             self._log(f"Model saved to {CHECKPOINT.relative_to(ROOT).as_posix()}")
-            self._set(stage="done", state="done")
+            self._set(stage="done", state="done", finished_at=time.time())
+            self._save_run(meta["trained_at"])
         except StopTraining:
             self._log("Training stopped by the user.")
             self._set(state="stopped", message="Eğitim durduruldu.")
@@ -510,6 +517,41 @@ class TrainingSession:
                     self.filters = conv1_filters(model)
         return 100 * correct / total, loss_sum / len(data_loader)
 
+    def _save_run(self, trained_at: str):
+        """Writes the finished run next to the checkpoint (atomically, so a crash leaves no half file)."""
+        try:
+            with self.lock:
+                data = {"trained_at": trained_at, **{key: getattr(self, key) for key in RUN_FIELDS}}
+            tmp = RUN_FILE.with_suffix(".tmp")
+            tmp.write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")
+            tmp.replace(RUN_FILE)
+        except Exception as exc:  # The model is saved; losing the curves is not worth failing the run
+            print(f"Could not save {RUN_FILE.name}: {exc}")
+
+    def restore_run(self, meta: dict | None) -> bool:
+        """Shows the run that produced the loaded checkpoint, if it was saved (and matches it)."""
+        if not meta or not RUN_FILE.exists():
+            return False
+        try:
+            data = json.loads(RUN_FILE.read_text(encoding="utf-8"))
+            if data.get("trained_at") != meta.get("trained_at"):
+                print(f"{RUN_FILE.name} belongs to another run than the checkpoint; not loaded.")
+                return False
+            with self.lock:
+                self._reset(data["config"])
+                for key in RUN_FIELDS:
+                    setattr(self, key, data[key])
+                self.run_id = 1
+                self.state = "done"
+                self.stage = "done"
+                self.restored = {"trained_at": data["trained_at"]}
+            self._log(f"Loaded the last run ({data['trained_at']}) from "
+                      f"{RUN_FILE.relative_to(ROOT).as_posix()}")
+            return True
+        except Exception as exc:  # A broken file should not stop the app
+            print(f"Could not load {RUN_FILE.name}: {exc}")
+            return False
+
     def snapshot(self) -> dict:
         with self.lock:
             end = self.finished_at or time.time()
@@ -533,6 +575,7 @@ class TrainingSession:
                 "samples": self.samples,
                 "sample_predictions": self.sample_predictions,
                 "log": list(self.log),
+                "restored": self.restored,
             }
 
 
@@ -683,6 +726,8 @@ def main():
     if engine.load_checkpoint():
         print(f"Loaded saved model: {CHECKPOINT.relative_to(ROOT).as_posix()}")
     session = TrainingSession(engine)
+    if session.restore_run(engine.meta):
+        print(f"Loaded the last training run: {RUN_FILE.relative_to(ROOT).as_posix()}")
 
     server = None
     for port in range(args.port, args.port + 20):

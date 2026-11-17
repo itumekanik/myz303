@@ -218,7 +218,6 @@ Object.assign(STATIC_EN, {
   "code.step": "Step by step",
   "code.title": "Let's code SimpleCNN",
   "code.loading": "Loading the tutorial…",
-  "float.label": "Model shown",
   "model.initial": "Before training",
   "model.trained": "Trained",
 });
@@ -276,6 +275,8 @@ Object.assign(STRINGS, {
   "run.try": { tr: "Çıkarımı dene →", en: "Try inference →" },
   "run.done": { tr: "Eğitim tamamlandı. Test doğruluğu {v}; model checkpoints/simple_cnn.pt dosyasına kaydedildi.", en: "Training finished. Test accuracy {v}; the model was saved to checkpoints/simple_cnn.pt." },
   "run.stopped": { tr: "Eğitim durduruldu.", en: "Training was stopped." },
+  "run.restored": { tr: "Son eğitim yüklendi ({d}): test doğruluğu {v}. Aşağıdakiler o eğitimin sonuçları; yeniden eğitince yenileri gelir.", en: "The last training run was loaded ({d}): test accuracy {v}. What you see below is from that run; training again replaces it." },
+  "run.nohistory": { tr: "Kayıtlı model yüklü, ama bu model eğitim geçmişi saklanmaya başlamadan önce eğitilmiş; bu yüzden aşağıdaki grafikler boş. Bir kez yeniden eğitin: bundan sonra panel her açılışta son eğitimi gösterir.", en: "A saved model is loaded, but it was trained before runs were kept, so the charts below are empty. Train once more: from then on the dashboard shows the last run every time it starts." },
   "run.stoppedmodel": { tr: "Çıkarım için epoch {e} sonrasındaki model kullanılabilir.", en: "The model after epoch {e} can be used for inference." },
   "chart.batch.label": { tr: "Batch başına eğitim kaybı", en: "Training loss per batch" },
   "chart.batch.empty": { tr: "Eğitim başlayınca her batch'in kaybı burada çizilir", en: "Once training starts, the loss of every batch is drawn here" },

@@ -51,3 +51,4 @@ build/
 
 # === VSCode (if used) ===
 .vscode/
+checkpoints/simple_cnn_run.json

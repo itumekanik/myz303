@@ -517,7 +517,7 @@ function renderModelBadge(model) {
 
 function renderRunBanner(st) {
   const banner = $("#run-banner");
-  const key = `${st.run_id}|${st.state}|${I18N.lang}`;
+  const key = `${st.run_id}|${st.state}|${I18N.lang}|${st.restored?.trained_at}|${st.model?.ready}`;
   if (seen.banner === key) return;
   seen.banner = key;
   banner.className = "banner inline";
@@ -528,10 +528,16 @@ function renderRunBanner(st) {
     go.addEventListener("click", () => selectTab("infer"));
     banner.append(
       h("span", { class: "icon", text: "✓" }),
-      h("span", { text: t("run.done", { v: fmtPct(st.test.acc) }) }),
+      h("span", { text: st.restored
+        ? t("run.restored", { d: new Date(st.restored.trained_at).toLocaleString(locale(), { dateStyle: "medium", timeStyle: "short" }), v: fmtPct(st.test.acc) })
+        : t("run.done", { v: fmtPct(st.test.acc) }) }),
       go,
     );
     go.style.marginLeft = "auto";
+  } else if (!st.run_id && !st.running && st.model?.ready) {
+    // A saved model but no saved run: trained before runs were kept, so there is nothing to show yet
+    banner.classList.add("info");
+    banner.append(h("span", { class: "icon", text: "i" }), h("span", { text: t("run.nohistory") }));
   } else if (st.state === "stopped" || st.state === "error") {
     banner.classList.add(st.state);
     banner.append(h("span", { class: "icon", text: "!" }), h("span", { text: st.state === "stopped" ? t("run.stopped") : st.message }));
@@ -754,7 +760,7 @@ $("#btn-stop").addEventListener("click", async () => {
 // "trained" or "initial": the random weights training starts from, to show what training changes
 // =====================================================================
 const modelView = { which: "trained" };
-const REQUIRED_SERVER_VERSION = 3;   // matches SERVER_VERSION in dashboard.py
+const REQUIRED_SERVER_VERSION = 4;   // matches SERVER_VERSION in dashboard.py
 
 /** The page files are newer than the running server (it was started before an update). */
 function showOutdatedServer() {
@@ -791,6 +797,8 @@ function describeModels(model) {
       ? `${modelSourceText(model)}${model.meta?.test_acc != null ? ` · ${t("model.testacc", { v: fmtPct(model.meta.test_acc) })}` : ""}`
       : t("model.notrained");
   for (const el of document.querySelectorAll("[data-model-desc]")) el.textContent = text;
+  const float = document.querySelector(".model-float");
+  if (float) float.title = `${L({ tr: "Gösterilen model", en: "Model shown" })}: ${text}`;
 }
 
 document.addEventListener("click", (event) => {
