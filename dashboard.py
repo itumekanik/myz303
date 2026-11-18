@@ -21,6 +21,8 @@ Theory tab:    the CNN building blocks explained, each with a live demo that
                runs on a real MNIST image and the trained model's weights.
 /perceptron:   chapter 1 of the learning path, the perceptron (runs in the
                browser; the Coding tab reads Perceptron.py).
+/mlp:          chapter 2, the multilayer network and backpropagation (runs in
+               the browser; the Coding tab reads MLP.py).
 
 The model, data loading and evaluation code are reused from SimpleCNN.py, and
 the web server uses only the Python standard library. With the default
@@ -61,7 +63,8 @@ import SimpleCNN as cnn
 ROOT = Path(__file__).resolve().parent
 STATIC_DIR = ROOT / "static"
 # The Coding tabs show these files; nothing else under the project is served
-SOURCE_FILES = {"/api/source/SimpleCNN.py": "SimpleCNN.py", "/api/source/Perceptron.py": "Perceptron.py"}
+SOURCE_FILES = {"/api/source/SimpleCNN.py": "SimpleCNN.py", "/api/source/Perceptron.py": "Perceptron.py",
+                "/api/source/MLP.py": "MLP.py"}
 CHECKPOINT = ROOT / "checkpoints" / "simple_cnn.pt"
 # The finished run that produced the checkpoint (curves, filters, samples, log), so the
 # Training tab can show it again after a restart
@@ -633,6 +636,8 @@ def make_handler(session: TrainingSession, engine: InferenceEngine):
                     return self._static("index.html")
                 if url.path in ("/perceptron", "/perceptron/"):      # chapter 1 (runs in the browser)
                     return self._static("perceptron.html")
+                if url.path in ("/mlp", "/mlp/"):                    # chapter 2 (runs in the browser)
+                    return self._static("mlp.html")
                 if url.path.startswith("/static/"):
                     return self._static(url.path[len("/static/"):])
                 if url.path == "/api/status":
@@ -748,6 +753,7 @@ def main():
     url = f"http://127.0.0.1:{server.server_address[1]}"
     print(f"SimpleCNN dashboard running at {url}  (Ctrl+C to quit)")
     print(f"Chapter 1, the perceptron:      {url}/perceptron")
+    print(f"Chapter 2, the MLP:             {url}/mlp")
     if not args.no_browser:
         threading.Timer(0.8, webbrowser.open, args=(url,)).start()
     try:

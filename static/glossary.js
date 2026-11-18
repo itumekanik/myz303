@@ -15,6 +15,7 @@
 
 const GLOSSARY_GROUPS = [
   { key: "neuron", title: { tr: "Yapay nöron ve perceptron", en: "The artificial neuron and the perceptron" } },
+  { key: "mlp", title: { tr: "Çok katmanlı ağlar", en: "Multilayer networks" } },
   { key: "train", title: { tr: "Eğitim süreci", en: "The training process" } },
   { key: "data", title: { tr: "Veri ve değerlendirme", en: "Data and evaluation" } },
   { key: "layers", title: { tr: "Model ve katmanlar", en: "The model and its layers" } },
@@ -178,7 +179,90 @@ const GLOSSARY = {
       tr: "Evrişim blokları ve FC1 gizli katmanlardır; yalnızca FC2'nin 10 çıktısının doğru cevabı bilinir.",
       en: "The convolution blocks and FC1 are hidden layers; only the 10 outputs of FC2 have a known right answer.",
     },
-    link: { chapter: "perceptron", tab: "theory", section: "p-xor" },
+    link: [{ chapter: "perceptron", tab: "theory", section: "p-xor" }, { chapter: "mlp", tab: "theory", section: "ml-hidden" }],
+  },
+  // ------------------------------------------------------------------ multilayer networks (chapter 2)
+  mlp: {
+    group: "mlp",
+    name: { tr: "Çok katmanlı ağ (MLP)", en: "Multilayer perceptron (MLP)" },
+    aka: ["mlp", "multilayer perceptron", "çok katmanlı perceptron", "ileri beslemeli ağ", "feedforward network", "dense network", "yoğun ağ"],
+    def: {
+      tr: "Nöronların katmanlar hâlinde dizildiği ve her katmanın bir öncekinin bütün çıktılarına bağlandığı ([[fully-connected|tam bağlı]]) ağ: girdi → bir ya da daha fazla [[hidden-layer|gizli katman]] → çıktı. Katmanlar arasında doğrusal olmayan bir [[activation|aktivasyon]] vardır; ağırlıklar [[backprop|geri yayılım]] ve [[gradient-descent|gradyan inişiyle]] öğrenilir. Adındaki \"perceptron\" tarihseldir: nöronları basamak yerine sigmoid, tanh ya da ReLU kullanır.",
+      en: "A network whose neurons are arranged in layers, each layer connected to all the outputs of the previous one ([[fully-connected|fully connected]]): input → one or more [[hidden-layer|hidden layers]] → output. A nonlinear [[activation|activation]] sits between the layers; the weights are learned with [[backprop|backpropagation]] and [[gradient-descent|gradient descent]]. The \"perceptron\" in its name is historical: its neurons use a sigmoid, tanh or ReLU instead of the step.",
+    },
+    model: {
+      tr: "SimpleCNN'in sonundaki FC1 ve FC2 katmanları bir MLP'dir: evrişim katmanlarının çıkardığı 1024 özellikten 10 sınıfa karar verir.",
+      en: "The FC1 and FC2 layers at the end of SimpleCNN are an MLP: it decides among the 10 classes from the 1024 features the convolution layers extract.",
+    },
+    link: [{ chapter: "mlp", tab: "theory", section: "ml-intro" }, { chapter: "mlp", tab: "play" }],
+  },
+  sigmoid: {
+    group: "mlp",
+    name: { tr: "Sigmoid", en: "Sigmoid" },
+    aka: ["sigmoid", "lojistik", "logistic", "σ", "s eğrisi", "s-curve"],
+    def: {
+      tr: "σ(z) = 1 / (1 + e^(−z)): her sayıyı 0 ile 1 arasına sıkıştıran, S biçimli bir [[activation|aktivasyon]]. [[step-function|Basamak fonksiyonunun]] yumuşatılmış hâlidir ve her yerde türevlidir: σ'(z) = σ(z)(1 − σ(z)), en fazla 0,25. Çıktısı bir olasılık gibi okunur; bu yüzden iki sınıflı problemlerde çıktı nöronunda kullanılır. Gizli katmanlarda ise iki uçta türevi 0'a indiği için öğrenmeyi yavaşlatır ([[vanishing-gradient|kaybolan gradyan]]).",
+      en: "σ(z) = 1 / (1 + e^(−z)): an S-shaped [[activation|activation]] that squeezes every number between 0 and 1. It is a smoothed [[step-function|step function]] with a derivative everywhere: σ'(z) = σ(z)(1 − σ(z)), at most 0.25. Its output reads like a probability, so it is used at the output neuron for two-class problems. In hidden layers it slows learning, because its derivative falls to 0 at both ends ([[vanishing-gradient|vanishing gradient]]).",
+    },
+    model: {
+      tr: "SimpleCNN sigmoid kullanmaz: gizli katmanlarda ReLU, çıktıda 10 sınıf için softmax.",
+      en: "SimpleCNN does not use the sigmoid: ReLU in the hidden layers, softmax over the 10 classes at the output.",
+    },
+    link: [{ chapter: "mlp", tab: "theory", section: "ml-act" }, { chapter: "mlp", tab: "math", section: "mm-act" }],
+  },
+  tanh: {
+    group: "mlp",
+    name: { tr: "tanh (hiperbolik tanjant)", en: "tanh (hyperbolic tangent)" },
+    aka: ["tanh", "hiperbolik tanjant", "hyperbolic tangent"],
+    def: {
+      tr: "tanh z = (e^z − e^(−z)) / (e^z + e^(−z)): [[sigmoid|sigmoid]]'in −1 ile 1 arasına gerilmiş hâli (tanh z = 2σ(2z) − 1). Çıktısı sıfır merkezli olduğu için gizli katmanlarda genelde sigmoid'den iyi çalışır. Türevi 1 − tanh² z, en fazla 1; o da iki uçta 0'a iner.",
+      en: "tanh z = (e^z − e^(−z)) / (e^z + e^(−z)): the [[sigmoid|sigmoid]] stretched to lie between −1 and 1 (tanh z = 2σ(2z) − 1). Its output is centred on zero, so in hidden layers it usually works better than the sigmoid. Its derivative is 1 − tanh² z, at most 1; it too falls to 0 at both ends.",
+    },
+    link: [{ chapter: "mlp", tab: "theory", section: "ml-act" }, { chapter: "mlp", tab: "code", section: "mc-act" }],
+  },
+  "chain-rule": {
+    group: "mlp",
+    name: { tr: "Zincir kuralı", en: "Chain rule" },
+    aka: ["chain rule", "zincir", "türev", "derivative", "bileşke fonksiyon", "composite function"],
+    def: {
+      tr: "Bileşke bir fonksiyonun türevi, iç içe geçmiş fonksiyonların türevlerinin çarpımıdır: y = f(g(x)) ise dy/dx = f'(g(x)) · g'(x). Bir değişken sonuca birden fazla yoldan etki ediyorsa yolların katkıları toplanır. [[backprop|Geri yayılım]], zincir kuralının bir ağın bütün ağırlıklarına düzenli bir sırayla, sondan başa doğru uygulanmasıdır.",
+      en: "The derivative of a composite function is the product of the derivatives of the nested functions: if y = f(g(x)), then dy/dx = f'(g(x)) · g'(x). If a variable affects the result along several paths, the contributions of the paths are added. [[backprop|Backpropagation]] is the chain rule applied to all the weights of a network in an orderly way, from the end to the start.",
+    },
+    link: [{ chapter: "mlp", tab: "theory", section: "ml-backprop" }, { chapter: "mlp", tab: "math", section: "mm-backprop" }],
+  },
+  "vanishing-gradient": {
+    group: "mlp",
+    name: { tr: "Kaybolan gradyan", en: "Vanishing gradient" },
+    aka: ["vanishing gradient", "sönen gradyan", "doyma", "saturation", "exploding gradient", "patlayan gradyan"],
+    def: {
+      tr: "Derin bir ağda hata sinyalinin geriye giderken her katmanda bir aktivasyon türevi ve ağırlıklarla çarpılıp giderek küçülmesi; ilk katmanlar neredeyse hiç öğrenmez. [[sigmoid|Sigmoid]]'in türevi en fazla 0,25 olduğu için 10 katmanda sinyal milyonda birine iner. [[relu|ReLU]], dikkatli seçilmiş başlangıç ağırlıkları ve [[batchnorm|batch normalization]] bu sorunu azaltır. Tersi, sinyalin katman katman büyümesi, patlayan gradyandır.",
+      en: "In a deep network, the error signal is multiplied by an activation derivative and weights at every layer on its way back and keeps shrinking; the first layers barely learn. The [[sigmoid|sigmoid]]'s derivative is at most 0.25, so over 10 layers the signal falls to a millionth. [[relu|ReLU]], carefully chosen initial weights and [[batchnorm|batch normalization]] reduce the problem. The opposite, a signal that grows layer by layer, is the exploding gradient.",
+    },
+    model: {
+      tr: "SimpleCNN bu yüzden ReLU ve BatchNorm kullanır.",
+      en: "That is why SimpleCNN uses ReLU and BatchNorm.",
+    },
+    link: { chapter: "mlp", tab: "math", section: "mm-act" },
+  },
+  "local-minimum": {
+    group: "mlp",
+    name: { tr: "Yerel minimum", en: "Local minimum" },
+    aka: ["local minimum", "yerel en küçük", "plato", "plateau", "takılmak", "stuck"],
+    def: {
+      tr: "Kaybın, yakınındaki bütün noktalardakinden küçük olduğu ama en küçük değerin (global minimum) olmadığı bir nokta. Orada gradyan sıfırdır ve [[gradient-descent|gradyan inişi]] durur. Küçük ağlarda (örneğin XOR için 2 gizli nöron) eğitim bazen böyle bir yere ya da düz bir bölgeye (plato) takılır; farklı bir rastgele başlangıç ya da daha fazla nöron genelde çözer. Büyük ağlarda kötü yerel minimumlar daha az sorun olur.",
+      en: "A point where the loss is smaller than at every nearby point but is not the smallest value (the global minimum). The gradient is zero there and [[gradient-descent|gradient descent]] stops. In small networks (2 hidden neurons for XOR, for example) training sometimes gets stuck at such a place or on a flat region (a plateau); a different random start or more neurons usually fixes it. In large networks bad local minima are less of a problem.",
+    },
+    link: { chapter: "mlp", tab: "theory", section: "ml-hidden" },
+  },
+  "universal-approximation": {
+    group: "mlp",
+    name: { tr: "Evrensel yaklaşım teoremi", en: "Universal approximation theorem" },
+    aka: ["universal approximation", "evrensel yaklaşım", "cybenko", "hornik"],
+    def: {
+      tr: "Tek gizli katmanlı bir ağın, yeterince nöronla, kapalı bir aralıktaki her sürekli fonksiyona istenen yakınlıkta yaklaşabileceğini söyleyen teorem (Cybenko 1989 sigmoid için; Hornik 1991; Leshno ve arkadaşları 1993 polinom olmayan her aktivasyon için). Kaç nöron gerektiğini, gradyan inişinin o ağırlıkları bulacağını ya da ağın iyi [[generalization|genelleyeceğini]] söylemez.",
+      en: "The theorem that a network with one hidden layer can, with enough neurons, approximate any continuous function on a closed interval as closely as we like (Cybenko 1989 for the sigmoid; Hornik 1991; Leshno and colleagues 1993 for every non-polynomial activation). It does not say how many neurons it takes, that gradient descent will find those weights, or that the network will [[generalization|generalize]] well.",
+    },
+    link: [{ chapter: "mlp", tab: "theory", section: "ml-capacity" }, { chapter: "mlp", tab: "math", section: "mm-universal" }],
   },
   // ------------------------------------------------------------------ training
   hyperparameter: {
@@ -247,7 +331,7 @@ const GLOSSARY = {
       tr: "1×28×28 → 32×24×24 → 32×12×12 → 64×8×8 → 64×4×4 → 1024 → 512 → 10 [[logit|logit]].",
       en: "1×28×28 → 32×24×24 → 32×12×12 → 64×8×8 → 64×4×4 → 1024 → 512 → 10 [[logit|logits]].",
     },
-    link: { tab: "code", section: "c-forward" },
+    link: [{ tab: "code", section: "c-forward" }, { chapter: "mlp", tab: "math", section: "mm-forward" }],
   },
   loss: {
     group: "train",
@@ -261,7 +345,7 @@ const GLOSSARY = {
       tr: "Kayıp fonksiyonu [[cross-entropy|cross-entropy]]. Eğitim yaklaşık 2,3'ten başlar: rastgele tahmin yapan bir modelin kaybı (ln 10).",
       en: "The loss function is [[cross-entropy|cross-entropy]]. Training starts at about 2.3: the loss of a model that guesses at random (ln 10).",
     },
-    link: [{ tab: "theory", section: "t-softmax" }, { chapter: "perceptron", tab: "math", section: "pm-gd" }],
+    link: [{ tab: "theory", section: "t-softmax" }, { chapter: "perceptron", tab: "math", section: "pm-gd" }, { chapter: "mlp", tab: "theory", section: "ml-loss" }],
   },
   "cross-entropy": {
     group: "train",
@@ -275,7 +359,7 @@ const GLOSSARY = {
       tr: "PyTorch'un <code>nn.CrossEntropyLoss</code>'u [[softmax|softmax]]'i kendi içinde uygular; bu yüzden model ham [[logit|logit]] döndürür.",
       en: "PyTorch's <code>nn.CrossEntropyLoss</code> applies [[softmax|softmax]] itself, so the model returns raw [[logit|logits]].",
     },
-    link: { tab: "theory", section: "t-softmax" },
+    link: [{ tab: "theory", section: "t-softmax" }, { chapter: "mlp", tab: "math", section: "mm-loss" }],
   },
   gradient: {
     group: "train",
@@ -304,7 +388,7 @@ const GLOSSARY = {
       tr: "PyTorch'ta tek satırdır: <code>loss.backward()</code>.",
       en: "In PyTorch it is a single line: <code>loss.backward()</code>.",
     },
-    link: { tab: "theory", section: "t-opt" },
+    link: [{ tab: "theory", section: "t-opt" }, { chapter: "mlp", tab: "theory", section: "ml-backprop" }, { chapter: "mlp", tab: "math", section: "mm-backprop" }],
   },
   "gradient-descent": {
     group: "train",
@@ -315,7 +399,7 @@ const GLOSSARY = {
       en: "Lowering the loss by moving the weights in small steps opposite to the [[gradient|gradient]]: <span class=\"g-formula\">\\(\\theta \\leftarrow \\theta - \\eta\\, \\nabla L\\)</span>. The [[learning-rate|learning rate]] η sets the step size. It is like walking down a valley, always in the steepest downhill direction.",
     },
     see: ["sgd", "adam"],
-    link: [{ tab: "theory", section: "t-opt" }, { chapter: "perceptron", tab: "math", section: "pm-gd" }],
+    link: [{ tab: "theory", section: "t-opt" }, { chapter: "perceptron", tab: "math", section: "pm-gd" }, { chapter: "mlp", tab: "theory", section: "ml-loss" }],
   },
   "learning-rate": {
     group: "train",
@@ -326,7 +410,7 @@ const GLOSSARY = {
       en: "The [[hyperparameter|hyperparameter]] (η) that sets how big each [[gradient-descent|gradient descent]] step is. Too small and training crawls; too large and the loss oscillates or diverges. Values between 0.1 and 0.0001 are typical.",
     },
     model: { tr: "[[adam|Adam]] ile η = 0,001.", en: "η = 0.001 with [[adam|Adam]]." },
-    link: [{ tab: "theory", section: "t-opt" }, { chapter: "perceptron", tab: "theory", section: "p-rule" }],
+    link: [{ tab: "theory", section: "t-opt" }, { chapter: "perceptron", tab: "theory", section: "p-rule" }, { chapter: "mlp", tab: "theory", section: "ml-loss" }],
   },
   optimizer: {
     group: "train",
@@ -351,7 +435,7 @@ const GLOSSARY = {
       en: "[[gradient-descent|Gradient descent]] done with one [[batch|batch]] per step instead of all the data. The gradient comes from a single batch, so it is noisy (\"stochastic\" = random), but the steps are much cheaper, and the noise sometimes even helps find better solutions.",
     },
     see: ["momentum", "adam"],
-    link: [{ tab: "theory", section: "t-opt" }, { chapter: "perceptron", tab: "math", section: "pm-gd" }],
+    link: [{ tab: "theory", section: "t-opt" }, { chapter: "perceptron", tab: "math", section: "pm-gd" }, { chapter: "mlp", tab: "math", section: "mm-train" }],
   },
   momentum: {
     group: "train",
@@ -570,7 +654,7 @@ const GLOSSARY = {
       en: "582,218 parameters; 90% of them (524,800) are in the FC1 layer.",
     },
     see: ["hyperparameter"],
-    link: [{ tab: "code", section: "c-model" }, { chapter: "perceptron", tab: "math", section: "pm-notation" }],
+    link: [{ tab: "code", section: "c-model" }, { chapter: "perceptron", tab: "math", section: "pm-notation" }, { chapter: "mlp", tab: "math", section: "mm-forward" }],
   },
   convolution: {
     group: "layers",
@@ -691,7 +775,7 @@ const GLOSSARY = {
       tr: "Katmanların çıktısına uygulanan doğrusal olmayan fonksiyon. Onsuz, üst üste kaç katman konursa konsun ağ tek bir doğrusal işleme eşit olurdu ve eğri sınırlar çizemezdi. En yaygını [[relu|ReLU]]'dur; sigmoid ve tanh daha eski örneklerdir.",
       en: "A non-linear function applied to the output of the layers. Without it, any stack of layers would equal a single linear operation and could not draw curved boundaries. The most common one is [[relu|ReLU]]; sigmoid and tanh are older examples.",
     },
-    link: [{ tab: "theory", section: "t-act" }, { chapter: "perceptron", tab: "theory", section: "p-neuron" }],
+    link: [{ tab: "theory", section: "t-act" }, { chapter: "perceptron", tab: "theory", section: "p-neuron" }, { chapter: "mlp", tab: "theory", section: "ml-act" }],
   },
   relu: {
     group: "layers",
@@ -705,7 +789,7 @@ const GLOSSARY = {
       tr: "Her [[batchnorm|BatchNorm]]'dan sonra ve FC1'den sonra.",
       en: "After every [[batchnorm|BatchNorm]] and after FC1.",
     },
-    link: { tab: "theory", section: "t-act" },
+    link: [{ tab: "theory", section: "t-act" }, { chapter: "mlp", tab: "math", section: "mm-act" }],
   },
   batchnorm: {
     group: "layers",
@@ -748,7 +832,7 @@ const GLOSSARY = {
       tr: "64×4×4 = 1024 değer: <code>torch.flatten(x, start_dim=1)</code>.",
       en: "64×4×4 = 1024 values: <code>torch.flatten(x, start_dim=1)</code>.",
     },
-    link: { tab: "code", section: "c-forward" },
+    link: [{ tab: "code", section: "c-forward" }, { chapter: "mlp", tab: "theory", section: "ml-images" }],
   },
   "fully-connected": {
     group: "layers",

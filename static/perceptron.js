@@ -8,8 +8,8 @@
  *
  * Texts are { tr, en } pairs of HTML; \( TeX \) is typeset by math.js and [[key|text]] links a
  * glossary term. The panels are rebuilt on every language change; the demos keep their state.
- * Uses i18n.js (L), core.js (h, svg, $, fmtNum, lineChart, showTip, …), math.js (texNum) and
- * glossary.js (termify).
+ * Uses kit.js (the plane, sliders, number formatting), i18n.js (L), core.js (h, svg, $,
+ * fmtNum, lineChart, showTip, …), math.js (texNum) and glossary.js (termify).
  */
 
 /** This page's tabs (core.js navigates between them). */
@@ -21,7 +21,8 @@ const TABS = {
 };
 
 (() => {
-const R = String.raw;
+const { R, seeded, gauss, nf, tx, txs, txp, html, formula, COLORS, readColors, redrawers, observers,
+  createPlane, slider, segmented, chartHost } = KIT;
 
 // =====================================================================
 // The perceptron and its data
@@ -51,285 +52,10 @@ function ruleStep(model, x, y, eta) {
   return { x, y, z, yHat, e, before, after: { w: [...model.w], b: model.b } };
 }
 
-/** Mulberry32: a small seeded random generator, so "new data" can be repeated. */
-function seeded(seed) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-const gauss = (rand) => Math.sqrt(-2 * Math.log(1 - rand())) * Math.cos(2 * Math.PI * rand());
-
-// Numbers
-const nf = (v, d = 2) => fmtNum(Math.abs(v) < 0.5 * 10 ** -d ? 0 : v, d);   // never "-0,00"
-const tx = (v, d = 2) => texNum(nf(v, d));                                  // a number inside TeX
-const txs = (v, d = 2) => (v < 0 ? `-\\,${tx(-v, d)}` : `+\\,${tx(v, d)}`);  // "+ 0,5" / "− 0,5"
-const txp = (v, d = 2) => (v < 0 ? `(${tx(v, d)})` : tx(v, d));             // negative in parentheses
-const T = (value) => termify(L(value));
-
-/** Static HTML with glossary links. */
-function html(tag, attrs, content) {
-  const node = h(tag, attrs);
-  node.innerHTML = T(content);
-  return node;
-}
-const formula = (tex) => h("div", { class: "formula", text: `\\(\\displaystyle ${tex}\\)` });
 
 // =====================================================================
-// Shared pieces: colors, the plane, sliders, segmented buttons
+// Pieces of this chapter's demos (the plane, sliders and colors are in kit.js)
 // =====================================================================
-const COLORS = {};
-function readColors() {
-  Object.assign(COLORS, {
-    one: cssVar("--series-3"), zero: cssVar("--critical"), line: cssVar("--series-2"), lineB: cssVar("--series-1"),
-    text: cssVar("--text"), text2: cssVar("--text-2"), muted: cssVar("--muted"), grid: cssVar("--grid"),
-    axis: cssVar("--axis"), surface: cssVar("--surface"), accent: cssVar("--accent"), page: cssVar("--page"),
-  });
-}
-readColors();
-
-const redrawers = new Set();      // views that draw on canvases: redrawn when the theme changes
-const observers = [];            // resize observers of the current panels (dropped on rebuild)
-
-/**
- * A square canvas showing the input plane: shaded decision regions, boundary lines, the
- * normal vector w and the data points (green circles = class 1, red crosses = class 0).
- */
-function createPlane(host, { domain = [-0.5, 1.5, -0.5, 1.5], ticks = [0, 1], label } = {}) {
-  const canvas = h("canvas", { role: "img", "aria-label": label || "" });
-  const wrap = h("div", { class: "pc-plane" }, canvas);
-  host.append(wrap);
-  const ctx = canvas.getContext("2d");
-  const shade = document.createElement("canvas");
-  const plane = { wrap, canvas, domain, scene: {}, size: 0 };
-
-  const [x0, x1, y0, y1] = domain;
-  plane.toPx = (x, y) => [((x - x0) / (x1 - x0)) * plane.size, plane.size - ((y - y0) / (y1 - y0)) * plane.size];
-  plane.toData = (px, py) => [x0 + (px / plane.size) * (x1 - x0), y0 + ((plane.size - py) / plane.size) * (y1 - y0)];
-  plane.unit = () => plane.size / (x1 - x0);   // pixels per data unit
-
-  /** Points where the line w·x + b = 0 crosses the domain square (null if it misses it). */
-  plane.clipLine = (w, b) => {
-    const pts = [];
-    if (Math.abs(w[1]) > 1e-12) {
-      for (const x of [x0, x1]) { const y = -(w[0] * x + b) / w[1]; if (y >= y0 - 1e-9 && y <= y1 + 1e-9) pts.push([x, y]); }
-    }
-    if (Math.abs(w[0]) > 1e-12) {
-      for (const y of [y0, y1]) { const x = -(w[1] * y + b) / w[0]; if (x >= x0 - 1e-9 && x <= x1 + 1e-9) pts.push([x, y]); }
-    }
-    if (pts.length < 2) return null;
-    let best = [pts[0], pts[1]];
-    let far = 0;
-    for (let i = 0; i < pts.length; i++) {
-      for (let j = i + 1; j < pts.length; j++) {
-        const d = Math.hypot(pts[i][0] - pts[j][0], pts[i][1] - pts[j][1]);
-        if (d > far) { far = d; best = [pts[i], pts[j]]; }
-      }
-    }
-    return far > 1e-9 ? best : null;
-  };
-
-  /** The boundary point nearest the middle of the plane, and the unit normal. */
-  plane.foot = (w, b) => {
-    const n2 = w[0] ** 2 + w[1] ** 2;
-    if (n2 < 1e-12) return null;
-    const c = [(x0 + x1) / 2, (y0 + y1) / 2];
-    const k = (w[0] * c[0] + w[1] * c[1] + b) / n2;
-    const n = Math.sqrt(n2);
-    return { p: [c[0] - k * w[0], c[1] - k * w[1]], u: [w[0] / n, w[1] / n] };
-  };
-
-  function drawShade(classify) {
-    const n = Math.max(24, Math.round(plane.size / 3));
-    shade.width = n;
-    shade.height = n;
-    const sctx = shade.getContext("2d");
-    const img = sctx.createImageData(n, n);
-    const one = hexToRgb(COLORS.one);
-    const zero = hexToRgb(COLORS.zero);
-    for (let r = 0; r < n; r++) {
-      for (let c = 0; c < n; c++) {
-        const x = x0 + ((c + 0.5) / n) * (x1 - x0);
-        const y = y1 - ((r + 0.5) / n) * (y1 - y0);
-        const k = classify(x, y);
-        const i = (r * n + c) * 4;
-        if (k == null) continue;
-        const rgb = k ? one : zero;
-        img.data[i] = rgb[0]; img.data[i + 1] = rgb[1]; img.data[i + 2] = rgb[2];
-        img.data[i + 3] = k ? 40 : 18;
-      }
-    }
-    sctx.putImageData(img, 0, 0);
-    ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(shade, 0, 0, plane.size, plane.size);
-  }
-
-  function arrow(from, to, color, width) {
-    const [ax, ay] = plane.toPx(...from);
-    const [bx, by] = plane.toPx(...to);
-    const ang = Math.atan2(by - ay, bx - ax);
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    ctx.lineWidth = width;
-    ctx.beginPath();
-    ctx.moveTo(ax, ay);
-    ctx.lineTo(bx - 7 * Math.cos(ang), by - 7 * Math.sin(ang));
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(bx, by);
-    ctx.lineTo(bx - 11 * Math.cos(ang - 0.42), by - 11 * Math.sin(ang - 0.42));
-    ctx.lineTo(bx - 11 * Math.cos(ang + 0.42), by - 11 * Math.sin(ang + 0.42));
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  function render() {
-    if (!plane.size) return;
-    const s = plane.scene;
-    const dpr = canvas.width / plane.size;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, plane.size, plane.size);
-    ctx.fillStyle = COLORS.surface;
-    ctx.fillRect(0, 0, plane.size, plane.size);
-    if (s.classify) drawShade(s.classify);
-
-    // Grid every 0.5, axes through 0
-    const stepGrid = (x1 - x0) > 3 ? 1 : 0.5;
-    ctx.lineWidth = 1;
-    for (let v = Math.ceil(x0 / stepGrid) * stepGrid; v <= x1 + 1e-9; v += stepGrid) {
-      const [px] = plane.toPx(v, 0);
-      ctx.strokeStyle = Math.abs(v) < 1e-9 ? COLORS.axis : COLORS.grid;
-      ctx.beginPath(); ctx.moveTo(Math.round(px) + 0.5, 0); ctx.lineTo(Math.round(px) + 0.5, plane.size); ctx.stroke();
-    }
-    for (let v = Math.ceil(y0 / stepGrid) * stepGrid; v <= y1 + 1e-9; v += stepGrid) {
-      const [, py] = plane.toPx(0, v);
-      ctx.strokeStyle = Math.abs(v) < 1e-9 ? COLORS.axis : COLORS.grid;
-      ctx.beginPath(); ctx.moveTo(0, Math.round(py) + 0.5); ctx.lineTo(plane.size, Math.round(py) + 0.5); ctx.stroke();
-    }
-    ctx.font = "11.5px system-ui, sans-serif";
-    ctx.fillStyle = COLORS.muted;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "bottom";
-    for (const v of ticks) {
-      const [px] = plane.toPx(v, 0);
-      ctx.fillText(nf(v, Number.isInteger(v) ? 0 : 1), px, plane.size - 4);
-    }
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    for (const v of ticks) {
-      const [, py] = plane.toPx(0, v);
-      ctx.fillText(nf(v, Number.isInteger(v) ? 0 : 1), 5, py);
-    }
-    ctx.font = "italic 13px Cambria, 'Times New Roman', serif";
-    ctx.fillStyle = COLORS.text2;
-    ctx.textAlign = "right";
-    ctx.textBaseline = "bottom";
-    ctx.fillText("x₁", plane.size - 6, plane.size - 18);
-    ctx.textAlign = "left";
-    ctx.textBaseline = "top";
-    ctx.fillText("x₂", 22, 6);
-
-    // Lines: ghosts first (dashed), then the others
-    for (const line of s.lines || []) {
-      const seg = plane.clipLine(line.w, line.b);
-      if (!seg) continue;
-      const [a, b] = seg.map((p) => plane.toPx(...p));
-      ctx.strokeStyle = line.ghost ? COLORS.muted : (line.color || COLORS.line);
-      ctx.lineWidth = line.ghost ? 1.6 : 2.6;
-      ctx.setLineDash(line.ghost ? [6, 5] : []);
-      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
-      ctx.setLineDash([]);
-      if (line.label) {
-        const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-        ctx.font = "600 12px system-ui, sans-serif";
-        ctx.fillStyle = line.color || COLORS.line;
-        ctx.textAlign = "left";
-        ctx.textBaseline = "bottom";
-        ctx.fillText(line.label, mid[0] + 6, mid[1] - 4);
-      }
-    }
-
-    // The normal vector w, from the boundary towards the class-1 side
-    if (s.normal) {
-      const f = plane.foot(s.normal.w, s.normal.b);
-      if (f) {
-        const len = s.normal.length ?? 0.38;
-        const tip = [f.p[0] + f.u[0] * len, f.p[1] + f.u[1] * len];
-        arrow(f.p, tip, COLORS.text, 2);
-        const [tx_, ty_] = plane.toPx(tip[0] + f.u[0] * 0.08, tip[1] + f.u[1] * 0.08);
-        ctx.font = "italic 600 14px Cambria, 'Times New Roman', serif";
-        ctx.fillStyle = COLORS.text;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("w", tx_, ty_);
-        plane.handles = { foot: f.p, tip };
-      } else plane.handles = null;
-    }
-
-    // Points
-    const r = Math.max(5, Math.min(9, plane.size / 48));
-    for (const p of s.points || []) {
-      const [px, py] = plane.toPx(p.x[0], p.x[1]);
-      if (p.current) {
-        ctx.strokeStyle = COLORS.accent;
-        ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(px, py, r + 7, 0, Math.PI * 2); ctx.stroke();
-      } else if (p.wrong) {
-        ctx.strokeStyle = COLORS.zero;
-        ctx.lineWidth = 1.6;
-        ctx.setLineDash([3, 3]);
-        ctx.beginPath(); ctx.arc(px, py, r + 5, 0, Math.PI * 2); ctx.stroke();
-        ctx.setLineDash([]);
-      }
-      if (p.y) {
-        ctx.fillStyle = COLORS.one;
-        ctx.strokeStyle = COLORS.surface;
-        ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      } else {
-        const k = r * 0.85;
-        ctx.strokeStyle = COLORS.surface;
-        ctx.lineWidth = 5;
-        ctx.beginPath(); ctx.moveTo(px - k, py - k); ctx.lineTo(px + k, py + k); ctx.moveTo(px + k, py - k); ctx.lineTo(px - k, py + k); ctx.stroke();
-        ctx.strokeStyle = COLORS.zero;
-        ctx.lineWidth = 2.6;
-        ctx.beginPath(); ctx.moveTo(px - k, py - k); ctx.lineTo(px + k, py + k); ctx.moveTo(px + k, py - k); ctx.lineTo(px - k, py + k); ctx.stroke();
-      }
-      if (s.coords) {
-        ctx.font = "12px system-ui, sans-serif";
-        ctx.fillStyle = COLORS.text2;
-        ctx.textAlign = p.x[0] > 0.5 ? "left" : "right";
-        ctx.textBaseline = p.x[1] > 0.5 ? "bottom" : "top";
-        ctx.fillText(`(${p.x[0]}, ${p.x[1]})`, px + (p.x[0] > 0.5 ? 10 : -10), py + (p.x[1] > 0.5 ? -9 : 9));
-      }
-    }
-    plane.afterDraw?.();
-  }
-
-  plane.draw = (scene) => {
-    if (scene) plane.scene = scene;
-    render();
-  };
-  const resize = () => {
-    const size = canvas.clientWidth;
-    if (!size) return;
-    plane.size = size;
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = Math.round(size * dpr);
-    canvas.height = Math.round(size * dpr);
-    render();
-  };
-  const observer = new ResizeObserver(resize);
-  observer.observe(canvas);
-  observers.push(observer);
-  redrawers.add(() => render());
-  return plane;
-}
-
 /** Shows z and the class under the pointer. */
 function planeTooltip(plane, model) {
   plane.canvas.addEventListener("pointermove", (event) => {
@@ -347,43 +73,8 @@ function planeTooltip(plane, model) {
   plane.canvas.addEventListener("pointerleave", hideTip);
 }
 
-function slider(label, { min, max, step, value, onInput, fmt = (v) => nf(v) }) {
-  const input = h("input", { type: "range", min, max, step, value });
-  const out = h("output", { text: fmt(value) });
-  input.addEventListener("input", () => {
-    out.textContent = fmt(Number(input.value));
-    onInput(Number(input.value));
-  });
-  const node = h("label", {}, h("span", { class: "pc-slider-name" }, label), input, out);
-  node.set = (v) => {
-    input.value = v;
-    out.textContent = fmt(v);
-  };
-  return node;
-}
-
-function segmented(options, current, onPick, aria) {
-  const box = h("div", { class: "seg", role: "group", "aria-label": aria || null });
-  for (const [value, label] of options) {
-    const b = h("button", { type: "button", "aria-pressed": String(value === current), "data-value": value, text: label });
-    b.addEventListener("click", () => {
-      for (const other of box.children) other.setAttribute("aria-pressed", String(other === b));
-      onPick(value);
-    });
-    box.append(b);
-  }
-  box.set = (value) => { for (const b of box.children) b.setAttribute("aria-pressed", String(b.dataset.value === value)); };
-  return box;
-}
-
 const gateSeg = (current, onPick, gates = ["and", "or", "nand", "xor"]) =>
   segmented(gates.map((g) => [g, GATES[g].name]), current, onPick, L({ tr: "Mantık kapısı", en: "Logic gate" }));
-
-function chartHost(height) {
-  const host = h("div", { class: "chart", "data-height": height });
-  resizeObserver.observe(host);
-  return host;
-}
 
 /** Mistakes per epoch as a line chart. */
 function mistakesChart(host, history, { max = null } = {}) {
@@ -1141,12 +832,7 @@ function buildXorDemo() {
 // =====================================================================
 const MATH_LINKS = { "p-neuron": "pm-notation", "p-boundary": "pm-geometry", "p-rule": "pm-rule", "p-converge": "pm-converge", "p-xor": "pm-xor" };
 
-function sectionCard(id, num, text, paragraphs, demo) {
-  const head = h("div", { class: "t-head" }, h("span", { class: "t-num", text: String(num) }), h("h2", { text: L(text.h) }));
-  if (MATH_LINKS[id]) head.append(h("a", { href: "#", class: "m-theory-link", "data-go": `math:${MATH_LINKS[id]}`, text: L({ tr: "∑ Matematiği →", en: "∑ The math →" }) }));
-  const body = h("div", { class: "t-text" }, head, ...paragraphs);
-  return h("article", { class: "card t-section", id }, body, demo);
-}
+const sectionCard = (id, num, text, paragraphs, demo) => KIT.sectionCard(id, num, text.h, paragraphs, demo, MATH_LINKS[id]);
 
 function buildTheory() {
   const panel = $("#panel-theory");
@@ -1177,8 +863,7 @@ function buildTheory() {
     sectionCard("p-converge", 4, C, [html("p", {}, C.p1), html("p", {}, C.p2), formula(R`\text{${L({ tr: "düzeltme sayısı", en: "corrections" })}} \;\le\; \left(\frac{R}{\gamma}\right)^{2}`),
       html("p", {}, C.p3), html("div", { class: "in-model" }, C.model)], buildConvergeDemo()),
     sectionCard("p-xor", 5, X, [html("p", {}, X.p1), html("p", {}, X.p2), html("p", {}, X.p3), html("div", { class: "in-model" }, X.model),
-      h("div", { class: "pc-next" }, h("span", { text: L({ tr: "Sıradaki bölüm:", en: "Next chapter:" }) }), h("strong", { text: L({ tr: "2 · Çok katmanlı ağ (MLP)", en: "2 · Multilayer network (MLP)" }) }),
-        h("span", { class: "ch-soon", text: L({ tr: "yakında", en: "coming soon" }) }))], buildXorDemo()));
+      KIT.nextChapterCard()], buildXorDemo()));
 }
 
 // =====================================================================

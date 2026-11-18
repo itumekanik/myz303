@@ -1477,3 +1477,70 @@ a.chm-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2p
   .pc-handle { width: 28px; height: 28px; margin: -14px 0 0 -14px; }
   .pg-check input { width: 20px; height: 20px; }
 }
+
+/* ---------- Shared chapter pieces (kit.js): function graphs, the next-chapter link ---------- */
+.kit-graph { position: relative; width: 100%; }
+.kit-graph canvas { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); }
+.key-line.dashed { background: none; border-top: 2px dashed var(--series-2); height: 0; }
+.key-line.muted.dashed { border-top-color: var(--muted); }
+.key-line.thin { height: 1px; background: var(--text-2); opacity: .7; }
+a.pc-next.link {
+  padding: 10px 14px; border: 1px solid var(--accent); border-radius: 10px; background: var(--accent-soft);
+  color: var(--text); text-decoration: none; width: fit-content; max-width: 100%;
+}
+a.pc-next.link:hover { background: var(--surface-2); }
+a.pc-next.link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pc-next-go { color: var(--accent); font-weight: 700; }
+.seg.seg-wrap button { white-space: nowrap; }
+
+/* ---------- Chapter 2: the MLP (mlp.js) ---------- */
+.ml-logo path { stroke-width: 1.4; }
+.ml-spaces .mini-title { margin-bottom: 6px; }
+.ml-net-svg { width: 100%; height: auto; display: block; }
+.ml-mini-net { max-width: 380px; margin: 4px auto 0; }
+.ml-edge { stroke: var(--axis); }
+.ml-edge.pos { stroke: var(--series-1); opacity: .75; }
+.ml-edge.neg { stroke: var(--series-2); opacity: .75; }
+.ml-edge-label { font-size: 11.5px; fill: var(--text-2); font-variant-numeric: tabular-nums; paint-order: stroke; stroke: var(--surface); stroke-width: 4px; }
+.ml-node { fill: var(--surface); stroke: var(--text-2); stroke-width: 1.6; }
+.ml-node.active { stroke: var(--accent); stroke-width: 3; fill: var(--accent-soft); }
+.ml-node-label { font: italic 15px Cambria, "Times New Roman", serif; fill: var(--text); }
+.ml-bias { font-size: 10px; fill: var(--text-2); font-variant-numeric: tabular-nums; }
+.ml-val { font-size: 12px; font-weight: 600; fill: var(--series-1); font-variant-numeric: tabular-nums; paint-order: stroke; stroke: var(--surface); stroke-width: 4px; }
+.ml-grad { font-size: 12px; font-weight: 600; fill: var(--series-2); font-variant-numeric: tabular-nums; paint-order: stroke; stroke: var(--surface); stroke-width: 4px; }
+.ml-back-arrow { fill: none; stroke: var(--series-2); stroke-width: 1.6; stroke-dasharray: 5 4; opacity: .7; }
+.ml-bp-diagram { max-width: 560px; margin: 0 auto; }
+.ml-bp-step { display: grid; gap: 6px; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); min-width: 0; }
+.ml-bp-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.ml-bp-title { font-weight: 650; }
+.ml-bp-tex { font-size: 14.5px; }
+.ml-bp-table { overflow-x: auto; }
+.ml-bp-table .pc-table { width: 100%; }
+.ml-grad-cell { color: var(--series-2); font-weight: 600; }
+.ml-image-row { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; }
+.ml-digit { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 1px; width: min(240px, 100%); aspect-ratio: 1; padding: 1px; background: var(--border); border-radius: 6px; }
+.ml-digit span { background: var(--surface); }
+.ml-digit span.on { background: var(--text); }
+.ml-digit span.ghost { background: var(--accent-soft); }
+.ml-arrows { display: grid; justify-items: center; gap: 6px; }
+.ml-arrows > div { display: flex; gap: 6px; }
+.ml-arrows .btn { min-width: 40px; }
+.ml-strips { display: grid; gap: 4px; }
+.ml-strip-label { font-size: 12px; color: var(--text-2); }
+.ml-strip { display: grid; grid-template-columns: repeat(98, minmax(0, 1fr)); gap: 0; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+.ml-strip span { height: 9px; background: var(--surface); box-shadow: inset -1px 0 0 var(--grid); }
+.ml-strip span.on { background: var(--text); }
+.ml-strip span.changed { box-shadow: inset 0 -3px 0 var(--critical); }
+.ml-diagram { min-width: 0; }
+.ml-diagram-canvas { display: block; width: 100%; height: 210px; }
+.ml-field { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-2); }
+.ml-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.ml-focus-note { min-height: 1.4em; }
+@media (max-width: 720px) {
+  .ml-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ml-image-row { justify-content: center; }
+  .ml-diagram-canvas { height: 190px; }
+}
+/* math widgets: long formulas scroll inside their box instead of widening the page */
+.m-widget { grid-template-columns: minmax(0, 1fr); }
+.m-widget-out { display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr); min-width: 0; }
