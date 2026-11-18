@@ -2172,9 +2172,6 @@ function setupToolbar() {
     const canvas = e.target.closest("canvas");
     if (canvas) selectFilter(Number(canvas.dataset.i));
   });
-  // The toolbar sticks right under the top bar, whose height changes with the window width
-  const topbar = $(".topbar");
-  new ResizeObserver(() => document.documentElement.style.setProperty("--topbar-h", `${topbar.offsetHeight}px`)).observe(topbar);
 }
 
 async function startTheory() {

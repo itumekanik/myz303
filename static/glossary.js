@@ -7,10 +7,14 @@
  * - The "Glossary" button in the top bar opens a searchable side panel with every term,
  *   grouped by topic, each with a link to the Theory or Coding section that shows it.
  *
- * Uses the helpers from i18n.js and app.js (L, h, $, navigate, nav, TABS, STEPS).
+ * Every chapter page loads it. A term's places may be on another chapter's page
+ * ({ chapter, tab, section }; no chapter means the CNN page); they are listed with this page's first.
+ *
+ * Uses the helpers from i18n.js and core.js (L, h, $, nav, CHAPTER, TAB_NAMES, goToChapterPlace).
  */
 
 const GLOSSARY_GROUPS = [
+  { key: "neuron", title: { tr: "Yapay nöron ve perceptron", en: "The artificial neuron and the perceptron" } },
   { key: "train", title: { tr: "Eğitim süreci", en: "The training process" } },
   { key: "data", title: { tr: "Veri ve değerlendirme", en: "Data and evaluation" } },
   { key: "layers", title: { tr: "Model ve katmanlar", en: "The model and its layers" } },
@@ -21,11 +25,161 @@ const GLOSSARY_GROUPS = [
  * name: shown in the current language, the other language is shown next to it.
  * aka:  extra words the search should find.
  * def:  the definition (static markup; [[key|text]] links another term).
- * model: how it looks in SimpleCNN (optional).
+ * model: how it looks in SimpleCNN (optional; modelLabel replaces the "In SimpleCNN" label).
  * see:  related terms (optional; ones already linked in the definition are skipped).
- * link: where the dashboard shows it (optional).
+ * link: where the pages show it (optional): { chapter?, tab, section? } or a list of them.
  */
 const GLOSSARY = {
+  // ------------------------------------------------------------------ the neuron (chapter 1)
+  perceptron: {
+    group: "neuron",
+    name: { tr: "Perceptron", en: "Perceptron" },
+    aka: ["algılayıcı", "rosenblatt"],
+    def: {
+      tr: "Frank Rosenblatt'ın 1958'de tanıttığı, örneklerden öğrenen ilk yapay nöron. Girdileri [[weight|ağırlıklarla]] çarpıp toplar, [[bias|bias]] ekler ve [[step-function|basamak fonksiyonuyla]] 0 ya da 1 der. Ağırlıklarını [[perceptron-rule|perceptron kuralıyla]] öğrenir. Karar sınırı düz olduğu için yalnızca [[linear-separability|doğrusal ayrılabilir]] verileri ayırabilir.",
+      en: "The first artificial neuron that learns from examples, introduced by Frank Rosenblatt in 1958. It multiplies its inputs by [[weight|weights]], adds them up, adds a [[bias|bias]] and says 0 or 1 with a [[step-function|step function]]. It learns its weights with the [[perceptron-rule|perceptron rule]]. Its boundary is straight, so it can only separate [[linear-separability|linearly separable]] data.",
+    },
+    see: ["artificial-neuron", "decision-boundary", "xor-problem"],
+    link: [{ chapter: "perceptron", tab: "theory", section: "p-intro" }, { chapter: "perceptron", tab: "code", section: "pc-class" }],
+  },
+  "artificial-neuron": {
+    group: "neuron",
+    name: { tr: "Yapay nöron", en: "Artificial neuron" },
+    aka: ["nöron", "neuron", "birim", "unit", "node"],
+    def: {
+      tr: "Sinir ağlarının temel hesap birimi: girdilerin ağırlıklı toplamına [[bias|bias]] ekler ve sonucu bir [[activation|aktivasyon fonksiyonundan]] geçirir: \\(a = f(\\mathbf w\\cdot\\mathbf x + b)\\). [[perceptron|Perceptron]] basamak fonksiyonlu bir yapay nörondur; bugünkü ağlarda genellikle [[relu|ReLU]] kullanılır.",
+      en: "The basic unit of computation in neural networks: it adds a [[bias|bias]] to the weighted sum of its inputs and passes the result through an [[activation|activation function]]: \\(a = f(\\mathbf w\\cdot\\mathbf x + b)\\). The [[perceptron|perceptron]] is an artificial neuron with a step function; today's networks mostly use [[relu|ReLU]].",
+    },
+    model: {
+      tr: "FC1 katmanında 512, FC2'de 10 yapay nöron var; her biri yukarıdaki hesabı yapar.",
+      en: "The FC1 layer has 512 artificial neurons and FC2 has 10; each does the computation above.",
+    },
+    link: { chapter: "perceptron", tab: "theory", section: "p-neuron" },
+  },
+  weight: {
+    group: "neuron",
+    name: { tr: "Ağırlık", en: "Weight" },
+    aka: ["weights", "ağırlıklar", "w"],
+    def: {
+      tr: "Bir girdinin nörona ne kadar ve hangi yönde etki ettiğini belirleyen sayı. Girdi ağırlığıyla çarpılır: büyük pozitif ağırlık girdiyi \"evet\" tarafına, negatif ağırlık \"hayır\" tarafına iter, sıfıra yakın ağırlık girdiyi önemsiz kılar. Ağırlıklar eğitimde öğrenilen [[parameter|parametrelerdir]].",
+      en: "The number that sets how strongly, and in which direction, an input affects a neuron. The input is multiplied by its weight: a large positive weight pushes the input towards \"yes\", a negative weight towards \"no\", a weight near zero makes the input unimportant. Weights are the [[parameter|parameters]] learned in training.",
+    },
+    modelLabel: { tr: "Geometrisi", en: "Its geometry" },
+    model: {
+      tr: "Ağırlık vektörü \\(\\mathbf w\\) [[decision-boundary|karar sınırına]] diktir ve 1 sınıfının tarafını gösterir.",
+      en: "The weight vector \\(\\mathbf w\\) is perpendicular to the [[decision-boundary|decision boundary]] and points to the side of class 1.",
+    },
+    see: ["bias"],
+    link: [{ chapter: "perceptron", tab: "theory", section: "p-neuron" }, { chapter: "perceptron", tab: "math", section: "pm-notation" }],
+  },
+  bias: {
+    group: "neuron",
+    name: { tr: "Bias (yanlılık)", en: "Bias" },
+    aka: ["b", "eşik", "threshold", "sapma"],
+    def: {
+      tr: "Ağırlıklı toplama eklenen sabit sayı: \\(z = \\mathbf w\\cdot\\mathbf x + b\\). Nöronun eşiğini belirler: \\(b = -0{,}7\\) ise ağırlıklı toplamın 0,7'yi aşması gerekir. Geometride [[decision-boundary|karar sınırını]] kendine paralel kaydırır. Değeri hep 1 olan bir girdinin ağırlığı gibi düşünülebilir ve o da eğitimde öğrenilir.",
+      en: "The constant added to the weighted sum: \\(z = \\mathbf w\\cdot\\mathbf x + b\\). It sets the neuron's threshold: with \\(b = -0.7\\) the weighted sum has to exceed 0.7. Geometrically it shifts the [[decision-boundary|decision boundary]] parallel to itself. It can be seen as the weight of an input that is always 1, and it is learned in training too.",
+    },
+    see: ["weight", "parameter"],
+    link: [{ chapter: "perceptron", tab: "theory", section: "p-neuron" }, { chapter: "perceptron", tab: "math", section: "pm-notation" }],
+  },
+  "step-function": {
+    group: "neuron",
+    name: { tr: "Basamak fonksiyonu", en: "Step function" },
+    aka: ["heaviside", "eşik fonksiyonu", "threshold function", "H(z)"],
+    def: {
+      tr: "Girdisi pozitifse 1, değilse 0 veren [[activation|aktivasyon fonksiyonu]]: \\(H(z) = 1\\) (\\(z > 0\\)), \\(H(z) = 0\\) (\\(z \\le 0\\)). [[perceptron|Perceptronun]] kararını verir. Eğimi her yerde 0 olduğundan [[gradient|gradyan]] taşımaz; bu yüzden çok katmanlı ağlarda sigmoid ya da [[relu|ReLU]] kullanılır.",
+      en: "The [[activation|activation function]] that gives 1 if its input is positive and 0 otherwise: \\(H(z) = 1\\) (\\(z > 0\\)), \\(H(z) = 0\\) (\\(z \\le 0\\)). It makes the [[perceptron|perceptron]]'s decision. Its slope is 0 everywhere, so it carries no [[gradient|gradient]]; that is why multilayer networks use the sigmoid or [[relu|ReLU]].",
+    },
+    link: [{ chapter: "perceptron", tab: "theory", section: "p-neuron" }, { chapter: "perceptron", tab: "math", section: "pm-gd" }],
+  },
+  "logic-gate": {
+    group: "neuron",
+    name: { tr: "Mantık kapısı", en: "Logic gate" },
+    aka: ["and", "or", "nand", "nor", "kapı", "gate", "truth table", "doğruluk tablosu"],
+    def: {
+      tr: "0/1 girdilerden 0/1 çıktı üreten basit kural. İki girdili kapının dört olası girdisi vardır: <b>AND</b> ikisi de 1 ise, <b>OR</b> en az biri 1 ise, <b>NAND</b> ikisi birden 1 değilse, <b>XOR</b> yalnızca biri 1 ise 1 verir. Tek bir [[perceptron|perceptron]] AND, OR ve NAND'ı öğrenebilir ama XOR'u öğrenemez ([[xor-problem|XOR problemi]]).",
+      en: "A simple rule that turns 0/1 inputs into a 0/1 output. A two-input gate has four possible inputs: <b>AND</b> gives 1 if both are 1, <b>OR</b> if at least one is 1, <b>NAND</b> if not both are 1, <b>XOR</b> if exactly one is 1. A single [[perceptron|perceptron]] can learn AND, OR and NAND, but not XOR (the [[xor-problem|XOR problem]]).",
+    },
+    link: [{ chapter: "perceptron", tab: "theory", section: "p-neuron" }, { chapter: "perceptron", tab: "code", section: "pc-data" }],
+  },
+  "decision-boundary": {
+    group: "neuron",
+    name: { tr: "Karar sınırı", en: "Decision boundary" },
+    aka: ["sınır", "boundary", "ayırıcı", "separator", "doğrusal sınıflandırıcı", "linear classifier"],
+    def: {
+      tr: "Girdi uzayında modelin kararının değiştiği yer. Perceptronda \\(\\mathbf w\\cdot\\mathbf x + b = 0\\) olan noktalardır: iki girdide bir doğru, çok girdide bir [[hyperplane|hiper düzlem]]. Bir yanı 1, öbür yanı 0 sınıfıdır. [[weight|Ağırlık vektörü]] sınıra diktir; [[bias|bias]] onu kaydırır. Sınırı düz olan modellere doğrusal sınıflandırıcı denir.",
+      en: "Where the model's decision changes in the input space. For a perceptron it is the set of points with \\(\\mathbf w\\cdot\\mathbf x + b = 0\\): a line with two inputs, a [[hyperplane|hyperplane]] with many. One side is class 1, the other class 0. The [[weight|weight vector]] is perpendicular to it; the [[bias|bias]] shifts it. Models with a straight boundary are called linear classifiers.",
+    },
+    link: [{ chapter: "perceptron", tab: "theory", section: "p-boundary" }, { chapter: "perceptron", tab: "math", section: "pm-geometry" }],
+  },
+  hyperplane: {
+    group: "neuron",
+    name: { tr: "Hiper düzlem", en: "Hyperplane" },
+    aka: ["hiperdüzlem", "düzlem", "plane"],
+    def: {
+      tr: "Doğrunun çok boyutlu karşılığı: \\(n\\) boyutlu uzayda \\(\\mathbf w\\cdot\\mathbf x + b = 0\\) denklemini sağlayan \\(n-1\\) boyutlu düz yüzey. 2 boyutta doğru, 3 boyutta düzlemdir. Bir perceptronun [[decision-boundary|karar sınırı]] her zaman bir hiper düzlemdir; 784 pikselli bir görüntüde 783 boyutludur.",
+      en: "The many-dimensional version of a line: the flat \\(n-1\\)-dimensional surface of points satisfying \\(\\mathbf w\\cdot\\mathbf x + b = 0\\) in an \\(n\\)-dimensional space. It is a line in 2 dimensions and a plane in 3. A perceptron's [[decision-boundary|decision boundary]] is always a hyperplane; for an image of 784 pixels it has 783 dimensions.",
+    },
+    link: { chapter: "perceptron", tab: "math", section: "pm-geometry" },
+  },
+  "perceptron-rule": {
+    group: "neuron",
+    name: { tr: "Perceptron öğrenme kuralı", en: "Perceptron learning rule" },
+    aka: ["öğrenme kuralı", "learning rule", "perceptron kuralı", "rosenblatt kuralı", "online"],
+    def: {
+      tr: "Rosenblatt'ın ağırlık güncelleme kuralı. Örnekler tek tek gösterilir; cevap doğruysa hiçbir şey değişmez, yanlışsa \\(\\mathbf w \\leftarrow \\mathbf w + \\eta\\,(y - \\hat y)\\,\\mathbf x\\) ve \\(b \\leftarrow b + \\eta\\,(y - \\hat y)\\). Her düzeltme o örneğin \\(z\\)'sini doğru yöne iter. Aslında \"perceptron ölçütü\" denen bir kaybın [[sgd|stokastik gradyan inişidir]].",
+      en: "Rosenblatt's weight update rule. The examples are shown one at a time; if the answer is right nothing changes, if it is wrong \\(\\mathbf w \\leftarrow \\mathbf w + \\eta\\,(y - \\hat y)\\,\\mathbf x\\) and \\(b \\leftarrow b + \\eta\\,(y - \\hat y)\\). Each correction pushes that example's \\(z\\) the right way. It is in fact [[sgd|stochastic gradient descent]] on a loss called the \"perceptron criterion\".",
+    },
+    see: ["learning-rate", "epoch", "linear-separability"],
+    link: [{ chapter: "perceptron", tab: "theory", section: "p-rule" }, { chapter: "perceptron", tab: "math", section: "pm-rule" }, { chapter: "perceptron", tab: "code", section: "pc-fit" }],
+  },
+  "linear-separability": {
+    group: "neuron",
+    name: { tr: "Doğrusal ayrılabilirlik", en: "Linear separability" },
+    aka: ["doğrusal ayrılabilir", "linearly separable", "yakınsama", "convergence", "novikoff"],
+    def: {
+      tr: "İki sınıfın tek bir [[hyperplane|hiper düzlemle]] (iki boyutta tek bir doğruyla) ayrılabilmesi. Perceptron yakınsama teoremine göre veri doğrusal ayrılabilirse [[perceptron-rule|perceptron kuralı]] sonlu sayıda düzeltmeden sonra bütün örnekleri doğru sınıflandırır; değilse (örneğin XOR) sonsuza kadar düzeltme yapar.",
+      en: "Two classes being separable by one [[hyperplane|hyperplane]] (one line in two dimensions). By the perceptron convergence theorem, if the data is linearly separable, the [[perceptron-rule|perceptron rule]] classifies every example correctly after a finite number of corrections; if not (XOR, for example), it keeps correcting forever.",
+    },
+    see: ["margin", "xor-problem"],
+    link: [{ chapter: "perceptron", tab: "theory", section: "p-converge" }, { chapter: "perceptron", tab: "math", section: "pm-converge" }],
+  },
+  margin: {
+    group: "neuron",
+    name: { tr: "Marj", en: "Margin" },
+    aka: ["boşluk", "gap", "gamma", "γ", "aralık"],
+    def: {
+      tr: "Bir [[decision-boundary|karar sınırı]] ile ona en yakın örnek arasındaki uzaklık. Marj büyükse sınıflar birbirinden belirgin biçimde ayrıdır. Perceptronun yaptığı düzeltme sayısı en fazla \\((R/\\gamma)^2\\)'dir (\\(\\gamma\\) marj, \\(R\\) en uzak örneğin uzaklığı): marj küçüldükçe öğrenme uzar.",
+      en: "The distance between a [[decision-boundary|decision boundary]] and the example closest to it. A large margin means the classes are clearly apart. The number of corrections the perceptron makes is at most \\((R/\\gamma)^2\\) (\\(\\gamma\\) the margin, \\(R\\) the distance of the farthest example): the smaller the margin, the longer learning takes.",
+    },
+    link: [{ chapter: "perceptron", tab: "theory", section: "p-converge" }, { chapter: "perceptron", tab: "math", section: "pm-converge" }],
+  },
+  "xor-problem": {
+    group: "neuron",
+    name: { tr: "XOR problemi", en: "The XOR problem" },
+    aka: ["xor", "exclusive or", "ya da", "minsky", "papert", "yapay zekâ kışı", "ai winter"],
+    def: {
+      tr: "XOR ([[logic-gate|mantık kapısı]]) doğrusal ayrılabilir olmadığı için tek bir [[perceptron|perceptronun]] onu öğrenememesi. Minsky ve Papert 1969'da bu tür sınırları gösterdi ve sinir ağlarına ilgi uzun süre azaldı. Çözüm perceptronları katman katman bağlamaktır (XOR = AND(OR, NAND)); bu [[hidden-layer|gizli katmanların]] eğitilmesi için de geri yayılım gerekir.",
+      en: "A single [[perceptron|perceptron]] cannot learn XOR (a [[logic-gate|logic gate]]) because XOR is not linearly separable. Minsky and Papert showed limits like this in 1969, and interest in neural networks fell for a long time. The way out is to connect perceptrons in layers (XOR = AND(OR, NAND)); training those [[hidden-layer|hidden layers]] then needs backpropagation.",
+    },
+    see: ["linear-separability"],
+    link: [{ chapter: "perceptron", tab: "theory", section: "p-xor" }, { chapter: "perceptron", tab: "math", section: "pm-xor" }],
+  },
+  "hidden-layer": {
+    group: "neuron",
+    name: { tr: "Gizli katman", en: "Hidden layer" },
+    aka: ["hidden", "ara katman", "mlp", "çok katmanlı"],
+    def: {
+      tr: "Girdi ile çıktı arasında kalan katman; değerleri doğrudan gözlenmez ve onlar için bir \"doğru cevap\" yoktur. Veriyi, sonraki katmanın işini kolaylaştıran yeni bir gösterime çevirir: XOR'un dört noktası gizli katmanda doğrusal ayrılabilir hâle gelir. Ağırlıkları [[backprop|geri yayılımla]] öğrenilir.",
+      en: "A layer between the input and the output; its values are not observed directly and there is no \"right answer\" for them. It turns the data into a new representation that makes the next layer's job easier: the four points of XOR become linearly separable in the hidden layer. Its weights are learned with [[backprop|backpropagation]].",
+    },
+    model: {
+      tr: "Evrişim blokları ve FC1 gizli katmanlardır; yalnızca FC2'nin 10 çıktısının doğru cevabı bilinir.",
+      en: "The convolution blocks and FC1 are hidden layers; only the 10 outputs of FC2 have a known right answer.",
+    },
+    link: { chapter: "perceptron", tab: "theory", section: "p-xor" },
+  },
   // ------------------------------------------------------------------ training
   hyperparameter: {
     group: "train",
@@ -53,7 +207,7 @@ const GLOSSARY = {
       tr: "48.000 eğitim görüntüsü / 256 = 188 batch, yani epoch başına 188 adım.",
       en: "48,000 training images / 256 = 188 batches, i.e. 188 steps per epoch.",
     },
-    link: { tab: "code", section: "c-train-loop" },
+    link: [{ tab: "code", section: "c-train-loop" }, { chapter: "perceptron", tab: "theory", section: "p-rule" }],
   },
   batch: {
     group: "train",
@@ -107,7 +261,7 @@ const GLOSSARY = {
       tr: "Kayıp fonksiyonu [[cross-entropy|cross-entropy]]. Eğitim yaklaşık 2,3'ten başlar: rastgele tahmin yapan bir modelin kaybı (ln 10).",
       en: "The loss function is [[cross-entropy|cross-entropy]]. Training starts at about 2.3: the loss of a model that guesses at random (ln 10).",
     },
-    link: { tab: "theory", section: "t-softmax" },
+    link: [{ tab: "theory", section: "t-softmax" }, { chapter: "perceptron", tab: "math", section: "pm-gd" }],
   },
   "cross-entropy": {
     group: "train",
@@ -161,7 +315,7 @@ const GLOSSARY = {
       en: "Lowering the loss by moving the weights in small steps opposite to the [[gradient|gradient]]: <span class=\"g-formula\">\\(\\theta \\leftarrow \\theta - \\eta\\, \\nabla L\\)</span>. The [[learning-rate|learning rate]] η sets the step size. It is like walking down a valley, always in the steepest downhill direction.",
     },
     see: ["sgd", "adam"],
-    link: { tab: "theory", section: "t-opt" },
+    link: [{ tab: "theory", section: "t-opt" }, { chapter: "perceptron", tab: "math", section: "pm-gd" }],
   },
   "learning-rate": {
     group: "train",
@@ -172,7 +326,7 @@ const GLOSSARY = {
       en: "The [[hyperparameter|hyperparameter]] (η) that sets how big each [[gradient-descent|gradient descent]] step is. Too small and training crawls; too large and the loss oscillates or diverges. Values between 0.1 and 0.0001 are typical.",
     },
     model: { tr: "[[adam|Adam]] ile η = 0,001.", en: "η = 0.001 with [[adam|Adam]]." },
-    link: { tab: "theory", section: "t-opt" },
+    link: [{ tab: "theory", section: "t-opt" }, { chapter: "perceptron", tab: "theory", section: "p-rule" }],
   },
   optimizer: {
     group: "train",
@@ -197,7 +351,7 @@ const GLOSSARY = {
       en: "[[gradient-descent|Gradient descent]] done with one [[batch|batch]] per step instead of all the data. The gradient comes from a single batch, so it is noisy (\"stochastic\" = random), but the steps are much cheaper, and the noise sometimes even helps find better solutions.",
     },
     see: ["momentum", "adam"],
-    link: { tab: "theory", section: "t-opt" },
+    link: [{ tab: "theory", section: "t-opt" }, { chapter: "perceptron", tab: "math", section: "pm-gd" }],
   },
   momentum: {
     group: "train",
@@ -416,7 +570,7 @@ const GLOSSARY = {
       en: "582,218 parameters; 90% of them (524,800) are in the FC1 layer.",
     },
     see: ["hyperparameter"],
-    link: { tab: "code", section: "c-model" },
+    link: [{ tab: "code", section: "c-model" }, { chapter: "perceptron", tab: "math", section: "pm-notation" }],
   },
   convolution: {
     group: "layers",
@@ -537,7 +691,7 @@ const GLOSSARY = {
       tr: "Katmanların çıktısına uygulanan doğrusal olmayan fonksiyon. Onsuz, üst üste kaç katman konursa konsun ağ tek bir doğrusal işleme eşit olurdu ve eğri sınırlar çizemezdi. En yaygını [[relu|ReLU]]'dur; sigmoid ve tanh daha eski örneklerdir.",
       en: "A non-linear function applied to the output of the layers. Without it, any stack of layers would equal a single linear operation and could not draw curved boundaries. The most common one is [[relu|ReLU]]; sigmoid and tanh are older examples.",
     },
-    link: { tab: "theory", section: "t-act" },
+    link: [{ tab: "theory", section: "t-act" }, { chapter: "perceptron", tab: "theory", section: "p-neuron" }],
   },
   relu: {
     group: "layers",
@@ -716,21 +870,29 @@ const TERM_MATH = {
 /** Section names for links whose section has no heading of its own. */
 const SECTION_NAMES = { "t-schematic": { tr: "Mimari şeması", en: "Architecture diagram" } };
 
-/** "Theory → Convolution", in the current language. */
+/** "Theory → Convolution" on this page, "CNN · Theory → …" for a place in another chapter. */
 function placeLabel(link) {
-  const tabName = $(TABS[link.tab].tab).textContent.trim();
-  if (!link.section) return tabName;
-  let name = SECTION_NAMES[link.section] && L(SECTION_NAMES[link.section]);
-  if (!name && link.tab === "code") {
-    const step = STEPS.find((s) => s.id === link.section);
-    name = step && L(step.title);
+  const chapter = link.chapter || "cnn";
+  const here = chapter === CHAPTER;
+  const tabName = L(TAB_NAMES[link.tab]);
+  const prefix = here ? "" : `${L(chapterOf(chapter).short)} · `;
+  let name = link.section && (link.title || PLACE_TITLES[link.section] || SECTION_NAMES[link.section]);   // title: a place on another page
+  name = name && L(name);
+  if (!name && here && link.section) {
+    if (link.tab === "code" && typeof STEPS !== "undefined") name = L(STEPS.find((s) => s.id === link.section)?.title);
+    if (!name && link.tab === "math") name = L(window.MATH_SECTIONS?.find((s) => s.id === link.section)?.title);
+    if (!name) name = document.querySelector(`#${link.section} h2`)?.textContent.trim();
   }
-  if (!name && link.tab === "math") {
-    const section = window.MATH_SECTIONS?.find((s) => s.id === link.section);
-    name = section && L(section.title);
-  }
-  if (!name) name = document.querySelector(`#${link.section} h2`)?.textContent.trim();
-  return name ? `${tabName} → ${name}` : tabName;
+  return prefix + tabName + (name ? ` → ${name}` : "");
+}
+
+/** A term's places: this page's first, then the other chapters'. */
+function termPlaces(key) {
+  const entry = GLOSSARY[key];
+  const places = [entry.link || []].flat();
+  if (TERM_MATH[key]) places.push({ tab: "math", section: TERM_MATH[key] });
+  const here = (p) => (p.chapter || "cnn") === CHAPTER;
+  return [...places.filter(here), ...places.filter((p) => !here(p))];
 }
 
 /** Related terms that the definition does not already link to. */
@@ -751,7 +913,8 @@ function renderTerm(key, { glossaryLink }) {
   def.innerHTML = termify(L(entry.def), key);   // static, author-written markup
   nodes.push(def);
   if (entry.model) {
-    const note = h("p", { class: "g-model" }, h("b", { text: `${L({ tr: "SimpleCNN'de", en: "In SimpleCNN" })}: ` }));
+    const label = L(entry.modelLabel || { tr: "SimpleCNN'de", en: "In SimpleCNN" });
+    const note = h("p", { class: "g-model" }, h("b", { text: `${label}: ` }));
     note.insertAdjacentHTML("beforeend", termify(L(entry.model), key));
     nodes.push(note);
   }
@@ -760,8 +923,7 @@ function renderTerm(key, { glossaryLink }) {
     nodes.push(h("div", { class: "g-see" }, h("span", { text: L({ tr: "İlgili:", en: "Related:" }) }), ...related.map(termChip)));
   }
   const links = h("div", { class: "g-links" });
-  for (const place of [entry.link, TERM_MATH[key] && { tab: "math", section: TERM_MATH[key] }]) {
-    if (!place) continue;
+  for (const place of termPlaces(key)) {
     const a = h("a", { href: "#", class: "g-place", text: `${placeLabel(place)} →` });
     a.addEventListener("click", (event) => {
       event.preventDefault();
@@ -788,6 +950,10 @@ function renderTerm(key, { glossaryLink }) {
 function goToPlace(link) {
   closeTerm();
   if (typeof closeInfo === "function") closeInfo();
+  if ((link.chapter || "cnn") !== CHAPTER) {   // another chapter's page
+    goToChapterPlace(link);
+    return;
+  }
   const moves = link.tab !== nav.tab || Boolean(link.section);   // navigate() does nothing otherwise
   if (glossary.open) closeGlossary({ fromLink: moves });
   if (moves) navigate(link.tab, link.section || null);
@@ -1075,7 +1241,7 @@ document.addEventListener("click", (event) => {
 
 // Esc closes the top-most layer only: the term card, then (in help.js) the info popup, then the panel
 document.addEventListener("keydown", (event) => {
-  if (event.key !== "Escape" || zoom.dialog.open) return;   // the zoom dialog closes itself
+  if (event.key !== "Escape" || document.querySelector("dialog[open]")) return;   // a dialog (zoom) closes itself
   if (termCard.anchor) {
     closeTerm();
     event.stopImmediatePropagation();

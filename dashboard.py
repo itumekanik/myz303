@@ -19,6 +19,8 @@ Inference tab: draw a digit (or pick a test image) and see the prediction
                together with what every layer of the network produces.
 Theory tab:    the CNN building blocks explained, each with a live demo that
                runs on a real MNIST image and the trained model's weights.
+/perceptron:   chapter 1 of the learning path, the perceptron (runs in the
+               browser; the Coding tab reads Perceptron.py).
 
 The model, data loading and evaluation code are reused from SimpleCNN.py, and
 the web server uses only the Python standard library. With the default
@@ -58,6 +60,8 @@ import SimpleCNN as cnn
 
 ROOT = Path(__file__).resolve().parent
 STATIC_DIR = ROOT / "static"
+# The Coding tabs show these files; nothing else under the project is served
+SOURCE_FILES = {"/api/source/SimpleCNN.py": "SimpleCNN.py", "/api/source/Perceptron.py": "Perceptron.py"}
 CHECKPOINT = ROOT / "checkpoints" / "simple_cnn.pt"
 # The finished run that produced the checkpoint (curves, filters, samples, log), so the
 # Training tab can show it again after a restart
@@ -627,6 +631,8 @@ def make_handler(session: TrainingSession, engine: InferenceEngine):
                 url = urlparse(self.path)
                 if url.path in ("/", "/index.html"):
                     return self._static("index.html")
+                if url.path in ("/perceptron", "/perceptron/"):      # chapter 1 (runs in the browser)
+                    return self._static("perceptron.html")
                 if url.path.startswith("/static/"):
                     return self._static(url.path[len("/static/"):])
                 if url.path == "/api/status":
@@ -634,8 +640,8 @@ def make_handler(session: TrainingSession, engine: InferenceEngine):
                     status.update(model=engine.info(), defaults=defaults, device=device,
                                   server_version=SERVER_VERSION)
                     return self._json(status)
-                if url.path == "/api/source/SimpleCNN.py":   # read-only, for the Coding tab
-                    body = (ROOT / "SimpleCNN.py").read_bytes()
+                if url.path in SOURCE_FILES:   # read-only, for the Coding tabs
+                    body = (ROOT / SOURCE_FILES[url.path]).read_bytes()
                     return self._send(body, "text/plain; charset=utf-8")
                 if url.path == "/api/theory/params":
                     which = parse_qs(url.query).get("model", ["trained"])[0]
@@ -741,6 +747,7 @@ def main():
 
     url = f"http://127.0.0.1:{server.server_address[1]}"
     print(f"SimpleCNN dashboard running at {url}  (Ctrl+C to quit)")
+    print(f"Chapter 1, the perceptron:      {url}/perceptron")
     if not args.no_browser:
         threading.Timer(0.8, webbrowser.open, args=(url,)).start()
     try:

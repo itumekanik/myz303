@@ -339,7 +339,20 @@ python dashboard.py          # opens http://127.0.0.1:8000 in your browser
 * **Theory tab** - the building blocks of the network (convolution, batch normalization, activation functions, pooling, dropout, softmax and cross-entropy, backpropagation and Adam), each explained next to a live demo that runs on a real MNIST image and the trained model's own weights: slide a kernel over the image step by step, compare the distributions before and after BatchNorm, drop units with a chosen rate, adjust the logits and watch the loss, or race SGD, Momentum and Adam on a loss surface.
 * **Math tab** - the mathematics of every building block, from notation and SimpleCNN's shapes to convolution, batch normalization, activations, pooling, dropout, the fully connected layer, softmax with cross-entropy, backpropagation and the optimizers. Each section gives the forward formulas and derives the gradients step by step (revealed one line at a time), with interactive examples: the nine products behind a convolution output, BatchNorm on numbers you choose, gradient routing in max pooling, Dropout's expected value, a softmax gradient check against finite differences and Adam's first steps with and without bias correction.
 * **Coding tab** - a step-by-step tutorial (in Turkish) that writes `SimpleCNN.py` from scratch: setup, imports, hyperparameters, data, the model, `forward`, the training and evaluation loops, saving the model and predicting, plus exercises. Code excerpts are read live from `SimpleCNN.py` with editor-style syntax highlighting, real line numbers and numbered line notes.
-* **Glossary** - the Glossary button in the top bar opens a searchable list of about 50 key terms (epoch, gradient, overfitting, receptive field, …), each with a short definition, what it looks like in SimpleCNN, and a link to the Theory or Coding section that shows it. Terms underlined with dots in the explanations open the same definition in a small card.
+* **Glossary** - the Glossary button in the top bar opens a searchable list of about 60 key terms (weight, bias, epoch, gradient, overfitting, receptive field, …), each with a short definition, what it looks like in SimpleCNN, and links to the chapter sections that show it. Terms underlined with dots in the explanations open the same definition in a small card.
+
+### Learning path: from the perceptron to the CNN
+The dashboard is growing into a step-by-step learning platform. Click the page title (top left, with the ▾) to open the learning path: the chapters in historical order, with the current one marked. Every chapter has the same kind of tabs.
+
+1. **Perceptron (1958)** - `http://127.0.0.1:8000/perceptron`. Everything runs in the browser.
+   * **Theory** - the artificial neuron as a clickable diagram that you turn into the AND, OR and NAND gates; the decision boundary as a line you can drag and turn; the perceptron learning rule applied one example at a time with every number shown; an experiment on how the margin sets the number of corrections; and why XOR cannot be learned, with the two-layer network that solves it.
+   * **Playground** - place points (or pick AND, OR, XOR, clusters or a ring) and watch the perceptron learn, with the mistakes per epoch and the path of the weights.
+   * **Math** - notation, the geometry of the boundary, why each correction helps, the perceptron rule as gradient descent, Novikoff's convergence theorem with its proof, and the proof that XOR is not linearly separable.
+   * **Coding** - a walk through [Perceptron.py](Perceptron.py), a perceptron written from scratch with NumPy (`python Perceptron.py` trains it on AND, OR, NAND and XOR), plus the same in PyTorch and exercises.
+2. **Multilayer network (MLP)** - coming soon.
+3. **Convolutional network (CNN)** - the SimpleCNN dashboard described above, at `http://127.0.0.1:8000/`.
+
+The pages share their building blocks in `static/`: `core.js` (helpers, charts, navigation, theme and language, the chapter list), `lesson.js` (the Math and Coding tab engine), `codeview.js` (the code viewer), `glossary.js` and `math.js`.
 
 The whole dashboard can be switched between Turkish and English. Formulas are written in LaTeX and typeset with [KaTeX](https://katex.org) (MIT license), which is bundled in `static/vendor/katex`, so the dashboard also works without an internet connection.
 

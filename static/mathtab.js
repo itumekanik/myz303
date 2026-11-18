@@ -1109,15 +1109,6 @@ function addTheoryLinks() {
   }
 }
 
-// Any element with data-go="tab:section" is a link to that place
-document.addEventListener("click", (event) => {
-  const link = event.target.closest?.("[data-go]");
-  if (!link) return;
-  event.preventDefault();
-  const [tab, section] = link.dataset.go.split(":");
-  navigate(tab, section || null);
-});
-
 document.addEventListener("tab-shown", (event) => {
   if (event.detail !== "math" || mt.started) return;
   mt.started = true;

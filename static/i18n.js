@@ -48,7 +48,9 @@ function applyStaticTranslations() {
       el.setAttribute(attr, I18N.lang === "en" && en !== undefined ? en : el._trAttr[attr]);
     }
   }
-  document.title = I18N.lang === "en" ? "SimpleCNN Dashboard" : "SimpleCNN Paneli";
+  const title = document.querySelector("title");   // <title data-en="English title">Türkçe başlık</title>
+  title._tr ??= title.textContent;
+  document.title = I18N.lang === "en" && title.dataset.en ? title.dataset.en : title._tr;
   for (const b of document.querySelectorAll("#lang-switch button")) {
     b.setAttribute("aria-pressed", String(b.dataset.lang === I18N.lang));
   }
@@ -99,6 +101,12 @@ Object.assign(STATIC_EN, {
   "math.title": "The math of a CNN",
   "math.loading": "Loading…",
   "a.mtoc": "Math sections",
+  // Chapter 1 (perceptron.html)
+  "p.top.title": "Perceptron",
+  "p.top.sub": "Chapter 1 · A learning machine with one neuron",
+  "tab.play": "Playground",
+  "p.math.title": "The math of the perceptron",
+  "p.code.title": "Let's code the perceptron",
   "theme.light": "Light",
   "theme.dark": "Dark",
   "theme.system": "System theme",
