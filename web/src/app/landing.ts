@@ -6,7 +6,7 @@ import { I18N, L, applyStaticTranslations } from "../shared/i18n.js";
 import { wireSwitches } from "../shared/switches.ts";
 import { CHAPTERS, type Text } from "../shared/chapters.ts";
 
-const REPO = "https://github.com/itumekanik/CNN-Architecture-Guide";
+const REPO = "https://github.com/itumekanik/myz303";
 /** The downloadable copy of this site (put next to index.html by the deployment). */
 const ZIP = "ai-learning-path.zip";
 

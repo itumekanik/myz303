@@ -3,7 +3,8 @@
 The learning path of this repository (perceptron → MLP → CNN → …) as a static web site. It needs no
 server and no Python: everything, including training the networks, runs in the browser.
 
-- **Online:** published on GitHub Pages by [.github/workflows/web.yml](../.github/workflows/web.yml).
+- **Online:** https://itumekanik.github.io/myz303/, published on GitHub Pages by
+  [.github/workflows/web.yml](../.github/workflows/web.yml).
 - **Offline:** download `ai-learning-path.zip` from the start page, unpack it and double-click
   `index.html`. The same files work from the disk (`file://`) as from the web.
 
