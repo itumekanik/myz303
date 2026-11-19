@@ -1,0 +1,7 @@
+dist/
+node_modules/
+# Ported from the Python dashboard (static/); formatted as they are until each is rewritten
+src/**/*.js
+src/**/*.html
+src/**/*.json
+src/styles/style.css

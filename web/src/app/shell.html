@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-en="{{titleEn}}">{{titleTr}}</title>
+  <link rel="icon" href="{{favicon}}">
+  <script>
+    // Apply the saved theme before the first paint (no flash of the wrong theme)
+    try {
+      const saved = localStorage.getItem("theme");
+      if (saved === "light" || saved === "dark") document.documentElement.dataset.theme = saved;
+    } catch (e) { /* storage blocked (or opened from a file with storage off): follow the system setting */ }
+  </script>
+  {{styles}}
+</head>
+<body data-chapter="{{id}}">
+  <header class="topbar">
+    <div class="brand">
+      <h1 class="brand-h">
+        <button type="button" class="brand-btn" id="chapter-btn" aria-expanded="false" aria-controls="chapter-menu">
+          {{logo}}
+          <span class="brand-text">
+            <span class="brand-title" data-i18n data-en="{{brandTitleEn}}">{{brandTitle}}</span>
+            <span class="brand-sub" data-i18n data-en="{{brandSubEn}}">{{brandSub}}</span>
+          </span>
+          <svg class="brand-caret" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg>
+        </button>
+      </h1>
+      <nav class="chapter-menu" id="chapter-menu" hidden></nav>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sekmeler" data-i18n-attr="aria-label=a.sections">
+{{tabs}}
+    </nav>
+    <div class="badges">
+      <button type="button" class="glossary-btn" id="glossary-btn" aria-controls="glossary" aria-expanded="false">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 4.5C3 3.7 3.7 3 4.5 3H9c.6 0 1 .4 1 1v12.5c-.4-.6-1-1-1.8-1H4.5c-.8 0-1.5-.7-1.5-1.5v-9.5Z"/><path d="M17 4.5c0-.8-.7-1.5-1.5-1.5H11c-.6 0-1 .4-1 1v12.5c.4-.6 1-1 1.8-1h3.7c.8 0 1.5-.7 1.5-1.5v-9.5Z"/></svg>
+        <span class="glossary-btn-text">Sözlük</span>
+      </button>
+      <div class="theme-switch" id="lang-switch" role="group" aria-label="Dil / Language">
+        <button type="button" data-lang="tr" aria-pressed="true">TR</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+      <div class="theme-switch" id="theme-switch" role="group" aria-label="Tema" data-i18n-attr="aria-label=a.theme">
+        <button type="button" data-theme-choice="light" aria-pressed="false" title="Açık" aria-label="Açık" data-i18n-attr="title=theme.light,aria-label=theme.light"><svg class="theme-icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.6"/><path d="M10 1.8v2.1M10 16.1v2.1M1.8 10h2.1M16.1 10h2.1M4.2 4.2l1.5 1.5M14.3 14.3l1.5 1.5M4.2 15.8l1.5-1.5M14.3 5.7l1.5-1.5"/></svg></button>
+        <button type="button" data-theme-choice="dark" aria-pressed="false" title="Koyu" aria-label="Koyu" data-i18n-attr="title=theme.dark,aria-label=theme.dark"><svg class="theme-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M16.5 12.6A7 7 0 0 1 7.4 3.5a7 7 0 1 0 9.1 9.1Z"/></svg></button>
+        <button type="button" data-theme-choice="system" aria-pressed="false" title="Sistem teması" aria-label="Sistem teması" data-i18n-attr="title=theme.system,aria-label=theme.system"><svg class="theme-icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="3.5" width="15" height="10.5" rx="1.5"/><path d="M7 17.5h6M10 14v3.5"/></svg></button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+{{panels}}
+  </main>
+
+  <div class="tooltip" id="tooltip" role="tooltip" hidden></div>
+  {{scripts}}
+</body>
+</html>

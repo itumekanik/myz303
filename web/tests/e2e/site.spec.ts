@@ -1,0 +1,155 @@
+import { expect, open, overflows, test } from "./fixtures";
+
+const CHAPTERS = [
+  {
+    id: "perceptron",
+    number: 1,
+    title: "Perceptron",
+    sections: ["p-intro", "p-neuron", "p-boundary", "p-rule", "p-converge", "p-xor"],
+    math: "#pm",
+    code: "#pc",
+    python: "class Perceptron",
+  },
+  {
+    id: "mlp",
+    number: 2,
+    title: "Çok katmanlı ağ",
+    sections: ["ml-intro", "ml-act", "ml-hidden", "ml-loss", "ml-backprop", "ml-capacity", "ml-images"],
+    math: "#mm",
+    code: "#mc",
+    python: "class MLP",
+  },
+];
+
+test.describe("start page", () => {
+  test("lists the learning path and links the ready chapters", async ({ page, errors }) => {
+    await open(page, "index.html");
+    const items = page.locator(".lp-chapter");
+    await expect(items).toHaveCount(3);
+    await expect(page.locator("a.lp-chapter")).toHaveCount(2);
+    await expect(page.locator("a.lp-chapter").first()).toHaveAttribute("href", "perceptron.html");
+    await expect(page.locator(".lp-chapter.soon")).toContainText("yakında");
+    await page.locator("a.lp-chapter").first().click();
+    await expect(page).toHaveTitle("Perceptron · Bölüm 1");
+    void errors;
+  });
+
+  test("switches to English and back", async ({ page, errors }) => {
+    await open(page, "index.html");
+    await page.locator('#lang-switch [data-lang="en"]').click();
+    await expect(page.locator(".brand-title")).toHaveText("AI learning path");
+    await expect(page.locator(".lp-path h2")).toHaveText("Learning path");
+    await page.locator('#lang-switch [data-lang="tr"]').click();
+    await expect(page.locator(".brand-title")).toHaveText("Yapay zekâ öğrenme yolu");
+    void errors;
+  });
+});
+
+for (const c of CHAPTERS) {
+  test.describe(`chapter ${c.number}: ${c.id}`, () => {
+    test("theory: every section, typeset math, chapter title", async ({ page, errors }) => {
+      await open(page, `${c.id}.html`);
+      await expect(page).toHaveTitle(`${c.id === "mlp" ? "MLP" : c.title} · Bölüm ${c.number}`);
+      await expect(page.locator(".brand-sub")).toHaveText(new RegExp(`^Bölüm ${c.number} · `));
+      for (const id of c.sections) await expect(page.locator(`#${id}`)).toBeVisible();
+      await expect(page.locator("#panel-theory .katex").first()).toBeVisible();
+      await expect(page.locator(".katex-error")).toHaveCount(0);
+      void errors;
+    });
+
+    test("math and coding tabs render, Python source is bundled", async ({ page, errors }) => {
+      await open(page, `${c.id}.html`);
+      await page.locator("#tab-math").click();
+      await expect(page).toHaveURL(/#matematik$/);
+      await expect(page.locator(`${c.math}-toc li`).first()).toBeVisible();
+      await expect(page.locator(`${c.math}-main .katex`).first()).toBeVisible();
+      await expect(page.locator(".katex-error")).toHaveCount(0);
+      await page.locator("#tab-code").click();
+      await expect(page.locator(`${c.code}-main .code-line`).first()).toBeVisible();
+      await expect(page.locator(`${c.code}-main`)).toContainText(c.python);
+      await expect(page.locator(`${c.code}-main`)).not.toContainText("bu derlemede yok");
+      void errors;
+    });
+
+    test("playground tab opens", async ({ page, errors }) => {
+      await open(page, `${c.id}.html#deneme`);
+      await expect(page.locator("#panel-play")).toBeVisible();
+      await expect(page.locator("#panel-play canvas").first()).toBeVisible();
+      void errors;
+    });
+
+    test("glossary opens; places in chapters still to come are not links", async ({ page, errors }) => {
+      await open(page, `${c.id}.html`);
+      await page.locator("#glossary-btn").click();
+      await expect(page.locator("#glossary")).toBeVisible();
+      expect(await page.locator("#glossary .g-entry").count()).toBeGreaterThan(50);
+      await page.evaluate(() => document.querySelector("#g-dropout")?.scrollIntoView());
+      await expect(page.locator("#g-dropout .g-place.soon").first()).toContainText("yakında");
+      await expect(page.locator("#g-dropout a.g-place")).toHaveCount(0);
+      void errors;
+    });
+
+    test("English, and the chapter menu leads to the other chapters", async ({ page, errors }) => {
+      await open(page, `${c.id}.html`);
+      await page.locator('#lang-switch [data-lang="en"]').click();
+      await expect(page).toHaveTitle(new RegExp(`· Chapter ${c.number}$`));
+      await expect(page.locator(".brand-sub")).toHaveText(new RegExp(`^Chapter ${c.number} · `));
+      await page.locator("#chapter-btn").click();
+      const menu = page.locator("#chapter-menu");
+      await expect(menu).toBeVisible();
+      await expect(menu.locator(".chm-item")).toHaveCount(3);
+      await expect(menu.locator(".chm-item.soon")).toHaveCount(1);
+      const other = CHAPTERS.find((o) => o.id !== c.id)!;
+      await menu.locator(`a.chm-item[href="${other.id}.html"]`).click();
+      await expect(page).toHaveTitle(new RegExp(`· Chapter ${other.number}$`)); // the language is kept
+      void errors;
+    });
+
+    test("fits a phone screen", async ({ page, errors }) => {
+      await page.setViewportSize({ width: 375, height: 760 });
+      await open(page, `${c.id}.html`);
+      expect(await overflows(page)).toBe(false);
+      for (const tab of ["play", "math", "code"]) {
+        await page.locator(`#tab-${tab}`).click();
+        await page.waitForTimeout(300);
+        expect(await overflows(page), tab).toBe(false);
+      }
+      void errors;
+    });
+  });
+}
+
+test("perceptron: the learning rule demo steps through the examples", async ({ page, errors }) => {
+  await open(page, "perceptron.html#teori/p-rule");
+  const demo = page.locator("#p-rule");
+  const before = await demo.locator(".pc-msg").textContent();
+  await demo.getByRole("button", { name: "Sonraki örnek" }).click();
+  await expect(demo.locator(".pc-msg")).not.toHaveText(before ?? "");
+  void errors;
+});
+
+test("mlp: the hidden layer learns XOR in the browser", async ({ page, errors }) => {
+  await open(page, "mlp.html#teori/ml-hidden");
+  const demo = page.locator("#ml-hidden");
+  await demo.getByRole("button", { name: "▶ Eğit" }).click();
+  await expect(demo.locator(".pc-msg")).toContainText("Çözüldü", { timeout: 20_000 });
+  void errors;
+});
+
+test("perceptron → mlp: the next-chapter card opens the MLP's theory", async ({ page, errors }) => {
+  await open(page, "perceptron.html#teori/p-xor");
+  await page.locator("#p-xor a.pc-next").click();
+  await expect(page).toHaveURL(/mlp\.html#teori$/);
+  await expect(page.locator("#tab-theory")).toHaveAttribute("aria-selected", "true");
+  void errors;
+});
+
+test("mlp: links to the CNN chapter say it is still to come", async ({ page, errors }) => {
+  await open(page, "mlp.html#teori/ml-images");
+  await expect(page.locator("#ml-images .pc-next")).toContainText("yakında");
+  await page.locator("#tab-math").click();
+  const soon = page.locator("#mm-main .m-link-soon");
+  await expect(soon.first()).toContainText("CNN");
+  await expect(page.locator('#mm-main a[data-chapter="cnn"]')).toHaveCount(0);
+  void errors;
+});

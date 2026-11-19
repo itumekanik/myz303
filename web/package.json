@@ -1,0 +1,37 @@
+{
+  "name": "ai-learning-path",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The AI learning path (perceptron → MLP → CNN …) as a static web app: no server, runs from GitHub Pages or by opening index.html.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "node scripts/build.mjs",
+    "preview": "node scripts/serve.mjs dist",
+    "zip": "node scripts/zip.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . && prettier --check \"src/**/*.{ts,css}\" \"scripts/**/*.mjs\" \"tests/**/*.ts\" \"*.{js,ts}\"",
+    "format": "prettier --write \"src/**/*.{ts,css}\" \"scripts/**/*.mjs\" \"tests/**/*.ts\" \"*.{js,ts}\"",
+    "test": "node --test --test-reporter=spec \"tests/unit/*.test.ts\"",
+    "test:e2e": "playwright test",
+    "check": "npm run lint && npm run typecheck && npm run test && npm run build && npm run test:e2e"
+  },
+  "dependencies": {
+    "katex": "0.16.47"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.65.1",
+    "@types/node": "^22.19.0",
+    "esbuild": "0.28.2",
+    "eslint": "10.15.0",
+    "globals": "17.14.0",
+    "prettier": "3.10.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.73.0"
+  }
+}

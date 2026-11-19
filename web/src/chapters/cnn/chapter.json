@@ -1,0 +1,10 @@
+{
+  "$schema": "../chapter.schema.json",
+  "id": "cnn",
+  "order": 3,
+  "status": "planned",
+  "year": "1989",
+  "short": "CNN",
+  "title": { "tr": "Evrişimli ağ (CNN)", "en": "Convolutional network (CNN)" },
+  "sub": { "tr": "Görüntüden öğrenen ağ: SimpleCNN", "en": "A network that learns from images: SimpleCNN" }
+}

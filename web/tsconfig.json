@@ -1,0 +1,27 @@
+{
+  // Type checking only (npm run typecheck); esbuild does the bundling.
+  // New code is TypeScript (strict). The chapter content and the shared UI ported from the
+  // Python dashboard (static/) are still plain JavaScript modules: allowJs lets TypeScript code
+  // import them, checkJs is off until each of them gets types.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": false,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "tests/**/*.ts", "playwright.config.ts"]
+}

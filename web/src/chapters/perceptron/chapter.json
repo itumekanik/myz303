@@ -1,0 +1,14 @@
+{
+  "$schema": "../chapter.schema.json",
+  "id": "perceptron",
+  "order": 1,
+  "status": "ready",
+  "year": "1958",
+  "short": "Perceptron",
+  "title": { "tr": "Perceptron", "en": "Perceptron" },
+  "sub": { "tr": "Tek nöronlu öğrenen makine", "en": "A learning machine with one neuron" },
+  "page": {
+    "title": { "tr": "Perceptron", "en": "Perceptron" },
+    "tabs": ["theory", "play", "math", "code"]
+  }
+}

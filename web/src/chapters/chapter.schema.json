@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Chapter of the learning path",
+  "description": "src/chapters/<id>/chapter.json. A 'ready' chapter also has main.js (its script), panels.html (its tab panels) and logo.svg; scripts/build.mjs turns it into <id>.html.",
+  "type": "object",
+  "required": ["id", "order", "status", "year", "short", "title", "sub"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$", "description": "Also the folder name and the page name (<id>.html)." },
+    "order": { "type": "integer", "minimum": 1, "description": "Position on the learning path; chapters are numbered in this order." },
+    "status": { "enum": ["ready", "planned"], "description": "planned: listed as 'coming soon', no page is built." },
+    "year": { "type": "string" },
+    "short": { "type": "string", "description": "Short name, used in links to this chapter from other pages." },
+    "title": { "$ref": "#/$defs/text" },
+    "sub": { "$ref": "#/$defs/text" },
+    "page": {
+      "type": "object",
+      "required": ["title", "tabs"],
+      "properties": {
+        "title": { "$ref": "#/$defs/text", "description": "Browser tab title, before ' · Bölüm N'." },
+        "brand": { "$ref": "#/$defs/text", "description": "Title in the top bar, when it differs from the chapter title." },
+        "tabs": { "type": "array", "items": { "enum": ["train", "infer", "theory", "play", "math", "code"] }, "minItems": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "text": {
+      "type": "object",
+      "required": ["tr", "en"],
+      "properties": { "tr": { "type": "string" }, "en": { "type": "string" } }
+    }
+  }
+}

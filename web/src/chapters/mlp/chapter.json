@@ -1,0 +1,15 @@
+{
+  "$schema": "../chapter.schema.json",
+  "id": "mlp",
+  "order": 2,
+  "status": "ready",
+  "year": "1986",
+  "short": "MLP",
+  "title": { "tr": "Çok katmanlı ağ (MLP)", "en": "Multilayer network (MLP)" },
+  "sub": { "tr": "Gizli katmanlar ve geri yayılım", "en": "Hidden layers and backpropagation" },
+  "page": {
+    "title": { "tr": "MLP", "en": "MLP" },
+    "brand": { "tr": "Çok katmanlı ağ", "en": "Multilayer network" },
+    "tabs": ["theory", "play", "math", "code"]
+  }
+}

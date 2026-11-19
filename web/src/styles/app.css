@@ -1,0 +1,6 @@
+/* All styles of the site, bundled by scripts/build.mjs into assets/app-[hash].css.
+   KaTeX's fonts are inlined as data: URLs (woff2 only), because a page opened from a file
+   cannot load font files. */
+@import "katex/dist/katex.min.css";
+@import "./style.css";
+@import "./landing.css";
