@@ -14,7 +14,7 @@
 // Blocks: { p }, { list, ordered }, { callout: "tip" | "warn" | "info", title, text },
 //         { file: { from, to, fold, notes } }  (cut from SimpleCNN.py),
 //         { code, name, notes, caption }      (a separate example file),
-//         { term: title, lines }, { table: { head, rows } }
+//         { term: title, lines }, { table: { head, rows } }, { links: [{ chapter, tab, section }] }
 // Any text (including `code`, `name`, a note's `at` and a terminal line) may be a { tr, en } pair.
 // =====================================================================
 const TRAIN_OUTPUT = [
@@ -42,6 +42,25 @@ const STEPS = [
         tr: "Bu rehberde `SimpleCNN.py` dosyasını baştan sona birlikte yazacağız: MNIST el yazısı rakamlarını tanıyan ve test setinde **%99'un üzerinde** doğruluğa ulaşan küçük bir evrişimli sinir ağı. Her adımda önce *neyi* ve *neden* yaptığımızı anlatıp, ardından kodu satır satır inceleyeceğiz.",
         en: "In this guide we will write `SimpleCNN.py` together from start to finish: a small convolutional neural network that recognizes handwritten MNIST digits and reaches **over 99%** accuracy on the test set. In every step we first explain *what* we are doing and *why*, then go through the code line by line.",
       } },
+      { p: {
+        tr: "Bu ilk ağınız değil: MLP bölümünde bir ağı önce NumPy ile elle, sonra PyTorch ile yazdınız (`nn.Linear`, bir kayıp ve `zero_grad` → `backward` → `step`). O dört satırlık eğitim döngüsü burada aynen geri gelecek, bu yüzden onu kısa geçeceğiz. Bu bölümde **yeni** olanlar: evrişim ve havuzlama katmanları (`Conv2d`, `MaxPool2d`), `BatchNorm2d` ve `Dropout` ile eğitim/değerlendirme modları, gerçek bir veri setini `DataLoader` ile batch'lere bölmek, GPU'da çalışmak ve modeli ayrı doğrulama ve test setlerinde ölçmek.",
+        en: "This is not your first network: in the MLP chapter you wrote one by hand in NumPy and then in PyTorch (`nn.Linear`, a loss and `zero_grad` → `backward` → `step`). That four-line training loop comes back unchanged here, so we will go over it quickly. What is **new** in this chapter: convolution and pooling layers (`Conv2d`, `MaxPool2d`), the training/evaluation modes that come with `BatchNorm2d` and `Dropout`, splitting a real dataset into batches with `DataLoader`, running on the GPU, and measuring the model on separate validation and test sets.",
+      } },
+      { p: {
+        tr: "Bu rehberin sonunda şunları yapabileceksiniz:",
+        en: "By the end of this guide you will be able to:",
+      } },
+      { list: [
+        { tr: "bir CNN'i `nn.Module` alt sınıfı olarak tanımlamak ve her katmandan sonra tensörün boyutunu hesaplamak;", en: "define a CNN as a subclass of `nn.Module` and work out the tensor's shape after every layer;" },
+        { tr: "parametre sayısını elle bulup `named_parameters()` ile doğrulamak;", en: "count the parameters by hand and check the count with `named_parameters()`;" },
+        { tr: "MNIST'i eğitim, doğrulama ve test diye bölüp `DataLoader` ile modele vermek;", en: "split MNIST into training, validation and test sets and feed it to the model with `DataLoader`;" },
+        { tr: "eğitim ve değerlendirme döngülerini `model.train()`, `model.eval()` ve `torch.no_grad()` ile doğru yazmak;", en: "write the training and evaluation loops correctly with `model.train()`, `model.eval()` and `torch.no_grad()`;" },
+        { tr: "eğitim çıktısını okuyup aşırı uyumu (overfitting) fark etmek.", en: "read the training output and recognize overfitting." },
+      ] },
+      { links: [
+        { chapter: "mlp", tab: "code", section: "mc-torch" },
+        { chapter: "mlp", tab: "code", section: "mc-fit" },
+      ] },
       { p: {
         tr: "Bir derin öğrenme programı hemen her zaman aynı iskeleti izler. Adımlar da bu sırayla ilerliyor:",
         en: "A deep learning program almost always follows the same skeleton, and the steps follow it in this order:",
@@ -151,8 +170,8 @@ print(torch.cuda.get_device_name(0))  # name of the GPU`,
         } },
       ] } },
       { callout: "info", title: { tr: "nn mi, F mi?", en: "nn or F?" }, text: {
-        tr: "Kural basit: öğrenilen ağırlığı olan her şey (`Conv2d`, `Linear`, `BatchNorm2d`) `nn` katmanı olarak modelde saklanır. Ağırlığı olmayan işlemler (`relu`, `flatten`) doğrudan fonksiyon olarak çağrılabilir.",
-        en: "The rule is simple: anything with learned weights (`Conv2d`, `Linear`, `BatchNorm2d`) is stored in the model as an `nn` layer. Operations without weights (`relu`, `flatten`) can be called directly as functions.",
+        tr: "Kural basit: öğrenilen ağırlığı olan her şey (`Conv2d`, `Linear`, `BatchNorm2d`) `nn` katmanı olarak modelde saklanır. Ağırlığı olmayan işlemler (`relu`, `flatten`) doğrudan fonksiyon olarak çağrılabilir. Dropout bir istisnadır: ağırlığı yoktur ama eğitimde ve değerlendirmede farklı davranır. `nn.Dropout` katmanı `model.eval()` ile kendiliğinden kapanır; `F.dropout` kullansaydık `training=self.training`'i her seferinde elle vermemiz gerekirdi.",
+        en: "The rule is simple: anything with learned weights (`Conv2d`, `Linear`, `BatchNorm2d`) is stored in the model as an `nn` layer. Operations without weights (`relu`, `flatten`) can be called directly as functions. Dropout is an exception: it has no weights, but it behaves differently in training and in evaluation. An `nn.Dropout` layer switches itself off with `model.eval()`; with `F.dropout` we would have to pass `training=self.training` by hand every time.",
       } },
     ],
   },
@@ -348,8 +367,8 @@ print(len(train_loader), "batches per epoch")`,
     id: "c-model", title: { tr: "Modeli tanımlamak: katmanlar", en: "Defining the model: layers" },
     blocks: [
       { p: {
-        tr: "PyTorch'ta bir model, `nn.Module`'den türetilen bir sınıftır. İki yöntemi vardır: `__init__` katmanları **oluşturur**, `forward` verinin bu katmanlardan **hangi sırayla** geçeceğini söyler (Adım 8).",
-        en: "In PyTorch a model is a class derived from `nn.Module`. It has two methods: `__init__` **creates** the layers, and `forward` says **in which order** the data passes through them (Step 8).",
+        tr: "PyTorch'ta bir model, `nn.Module`'den türetilen bir sınıftır. İki yöntemi vardır: `__init__` katmanları **oluşturur**, `forward` verinin bu katmanlardan **hangi sırayla** geçeceğini söyler (Adım 8). MLP bölümündeki PyTorch örneğinde `nn.Sequential` yetiyordu, çünkü katmanlar yalnızca art arda uygulanıyordu. Burada `forward`'u kendimiz yazıyoruz: araya `torch.flatten` ve `F.relu` gibi işlemler giriyor, sıra da açıkça okunuyor.",
+        en: "In PyTorch a model is a class derived from `nn.Module`. It has two methods: `__init__` **creates** the layers, and `forward` says **in which order** the data passes through them (Step 8). In the MLP chapter's PyTorch example `nn.Sequential` was enough, because the layers were simply applied one after the other. Here we write `forward` ourselves: operations such as `torch.flatten` and `F.relu` come in between, and the order can be read explicitly.",
       } },
       { file: { from: "class SimpleCNN(nn.Module):", to: "self.batch2 = nn.BatchNorm2d(num_features=conv2_out_channels)", fold: true, notes: [
         { at: "class SimpleCNN(nn.Module):", text: {
@@ -373,8 +392,8 @@ print(len(train_loader), "batches per epoch")`,
           en: "Pooling has no learned parameters; it is still defined as a layer for readability.",
         } },
         { at: "self.fc1 = nn.Linear(in_features=fc1_in, out_features=fc2_in)", text: {
-          tr: "1024 → 512 tam bağlı katman: 1024 × 512 + 512 = **524.800** parametre, modelin yaklaşık %90'ı.",
-          en: "A 1024 → 512 fully connected layer: 1024 × 512 + 512 = **524,800** parameters, about 90% of the model.",
+          tr: "1024 → 512 tam bağlı katman: 1024 × 512 + 512 = **524.800** parametre, modelin yaklaşık %90'ı. FC1 ve FC2 birlikte, MLP bölümünde yazdığınız türden bir MLP'dir; evrişim blokları ona ham pikseller yerine öznitelikler verir.",
+          en: "A 1024 → 512 fully connected layer: 1024 × 512 + 512 = **524,800** parameters, about 90% of the model. Together FC1 and FC2 are an MLP of the kind you wrote in the MLP chapter; the convolution blocks feed it features instead of raw pixels.",
         } },
         { at: "self.fc2 = nn.Linear(in_features=fc2_in, out_features=num_classes)", text: {
           tr: "512 → 10: her rakam için bir skor (logit).",
@@ -385,8 +404,8 @@ print(len(train_loader), "batches per epoch")`,
           en: "Dropout has no parameters either, and it is only active in training mode.",
         } },
         { at: "self.batch1 = nn.BatchNorm2d(num_features=conv1_out_channels)", text: {
-          tr: "Kanal başına öğrenilen γ ve β (32 + 32 parametre) ile eğitim boyunca biriken ortalama ve varyans.",
-          en: "A learned γ and β per channel (32 + 32 parameters), plus the running mean and variance accumulated during training.",
+          tr: "Kanal başına öğrenilen γ ve β (32 + 32 parametre) ile eğitim boyunca biriken ortalama ve varyans. Bu ikisi gradyanla öğrenilmez, batch'lerden hesaplanır: parametre değil \"buffer\"dır, bu yüzden aşağıdaki `named_parameters()` listesinde görünmezler ama `state_dict` ile kaydedilirler.",
+          en: "A learned γ and β per channel (32 + 32 parameters), plus the running mean and variance accumulated during training. These two are not learned by gradients but computed from the batches: they are \"buffers\", not parameters, so they do not appear in the `named_parameters()` list below, but `state_dict` saves them.",
         } },
       ] } },
       { p: {
@@ -515,8 +534,8 @@ print(f"{'flatten':10s} -> {tuple(x.shape)}")`,
           en: "Creates the model and moves all of its weights to the chosen device. The model and the data must be **on the same device**; otherwise you get an error.",
         } },
         { at: "loss_function = nn.CrossEntropyLoss().to(device)", text: {
-          tr: "Sınıflandırma kaybı: logitlere softmax uygular ve doğru sınıfın olasılığının negatif logaritmasını alır. Batch ortalamasını döndürür.",
-          en: "The classification loss: it applies softmax to the logits and takes the negative logarithm of the correct class's probability. It returns the batch average.",
+          tr: "Sınıflandırma kaybı: logitlere softmax uygular ve doğru sınıfın olasılığının negatif logaritmasını alır. Batch ortalamasını döndürür. MLP bölümündeki `BCEWithLogitsLoss`'un 10 sınıflı karşılığıdır: o sigmoid'i, bu softmax'ı kayıpla birleştirir; logitlere göre gradyanı da \\(\\hat y - y\\) yerine \\(\\mathbf p - \\mathbf y\\) olur. Etiketler one-hot değil, doğrudan sınıf numarası (0–9) olarak verilir.",
+          en: "The classification loss: it applies softmax to the logits and takes the negative logarithm of the correct class's probability. It returns the batch average. It is the 10-class counterpart of the MLP chapter's `BCEWithLogitsLoss`: that one merges the sigmoid into the loss, this one the softmax, and the gradient with respect to the logits becomes \\(\\mathbf p - \\mathbf y\\) instead of \\(\\hat y - y\\). The labels are given as class numbers (0–9), not one-hot vectors.",
         } },
         { at: "optimizer = optim.Adam(model.parameters(), lr=lr)", text: {
           tr: "`model.parameters()` modeldeki tüm öğrenilen ağırlıkları (582.218 sayı) optimizer'a verir. Adam her ağırlık için adım boyunu ayrı ayarlar.",
@@ -524,8 +543,8 @@ print(f"{'flatten':10s} -> {tuple(x.shape)}")`,
         } },
       ] } },
       { callout: "info", title: { tr: "Kavramlar", en: "Concepts" }, text: {
-        tr: "Cross-Entropy'nin neden \\(-\\log p\\) olduğu ve SGD, Momentum ile Adam'ın farkı için: [[theory:t-softmax|Teori → Softmax ve kayıp]] ile [[theory:t-opt|Teori → Optimizasyon]].",
-        en: "For why cross-entropy is \\(-\\log p\\) and how SGD, Momentum and Adam differ, see [[theory:t-softmax|Theory → Softmax and loss]] and [[theory:t-opt|Theory → Optimization]].",
+        tr: "Çapraz entropinin neden \\(-\\log p\\) olduğu ve SGD, Momentum ile Adam'ın farkı için: [[theory:t-softmax|Teori → Softmax ve kayıp]] ile [[theory:t-opt|Teori → Optimizasyon]]. Gradyanın türetilmesi ve Adam'ın güncelleme kuralı: [[math:m-softmax|Matematik → Softmax ve cross-entropy]] ile [[math:m-opt|Matematik → Optimizasyon]].",
+        en: "For why cross-entropy is \\(-\\log p\\) and how SGD, Momentum and Adam differ, see [[theory:t-softmax|Theory → Softmax and loss]] and [[theory:t-opt|Theory → Optimization]]. For the derivation of the gradient and Adam's update rule: [[math:m-softmax|Math → Softmax and cross-entropy]] and [[math:m-opt|Math → Optimization]].",
       } },
     ],
   },
@@ -535,6 +554,10 @@ print(f"{'flatten':10s} -> {tuple(x.shape)}")`,
       { p: {
         tr: "Eğitimin kalbi bu fonksiyondur. Eğitim verisindeki her batch için aynı **beş adım** tekrarlanır: gradyanları sıfırla, ileri yayılım, kaybı hesapla, geri yayılım, ağırlıkları güncelle. Kalan satırlar yalnızca doğruluğu ve ortalama kaybı hesaplamak içindir.",
         en: "This function is the heart of training. For every batch of training data the same **five steps** repeat: zero the gradients, forward pass, compute the loss, backward pass, update the weights. The remaining lines only compute the accuracy and the average loss.",
+      } },
+      { p: {
+        tr: "Bu beş adımı MLP bölümündeki PyTorch döngüsünden tanıyorsunuz; orada `zero_grad` kayıptan sonra geliyordu, burada en başta. `backward`'dan önce çağrıldığı sürece yeri fark etmez. Yeni olanlar: veriyi bir `DataLoader`'dan batch batch almak, her batch'i `.to(device)` ile GPU'ya taşımak ve döngünün başındaki `model.train()`.",
+        en: "You know these five steps from the MLP chapter's PyTorch loop; there `zero_grad` came after the loss, here it comes first. As long as it is called before `backward`, its position does not matter. What is new: taking the data batch by batch from a `DataLoader`, moving every batch to the GPU with `.to(device)`, and the `model.train()` at the start of the loop.",
       } },
       { file: { from: "def train_epoch(", to: "return epoch_accuracy, epoch_loss", fold: true, notes: [
         { at: "model.train()  # Training mode", text: {
@@ -562,8 +585,8 @@ print(f"{'flatten':10s} -> {tuple(x.shape)}")`,
           en: "**3. Loss.** A single number that measures how wrong the prediction is.",
         } },
         { at: "loss.backward()", text: {
-          tr: "**4. Geri yayılım.** Kaybın her ağırlığa göre gradyanını zincir kuralıyla hesaplar ve ağırlıkların `.grad` alanına yazar.",
-          en: "**4. Backward pass.** Uses the chain rule to compute the gradient of the loss with respect to every weight and stores it in each weight's `.grad` field.",
+          tr: "**4. Geri yayılım.** Kaybın her ağırlığa göre gradyanını zincir kuralıyla hesaplar ve ağırlıkların `.grad` alanına **ekler** (üzerine yazmaz; 1. adımın nedeni budur). MLP bölümünde elle yazdığınız `backward`'ı, her katman türü için [[math:m-backprop|Matematik → Geri yayılım]] tablosundaki kuralla otomatik yapar.",
+          en: "**4. Backward pass.** Uses the chain rule to compute the gradient of the loss with respect to every weight and **adds** it to each weight's `.grad` field (it does not overwrite it; that is the reason for step 1). It does automatically what you wrote by hand as `backward` in the MLP chapter, using the rule for each kind of layer from the [[math:m-backprop|Math → Backpropagation]] table.",
         } },
         { at: "optimizer.step()", text: {
           tr: "**5. Güncelleme.** Adam, gradyanları kullanarak tüm ağırlıkları bir adım değiştirir.",
@@ -720,8 +743,12 @@ print(f"{'flatten':10s} -> {tuple(x.shape)}")`,
       } },
       { term: "PowerShell", lines: ["$ .venv\\Scripts\\python.exe SimpleCNN.py", ...TRAIN_OUTPUT] },
       { callout: "info", title: { tr: "Sonucu yorumlamak", en: "Interpreting the result" }, text: {
-        tr: "İlk epoch'ta bile doğrulama doğruluğu %97,7. Sonraki epoch'lar küçük ama düzenli iyileştirmeler getiriyor. Eğitim kaybının doğrulamadan yüksek olması bir hata değil: eğitimde Dropout açık, doğrulamada kapalı. Test doğruluğu (%99,29) doğrulamaya (%99,36) çok yakın, yani model ezberlemeden genelleme yapıyor.",
-        en: "Even after the first epoch the validation accuracy is 97.7%. The following epochs bring small but steady improvements. The training loss being higher than the validation loss is not a bug: Dropout is on during training and off during validation. The test accuracy (99.29%) is very close to the validation accuracy (99.36%), so the model generalizes rather than memorizes.",
+        tr: "İlk epoch'ta bile doğrulama doğruluğu %97,7. Sonraki epoch'lar küçük ama düzenli iyileştirmeler getiriyor. Eğitim kaybının doğrulamadan yüksek olması bir hata değil, iki nedeni var: eğitimde Dropout açık, doğrulamada kapalı; ayrıca eğitim kaybı, ağırlıklar epoch boyunca hâlâ iyileşirken alınan bir ortalamadır, doğrulama ise epoch sonundaki modelle ölçülür. Doğrulama kaybı 10 epoch boyunca (7. epoch'taki küçük bir dalgalanma dışında) düşmeye devam ediyor, yani aşırı uyum belirtisi yok. Test doğruluğu (%99,29) da doğrulamaya (%99,36) çok yakın: doğrulama sonucu, hiç görülmemiş verideki başarının iyi bir tahminiymiş.",
+        en: "Even after the first epoch the validation accuracy is 97.7%. The following epochs bring small but steady improvements. The training loss being higher than the validation loss is not a bug, and there are two reasons for it: Dropout is on during training and off during validation, and the training loss is an average taken while the weights are still improving during the epoch, whereas validation is measured with the model at the end of the epoch. The validation loss keeps falling over the 10 epochs (apart from a tiny wobble at epoch 7), so there is no sign of overfitting. The test accuracy (99.29%) is also very close to the validation accuracy (99.36%): the validation result was a good estimate of the performance on never-seen data.",
+      } },
+      { callout: "tip", title: { tr: "Özet: MLP bölümünden ne değişti?", en: "Recap: what changed since the MLP chapter?" }, text: {
+        tr: "Eğitim döngüsü aynı: ileri yayılım, kayıp, `backward`, `step`. Değişenler: **model** (evrişim, havuzlama, BatchNorm, Dropout ve sonda bir MLP), **kayıp** (10 sınıflı `CrossEntropyLoss`), **optimizer** (Adam), **veri** (`DataLoader` ile 188 batch'lik epoch'lar), **cihaz** (`.to(device)`) ve **ölçüm** (`model.eval()`, `torch.no_grad()`, ayrı doğrulama ve test setleri).",
+        en: "The training loop is the same: forward pass, loss, `backward`, `step`. What changed: the **model** (convolution, pooling, BatchNorm, Dropout and an MLP at the end), the **loss** (10-class `CrossEntropyLoss`), the **optimizer** (Adam), the **data** (epochs of 188 batches from a `DataLoader`), the **device** (`.to(device)`) and the **measurement** (`model.eval()`, `torch.no_grad()`, separate validation and test sets).",
       } },
     ],
   },
@@ -808,37 +835,41 @@ print("Prediction:", probs.argmax().item(), "| True:", label, f"| Confidence: {p
     id: "c-exercises", title: { tr: "Alıştırmalar", en: "Exercises" },
     blocks: [
       { p: {
-        tr: "Kodu gerçekten anlamanın en iyi yolu değiştirip ne olduğunu görmektir. Her alıştırmadan sonra kayıp grafiğine ve test doğruluğuna bakın:",
-        en: "The best way to really understand the code is to change it and see what happens. After each exercise, look at the loss plot and the test accuracy:",
+        tr: "Kodu gerçekten anlamanın en iyi yolu değiştirip ne olduğunu görmektir. Her alıştırmadan sonra kayıp grafiğine ve test doğruluğuna bakın. Alıştırmalar kolaydan zora sıralı: ★ bir sayıyı değiştirip sonucu yorumlamak, ★★ modeli değiştirip sonucu önce elle hesaplamak, ★★★ yeni kod yazmak.",
+        en: "The best way to really understand the code is to change it and see what happens. After each exercise, look at the loss plot and the test accuracy. The exercises go from easy to hard: ★ change a number and interpret the result, ★★ change the model and work out the result by hand first, ★★★ write new code.",
       } },
       { list: [
         {
-          tr: "**Öğrenme oranı**: `learning_rate`'i `1e-2` ve `1e-4` yapın. Hangisi daha hızlı öğreniyor, hangisi kararsız? [[theory:t-opt|Teori → Optimizasyon]] ile karşılaştırın.",
-          en: "**Learning rate**: set `learning_rate` to `1e-2` and to `1e-4`. Which one learns faster, and which one is unstable? Compare with [[theory:t-opt|Theory → Optimization]].",
+          tr: "★ **Öğrenme oranı**: `learning_rate`'i `1e-2` ve `1e-4` yapın. Hangisi daha hızlı öğreniyor, hangisi kararsız? [[theory:t-opt|Teori → Optimizasyon]] ile karşılaştırın. *İpucu:* ilk 2–3 epoch'un doğrulama kaybına bakmak yeterli. Adam'da her ağırlığın adımı yaklaşık η'dır ([[math:m-opt|Matematik → Optimizasyon]]), yani η'yı 10 kat büyütmek adımı da yaklaşık 10 kat büyütür.",
+          en: "★ **Learning rate**: set `learning_rate` to `1e-2` and to `1e-4`. Which one learns faster, and which one is unstable? Compare with [[theory:t-opt|Theory → Optimization]]. *Hint:* looking at the validation loss of the first 2–3 epochs is enough. With Adam every weight's step is about η ([[math:m-opt|Math → Optimization]]), so making η 10 times larger makes the step about 10 times larger too.",
         },
         {
-          tr: "**Dropout'suz**: iki dropout oranını da `0` yapın. Eğitim ve doğrulama kaybı arasındaki fark nasıl değişiyor?",
-          en: "**No dropout**: set both dropout rates to `0`. How does the gap between the training and validation loss change?",
+          tr: "★ **Dropout'suz**: iki dropout oranını da `0` yapın. Eğitim ve doğrulama kaybı arasındaki fark nasıl değişiyor? *İpucu:* şu anki çıktıda eğitim kaybı doğrulamadan yüksek (Adım 14) ve Dropout bunun iki nedeninden biriydi. Kapatınca eğitim kaybı hangi yöne kayıyor?",
+          en: "★ **No dropout**: set both dropout rates to `0`. How does the gap between the training and validation loss change? *Hint:* in the current output the training loss is higher than the validation loss (Step 14), and Dropout was one of the two reasons. Which way does the training loss move when it is switched off?",
         },
         {
-          tr: "**BatchNorm'suz**: `forward`'da `self.batch1(x)` ve `self.batch2(x)` çağrılarını kaldırın (`F.relu(x)` kalsın). Eğitim hızı ve Conv1 filtreleri nasıl değişiyor?",
-          en: "**No BatchNorm**: remove the `self.batch1(x)` and `self.batch2(x)` calls in `forward` (keep `F.relu(x)`). How do the training speed and the Conv1 filters change?",
+          tr: "★ **Optimizer**: Adam yerine `optim.SGD(model.parameters(), lr=0.05, momentum=0.9)` deneyin. *İpucu:* SGD'nin adımı gradyanın büyüklüğüyle orantılıdır, Adam'ınki değildir; bu yüzden SGD için `lr` Adam'dakinden çok daha büyük seçilir. `momentum=0.9`, yönü tutarlı bileşenlerde adımı yaklaşık 10 kat büyütür ([[math:m-opt|Matematik → Optimizasyon]]).",
+          en: "★ **Optimizer**: try `optim.SGD(model.parameters(), lr=0.05, momentum=0.9)` instead of Adam. *Hint:* SGD's step is proportional to the size of the gradient, Adam's is not; that is why SGD gets a much larger `lr` than Adam. `momentum=0.9` makes the step about 10 times larger in consistent directions ([[math:m-opt|Math → Optimization]]).",
         },
         {
-          tr: "**Optimizer**: Adam yerine `optim.SGD(model.parameters(), lr=0.05, momentum=0.9)` deneyin.",
-          en: "**Optimizer**: try `optim.SGD(model.parameters(), lr=0.05, momentum=0.9)` instead of Adam.",
+          tr: "★★ **Daha geniş model**: `conv1_out_channels`'ı 64 yapın. Parametre sayısı ve süre nasıl değişiyor? (`fc1_in` neden değişmiyor?) *İpucu:* önce elle hesaplayın: \\(P = C_{\\text{out}}(C_{\\text{in}}k^2 + 1)\\) ile Conv1, BatchNorm1 ve Conv2 değişir. Sonucu Adım 7'deki `parametreler.py` ile kontrol edin (doğru cevap: 634.314).",
+          en: "★★ **A wider model**: set `conv1_out_channels` to 64. How do the parameter count and the training time change? (Why doesn't `fc1_in` change?) *Hint:* work it out by hand first: with \\(P = C_{\\text{out}}(C_{\\text{in}}k^2 + 1)\\), Conv1, BatchNorm1 and Conv2 change. Check your result with `parameters.py` from Step 7 (the answer: 634,314).",
         },
         {
-          tr: "**Daha geniş model**: `conv1_out_channels`'ı 64 yapın. Parametre sayısı ve süre nasıl değişiyor? (`fc1_in` neden değişmiyor?)",
-          en: "**A wider model**: set `conv1_out_channels` to 64. How do the parameter count and the training time change? (Why doesn't `fc1_in` change?)",
+          tr: "★★ **BatchNorm'suz**: `forward`'da `self.batch1(x)` ve `self.batch2(x)` çağrılarını kaldırın (`F.relu(x)` kalsın). Eğitim hızı ve Conv1 filtreleri nasıl değişiyor? *İpucu:* [[math:m-notation|Matematik → Gösterim]] bölümündeki \"Başlangıç ağırlıkları\" paragrafına bakın: PyTorch'un varsayılan başlangıcıyla, BatchNorm olmadan sinyal her katmanda küçülür. En büyük farkı ilk epoch'ta arayın.",
+          en: "★★ **No BatchNorm**: remove the `self.batch1(x)` and `self.batch2(x)` calls in `forward` (keep `F.relu(x)`). How do the training speed and the Conv1 filters change? *Hint:* see the \"Initial weights\" paragraph of [[math:m-notation|Math → Notation]]: with PyTorch's default initialization and no BatchNorm, the signal shrinks at every layer. Look for the biggest difference in the first epoch.",
         },
         {
-          tr: "**Üçüncü blok**: `padding=2` ile 5×5 bir `conv3` (64 → 128) ve 2×2 havuzlama ekleyin. `fc1_in` ne olmalı? Sahte görüntü yöntemiyle (Adım 8) doğrulayın.",
-          en: "**A third block**: add a 5×5 `conv3` (64 → 128) with `padding=2` and a 2×2 pooling layer. What should `fc1_in` be? Check it with the dummy-image method (Step 8).",
+          tr: "★★ **MLP ile karşılaştırma**: evrişim bloklarını kaldırıp MLP bölümündeki gibi bir ağ kurun: `torch.flatten` → `nn.Linear(784, 512)` → ReLU → `nn.Linear(512, 10)`. Parametre sayısı ve test doğruluğu nasıl değişiyor? *İpucu:* `fc1_in = 28 * 28` yapın ve evrişim, BatchNorm, havuzlama ve dropout katmanlarını yalnızca `forward`'dan değil `__init__`'ten de silin; yoksa kullanılmayan katmanlar da parametre sayısına girer (doğru cevap: 407.050).",
+          en: "★★ **Compare with an MLP**: remove the convolution blocks and build a network like the one in the MLP chapter: `torch.flatten` → `nn.Linear(784, 512)` → ReLU → `nn.Linear(512, 10)`. How do the parameter count and the test accuracy change? *Hint:* set `fc1_in = 28 * 28` and delete the convolution, BatchNorm, pooling and dropout layers not only from `forward` but also from `__init__`; otherwise the unused layers are counted too (the answer: 407,050).",
         },
         {
-          tr: "**Hatalı tahminler**: test setinde `predicted != labels` olan görüntüleri bulun ve matplotlib ile gösterin. Model hangi rakamları karıştırıyor?",
-          en: "**Wrong predictions**: find the test images where `predicted != labels` and display them with matplotlib. Which digits does the model confuse?",
+          tr: "★★★ **Üçüncü blok**: `padding=2` ile 5×5 bir `conv3` (64 → 128) ve 2×2 havuzlama ekleyin. `fc1_in` ne olmalı? Sahte görüntü yöntemiyle (Adım 8) doğrulayın. *İpucu:* Adım 4'teki formülü yeni katmanlara uygulayın: `padding=2` olan 5×5 bir evrişim boyutu değiştirmez, havuzlama yarıya indirir. Yeni katmanları hem `__init__`'e hem `forward`'a ekleyin.",
+          en: "★★★ **A third block**: add a 5×5 `conv3` (64 → 128) with `padding=2` and a 2×2 pooling layer. What should `fc1_in` be? Check it with the dummy-image method (Step 8). *Hint:* apply the formula from Step 4 to the new layers: a 5×5 convolution with `padding=2` keeps the size, pooling halves it. Add the new layers to both `__init__` and `forward`.",
+        },
+        {
+          tr: "★★★ **Hatalı tahminler**: test setinde `predicted != labels` olan görüntüleri bulun ve matplotlib ile gösterin. Model hangi rakamları karıştırıyor? *İpucu:* `evaluate_model`'deki döngüyü kopyalayın; `model.eval()` ve `torch.no_grad()` içinde `inputs[predicted != labels]` ile yanlışları toplayın ve her birini `plt.imshow(img[0].cpu(), cmap=\"gray\")` ile, başlığında tahmin ve gerçek etiketle çizin.",
+          en: "★★★ **Wrong predictions**: find the test images where `predicted != labels` and display them with matplotlib. Which digits does the model confuse? *Hint:* copy the loop from `evaluate_model`; inside `model.eval()` and `torch.no_grad()`, collect the mistakes with `inputs[predicted != labels]` and draw each one with `plt.imshow(img[0].cpu(), cmap=\"gray\")`, with the prediction and the true label in its title.",
         },
       ], ordered: true },
       { callout: "tip", title: { tr: "Seed'i unutmayın", en: "Don't forget the seed" }, text: {
@@ -894,6 +925,12 @@ function renderBlock(block) {
     return codeEditor(lines, { file: L(block.name), notes: block.notes, caption: block.caption });
   }
   if (block.term) return terminal(L(block.term), block.lines.map((line) => L(line)));
+  if (block.links) {
+    // Links to places in other chapters ({ chapter, tab, section }); core.js follows data-go/data-chapter
+    return h("div", { class: "m-links" }, h("span", { text: L({ tr: "Ayrıca bakın:", en: "See also:" }) }),
+      ...block.links.map((place) => h("a", { href: "#", "data-go": `${place.tab}:${place.section || ""}`, "data-chapter": place.chapter,
+        text: `${placeLabel(place)} →` })));
+  }
   if (block.table) {
     return h("div", { class: "table-wrap" }, h("table", { class: "data-table tut-table" },
       h("thead", {}, h("tr", {}, ...block.table.head.map((c) => h("th", { text: L(c) })))),

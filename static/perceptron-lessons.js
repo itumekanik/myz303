@@ -221,8 +221,8 @@ const MATH = [
       } },
       { widget: "update" },
       { callout: "info", title: { tr: "Bir düzeltme ötekileri bozabilir", en: "A correction can spoil the others" },
-        text: { tr: R`Kural yalnızca o anki örneğe bakar; onu düzeltirken daha önce doğru olan bir örneği yanlış tarafa geçirebilir. Yine de veri doğrusal ayrılabilirse bu gidip gelme sonsuza kadar sürmez: yakınsama teoremi (5. bölüm) bunu ispatlar.`,
-          en: R`The rule only looks at the current example; while fixing it, it can move an example that was right before to the wrong side. Still, if the data is linearly separable, this back and forth cannot go on forever: the convergence theorem (section 5) proves it.` } },
+        text: { tr: R`Kural yalnızca o anki örneğe bakar; onu düzeltirken daha önce doğru olan bir örneği yanlış tarafa geçirebilir. Yine de veri doğrusal ayrılabilirse bu gidip gelme sonsuza kadar sürmez: yakınsama teoremi (bu sekmenin 5. kısmı) bunu ispatlar.`,
+          en: R`The rule only looks at the current example; while fixing it, it can move an example that was right before to the wrong side. Still, if the data is linearly separable, this back and forth cannot go on forever: the convergence theorem (section 5 of this tab) proves it.` } },
       { links: [{ tab: "theory", section: "p-rule" }, { tab: "code", section: "pc-fit" }] },
     ],
   },
@@ -249,18 +249,18 @@ const MATH = [
           { tex: R`\mathbf w \leftarrow \mathbf w - \eta\,\frac{\partial \ell}{\partial \mathbf w} = \mathbf w + \eta\,t\,\mathbf x, \qquad b \leftarrow b + \eta\,t`,
             why: { tr: R`Tek örnekle bir [[sgd|SGD]] adımı: gradyanın tersi yönünde \(\eta\) kadar.`, en: R`One [[sgd|SGD]] step on one example: \(\eta\) times the opposite of the gradient.` } },
           { tex: R`e = y - \hat y = t \quad\Rightarrow\quad \mathbf w \leftarrow \mathbf w + \eta\,e\,\mathbf x`,
-            why: { tr: R`Yanlış sınıflanan bir örnekte \(y = 1, \hat y = 0\) ise \(e = 1 = t\); \(y = 0, \hat y = 1\) ise \(e = -1 = t\). Bu tam olarak perceptron kuralı. (\(z = 0\)'da kaybın bir kırığı vardır; kural orada da aynı adımı atar.)`, en: R`For a misclassified example, \(y = 1, \hat y = 0\) gives \(e = 1 = t\) and \(y = 0, \hat y = 1\) gives \(e = -1 = t\). This is exactly the perceptron rule. (The loss has a kink at \(z = 0\); the rule takes the same step there too.)` } },
+            why: { tr: R`Yanlış sınıflanan bir örnekte \(y = 1, \hat y = 0\) ise \(e = 1 = t\); \(y = 0, \hat y = 1\) ise \(e = -1 = t\). Bu tam olarak perceptron kuralı. (\(z = 0\)'da kaybın bir kırığı vardır ve gradyan tek değildir. \(H(0) = 0\) olduğu için kural orada \(y = 1\) ise adım atar, \(y = 0\) ise atmaz; ikisi de geçerli bir seçimdir.)`, en: R`For a misclassified example, \(y = 1, \hat y = 0\) gives \(e = 1 = t\) and \(y = 0, \hat y = 1\) gives \(e = -1 = t\). This is exactly the perceptron rule. (At \(z = 0\) the loss has a kink and the gradient is not unique. Since \(H(0) = 0\), the rule takes the step there if \(y = 1\) and does nothing if \(y = 0\); both are valid choices.)` } },
         ],
       } },
       { h: { tr: "Neden basamak fonksiyonunun türevini kullanmıyoruz?", en: "Why not use the derivative of the step function?" } },
       { p: {
-        tr: R`Daha doğal görünen kayıp, çıktının hatasının karesidir: \((y - H(z))^2\). Ama \(H'(z) = 0\) (\(z \neq 0\) için), yani bu kaybın \(\mathbf w\)'ye göre gradyanı neredeyse her yerde sıfırdır: hiçbir sinyal yoktur. Perceptron ölçütü \(H\)'nin türevini hiç almadan \(z\)'ye doğrudan bakarak bu sorunu atlatır. Çok katmanlı ağlarda ise bu hile işe yaramaz; orada \(H\) yerine türevi sıfır olmayan bir [[activation|aktivasyon]] kullanılır, örneğin sigmoid:`,
-        en: R`The more natural-looking loss is the squared error of the output: \((y - H(z))^2\). But \(H'(z) = 0\) (for \(z \neq 0\)), so the gradient of this loss with respect to \(\mathbf w\) is zero almost everywhere: there is no signal at all. The perceptron criterion sidesteps this by looking at \(z\) directly, never differentiating \(H\). In multilayer networks this trick does not work; there \(H\) is replaced by an [[activation|activation]] with a nonzero derivative, for example the sigmoid:`,
+        tr: R`Daha doğal görünen kayıp, çıktının hatasının karesidir: \((y - H(z))^2\). Ama \(H'(z) = 0\) (\(z \neq 0\) için), yani bu kaybın \(\mathbf w\)'ye göre gradyanı neredeyse her yerde sıfırdır: hiçbir sinyal yoktur. Perceptron ölçütü \(H\)'nin türevini hiç almadan \(z\)'ye doğrudan bakarak bu sorunu atlatır. Çok katmanlı ağlarda ise bu hile işe yaramaz: gizli bir nöron için hedef yoktur, çıktıdaki hatanın sinyali ona ancak sonraki nöronların aktivasyonlarından geriye geçerek ulaşabilir. Bu yüzden orada \(H\) yerine türevi sıfır olmayan bir [[activation|aktivasyon]] kullanılır, örneğin sigmoid:`,
+        en: R`The more natural-looking loss is the squared error of the output: \((y - H(z))^2\). But \(H'(z) = 0\) (for \(z \neq 0\)), so the gradient of this loss with respect to \(\mathbf w\) is zero almost everywhere: there is no signal at all. The perceptron criterion sidesteps this by looking at \(z\) directly, never differentiating \(H\). In multilayer networks this trick does not work: a hidden neuron has no target, and the error signal from the output can only reach it by passing back through the activations of the neurons after it. So there \(H\) is replaced by an [[activation|activation]] with a nonzero derivative, for example the sigmoid:`,
       } },
       { eq: R`\sigma(z) = \frac{1}{1 + e^{-z}}, \qquad \sigma'(z) = \sigma(z)\,\big(1 - \sigma(z)\big) > 0` },
       { callout: "tip", title: { tr: "CNN bölümüyle bağlantı", en: "The link to the CNN chapter" },
-        text: { tr: R`SimpleCNN'in eğitimi de aynı kalıpla çalışır: bir kayıp, onun gradyanı ve \(\theta \leftarrow \theta - \eta\,\nabla L\). Değişen, kaybın [[cross-entropy|cross-entropy]] olması ve gradyanın katmanlar boyunca [[backprop|geri yayılımla]] hesaplanmasıdır.`,
-          en: R`SimpleCNN is trained with the same pattern: a loss, its gradient and \(\theta \leftarrow \theta - \eta\,\nabla L\). What changes is that the loss is [[cross-entropy|cross-entropy]] and the gradient is computed through the layers with [[backprop|backpropagation]].` } },
+        text: { tr: R`SimpleCNN'in eğitimi de aynı kalıpla çalışır: bir kayıp, onun gradyanı ve gradyanın tersi yönünde bir adım (en sade biçimi \(\theta \leftarrow \theta - \eta\,\nabla L\); SimpleCNN bunun geliştirilmiş bir biçimi olan Adam'ı kullanır). Değişen, kaybın [[cross-entropy|çapraz entropi]] olması ve gradyanın katmanlar boyunca [[backprop|geri yayılımla]] hesaplanmasıdır.`,
+          en: R`SimpleCNN is trained with the same pattern: a loss, its gradient and a step against the gradient (in its plainest form \(\theta \leftarrow \theta - \eta\,\nabla L\); SimpleCNN uses Adam, a refined version of it). What changes is that the loss is [[cross-entropy|cross-entropy]] and the gradient is computed through the layers with [[backprop|backpropagation]].` } },
       { links: [
         { chapter: "cnn", tab: "math", section: "m-opt", title: { tr: "Optimizasyon: SGD, Momentum, Adam", en: "Optimization: SGD, Momentum, Adam" } },
         { chapter: "cnn", tab: "theory", section: "t-opt", title: { tr: "Geri yayılım ve optimizasyon", en: "Backpropagation and optimization" } }] },
@@ -289,7 +289,7 @@ const MATH = [
           { tex: R`\tilde{\mathbf w}_k = \tilde{\mathbf w}_{k-1} + \eta\,t\,\tilde{\mathbf x}, \qquad t\,\tilde{\mathbf w}_{k-1}\cdot\tilde{\mathbf x} \le 0`,
             why: { tr: R`\(k\). düzeltme, yanlış sınıflanan bir \((\tilde{\mathbf x}, t)\) örneğinde yapılır; yanlış olduğu için \(t\,\tilde{\mathbf w}_{k-1}\cdot\tilde{\mathbf x} \le 0\).`, en: R`The \(k\)-th correction happens on a misclassified example \((\tilde{\mathbf x}, t)\); being wrong means \(t\,\tilde{\mathbf w}_{k-1}\cdot\tilde{\mathbf x} \le 0\).` } },
           { tex: R`\mathbf u\cdot\tilde{\mathbf w}_k = \mathbf u\cdot\tilde{\mathbf w}_{k-1} + \eta\,t\,\mathbf u\cdot\tilde{\mathbf x} \;\ge\; \mathbf u\cdot\tilde{\mathbf w}_{k-1} + \eta\gamma \quad\Rightarrow\quad \mathbf u\cdot\tilde{\mathbf w}_k \ge k\,\eta\gamma`,
-            why: { tr: R`<b>Doğru yönde büyüme:</b> marj varsayımıyla her düzeltme \(\tilde{\mathbf w}\)'nin \(\mathbf u\) yönündeki bileşenini en az \(\eta\gamma\) büyütür. \(\mathbf 0\)'dan başlayıp \(k\) kez toplayınca.`, en: R`<b>Growth in the right direction:</b> by the margin assumption, every correction grows the component of \(\tilde{\mathbf w}\) along \(\mathbf u\) by at least \(\eta\gamma\). Starting from \(\mathbf 0\) and adding up \(k\) times.` } },
+            why: { tr: R`<b>Doğru yönde büyüme:</b> marj varsayımıyla her düzeltme \(\tilde{\mathbf w}\)'nin \(\mathbf u\) yönündeki bileşenini en az \(\eta\gamma\) büyütür. \(\mathbf 0\)'dan başlayıp bunu \(k\) düzeltme boyunca toplayınca sağdaki sonuç çıkar.`, en: R`<b>Growth in the right direction:</b> by the margin assumption, every correction grows the component of \(\tilde{\mathbf w}\) along \(\mathbf u\) by at least \(\eta\gamma\). Starting from \(\mathbf 0\) and adding this up over \(k\) corrections gives the result on the right.` } },
           { tex: R`\lVert\tilde{\mathbf w}_k\rVert^2 = \lVert\tilde{\mathbf w}_{k-1}\rVert^2 + 2\eta\,t\,\tilde{\mathbf w}_{k-1}\cdot\tilde{\mathbf x} + \eta^2\lVert\tilde{\mathbf x}\rVert^2 \;\le\; \lVert\tilde{\mathbf w}_{k-1}\rVert^2 + \eta^2 R^2 \quad\Rightarrow\quad \lVert\tilde{\mathbf w}_k\rVert^2 \le k\,\eta^2 R^2`,
             why: { tr: R`<b>Uzunluk yavaş büyür:</b> ortadaki terim hata olduğu için \(\le 0\), son terim \(\le \eta^2 R^2\). Uzunluğun karesi her düzeltmede en fazla \(\eta^2R^2\) artar.`, en: R`<b>The length grows slowly:</b> the middle term is \(\le 0\) because it was a mistake, the last term is \(\le \eta^2 R^2\). The squared length grows by at most \(\eta^2R^2\) per correction.` } },
           { tex: R`k\,\eta\gamma \;\le\; \mathbf u\cdot\tilde{\mathbf w}_k \;\le\; \lVert\mathbf u\rVert\,\lVert\tilde{\mathbf w}_k\rVert \;\le\; \sqrt{k}\,\eta R`,
@@ -433,8 +433,8 @@ const CODE = [
       } },
       { term: "PowerShell", lines: ["$ .venv\\Scripts\\python.exe Perceptron.py"] },
       { callout: "tip", title: { tr: "Neden PyTorch değil?", en: "Why not PyTorch?" },
-        text: { tr: R`Perceptron kuralı gradyan istemez; tek ihtiyacımız vektörlerle toplama ve çarpma. Her satırın ne yaptığını görmek için düz NumPy en açığı. 6. adımda aynı şeyi PyTorch ile yazıp CNN koduna bağlayacağız.`,
-          en: R`The perceptron rule needs no gradients; all we need is adding and multiplying vectors. Plain NumPy shows most clearly what every line does. In step 6 we write the same with PyTorch and connect it to the CNN code.` } },
+        text: { tr: R`Perceptron kuralı gradyan istemez; tek ihtiyacımız vektörlerle toplama ve çarpma. Her satırın ne yaptığını görmek için düz NumPy en açığı. 7. adımda aynı şeyi PyTorch ile yazıp CNN koduna bağlayacağız.`,
+          en: R`The perceptron rule needs no gradients; all we need is adding and multiplying vectors. Plain NumPy shows most clearly what every line does. In step 7 we write the same with PyTorch and connect it to the CNN code.` } },
     ],
   },
   {
@@ -446,7 +446,7 @@ const CODE = [
         en: R`First the [[hyperparameter|hyperparameters]], then the data. Every logic gate has only four possible inputs; we write them once into the matrix <code>X</code> and keep each gate's answers in a separate vector.`,
       } },
       { file: { from: "#--------------- Hyperparameters", to: "}", notes: [
-        { at: "learning_rate = 0.1", text: { tr: "η: bir düzeltmenin büyüklüğü (Teori, 3. bölüm).", en: "η: the size of one correction (Theory, section 3)." } },
+        { at: "learning_rate = 0.1", text: { tr: "η: bir düzeltmenin büyüklüğü (Teori, 3. kısım).", en: "η: the size of one correction (Theory, section 3)." } },
         { at: "seed = 0", text: { tr: "Başlangıç ağırlıkları rastgele; aynı seed aynı başlangıcı ve aynı eğitimi verir.", en: "The starting weights are random; the same seed gives the same start and the same training." } },
         { at: "X = np.array([[0, 0],", text: { tr: "Her satır bir örnek: `X`'in biçimi (4, 2). `dtype=float`, ağırlıklarla çarpılacağı için.", en: "Every row is one example: `X` has shape (4, 2). `dtype=float` because it is multiplied by the weights." } },
         { at: '"XOR":', text: { tr: "XOR'u bilerek ekliyoruz: öğrenilemeyeceğini göreceğiz.", en: "We add XOR on purpose: we will see that it cannot be learned." } },
@@ -474,7 +474,7 @@ const CODE = [
         { at: "z = X @ self.w + self.b", text: { tr: "`@` matris çarpımıdır: (4, 2) @ (2,) → (4,). Dört örneğin z'si tek satırda; `b` her birine eklenir.", en: "`@` is matrix multiplication: (4, 2) @ (2,) → (4,). The z of all four examples in one line; `b` is added to each." } },
       ] } },
       { p: {
-        tr: R`<code>predict</code> Teori'deki formülün aynısı: \(\hat y = H(\mathbf w\cdot\mathbf x + b)\). Tek fark, dört örneği tek seferde hesaplaması: <code>X @ self.w</code>, her satırın ağırlıklarla [[weight|iç çarpımını]] verir.`,
+        tr: R`<code>predict</code> Teori'deki formülün aynısı: \(\hat y = H(\mathbf w\cdot\mathbf x + b)\). Tek fark, dört örneği tek seferde hesaplaması: <code>X @ self.w</code>, her satırın [[weight|ağırlıklarla]] iç çarpımını verir.`,
         en: R`<code>predict</code> is the very formula from Theory: \(\hat y = H(\mathbf w\cdot\mathbf x + b)\). The only difference is that it computes all four examples at once: <code>X @ self.w</code> gives the dot product of every row with the [[weight|weights]].`,
       } },
     ],
@@ -490,12 +490,12 @@ const CODE = [
         { at: "if mistakes == 0:", text: { tr: "Hatasız bir epoch: yakınsadı, durabiliriz.", en: "An epoch without a mistake: converged, we can stop." } },
       ] } },
       { p: {
-        tr: R`Formülle yan yana koyun: \(\mathbf w \leftarrow \mathbf w + \eta\,(y - \hat y)\,\mathbf x\) ve \(b \leftarrow b + \eta\,(y - \hat y)\). <code>if error != 0</code> koşulu yalnızca kodu hızlandırır; \(e = 0\) iken güncelleme zaten hiçbir şey değiştirmezdi. <code>history</code> her epoch'taki hata sayısını tutar; Deneme alanındaki grafik de bunu çizer.`,
-        en: R`Put it next to the formula: \(\mathbf w \leftarrow \mathbf w + \eta\,(y - \hat y)\,\mathbf x\) and \(b \leftarrow b + \eta\,(y - \hat y)\). The <code>if error != 0</code> test only saves work; with \(e = 0\) the update would change nothing anyway. <code>history</code> keeps the number of mistakes in each epoch; the chart in the Playground draws the same thing.`,
+        tr: R`Formülle yan yana koyun: \(\mathbf w \leftarrow \mathbf w + \eta\,(y - \hat y)\,\mathbf x\) ve \(b \leftarrow b + \eta\,(y - \hat y)\). <code>if error != 0</code> koşulu güncelleme için şart değildir (\(e = 0\) iken güncelleme zaten hiçbir şey değiştirmezdi); asıl işi hataları saymaktır. <code>history</code> her epoch'taki hata sayısını tutar; Deneme alanındaki grafik de bunu çizer.`,
+        en: R`Put it next to the formula: \(\mathbf w \leftarrow \mathbf w + \eta\,(y - \hat y)\,\mathbf x\) and \(b \leftarrow b + \eta\,(y - \hat y)\). The <code>if error != 0</code> test is not needed for the update (with \(e = 0\) the update would change nothing anyway); its real job is to count the mistakes. <code>history</code> keeps the number of mistakes in each epoch; the chart in the Playground draws the same thing.`,
       } },
       { callout: "info", title: { tr: "Örnek örnek mi, batch batch mi?", en: "Example by example, or batch by batch?" },
-        text: { tr: R`Perceptron kuralı <i>çevrimiçi</i> bir kuraldır: her örnekten hemen sonra günceller. SimpleCNN ise 256 görüntülük [[batch|batch]]'ler üzerinden ortalama gradyanla günceller. İkisi de aynı ailenin üyesidir: [[sgd|stokastik gradyan inişi]].`,
-          en: R`The perceptron rule is an <i>online</i> rule: it updates right after every example. SimpleCNN updates with the average gradient over [[batch|batches]] of 256 images. Both belong to the same family: [[sgd|stochastic gradient descent]].` } },
+        text: { tr: R`Perceptron kuralı <i>çevrimiçi</i> bir kuraldır: her örnekten hemen sonra günceller. SimpleCNN ise 256 görüntülük [[batch|batch]]'lerin ortalama gradyanıyla (Adam algoritmasıyla) günceller. İkisi de aynı ailenin üyesidir: [[sgd|stokastik gradyan inişi]] ve onun türevleri.`,
+          en: R`The perceptron rule is an <i>online</i> rule: it updates right after every example. SimpleCNN updates with the average gradient of [[batch|batches]] of 256 images (with the Adam optimizer). Both belong to the same family: [[sgd|stochastic gradient descent]] and its variants.` } },
     ],
   },
   {
@@ -507,7 +507,8 @@ const CODE = [
       { list: [
         { tr: R`<b>AND</b> 9, <b>OR</b> 3, <b>NAND</b> 4 epoch'ta yakınsadı: son epoch'taki hata sayısı 0. Bulunan sınırlar Teori'deki çözümlerden farklı ama aynı işi görüyor; ayıran sınır tek değildir.`, en: R`<b>AND</b> converged in 9 epochs, <b>OR</b> in 3, <b>NAND</b> in 4: the last epoch has 0 mistakes. The boundaries found differ from the solutions in Theory but do the same job; the separating boundary is not unique.` },
         { tr: R`<b>OR</b>'da \(b = 0{,}00\): \((0, 0)\) noktası tam sınırın üzerinde ve \(z = 0\) olduğu için 0 sınıfına düşüyor. Kesin eşitsizliğin (\(z > 0\)) önemi burada.`, en: R`For <b>OR</b>, \(b = 0.00\): the point \((0, 0)\) lies right on the boundary and falls into class 0 because \(z = 0\). This is where the strict inequality (\(z > 0\)) matters.` },
-        { tr: R`<b>XOR</b> hiç yakınsamadı: hata sayısı 4'te takılı kaldı ve doğruluk %50. 20 yerine 20.000 epoch verseniz de sonuç değişmez (Matematik, 6. bölüm).`, en: R`<b>XOR</b> never converged: the mistakes got stuck at 4 and the accuracy is 50%. Giving it 20,000 epochs instead of 20 would not change that (Math, section 6).` },
+        { tr: R`<b>XOR</b> hiç yakınsamadı: hata sayısı 4'te takılı kaldı ve doğruluk %50. 20 yerine 20.000 epoch verseniz de sonuç değişmez (Matematik, 6. kısım).`, en: R`<b>XOR</b> never converged: the mistakes got stuck at 4 and the accuracy is 50%. Giving it 20,000 epochs instead of 20 would not change that (Math, section 6).` },
+        { tr: R`Epoch başına 4 hata ama doğruluk %50 nasıl olur? Hatalar epoch <i>sırasında</i>, ağırlıklar her örnekte değişirken sayılır; doğruluk ise eğitim bittikten sonra son ağırlıklarla ölçülür. 4. epoch'tan sonra sınır her epoch'ta dört örneğin her birinde yer değiştirir ve epoch sonunda hep aynı yere döner: kural bir döngüye girmiştir.`, en: R`How can there be 4 mistakes per epoch but 50% accuracy? The mistakes are counted <i>during</i> the epoch, while the weights change at every example; the accuracy is measured after training, with the final weights. From the 4th epoch on, the boundary moves at each of the four examples and is back in the same place at the end of every epoch: the rule is stuck in a cycle.` },
       ] },
     ],
   },
@@ -516,18 +517,18 @@ const CODE = [
     title: PLACE_TITLES["pc-torch"],
     blocks: [
       { p: {
-        tr: R`3. bölümdeki SimpleCNN PyTorch ile yazıldı. Aynı perceptronu PyTorch'un yapı taşlarıyla yazınca bağlantı netleşir: <code>nn.Linear(2, 1)</code> tam olarak \(\mathbf w\cdot\mathbf x + b\) hesaplayan bir katmandır.`,
+        tr: R`CNN bölümündeki (3. bölüm) SimpleCNN PyTorch ile yazıldı. Aynı perceptronu PyTorch'un yapı taşlarıyla yazınca bağlantı netleşir: <code>nn.Linear(2, 1)</code> tam olarak \(\mathbf w\cdot\mathbf x + b\) hesaplayan bir katmandır.`,
         en: R`SimpleCNN in chapter 3 is written with PyTorch. Writing the same perceptron with PyTorch's building blocks makes the link clear: <code>nn.Linear(2, 1)</code> is a layer that computes exactly \(\mathbf w\cdot\mathbf x + b\).`,
       } },
       { code: TORCH_CODE, name: "perceptron_torch.py", notes: [
         { at: "layer = nn.Linear(2, 1)", text: { tr: "2 girdi, 1 çıktı: ağırlık matrisi (1, 2), bias (1,). SimpleCNN'in `fc1` ve `fc2` katmanları da `nn.Linear`.", en: "2 inputs, 1 output: weight matrix (1, 2), bias (1,). SimpleCNN's `fc1` and `fc2` layers are `nn.Linear` too." } },
         { at: "with torch.no_grad():", text: { tr: "Ağırlıkları elle değiştiriyoruz; PyTorch'un gradyan takibine gerek yok.", en: "We change the weights by hand; no need for PyTorch's gradient tracking." } },
-        { at: "y_hat = (layer(x_i) > 0).float()", text: { tr: "Basamak fonksiyonu. SimpleCNN'de bunun yerine ReLU var.", en: "The step function. SimpleCNN has ReLU here instead." } },
+        { at: "y_hat = (layer(x_i) > 0).float()", text: { tr: "Basamak fonksiyonu. SimpleCNN'in `fc1` katmanında bunun yerine ReLU var; `fc2`'de ise hiç aktivasyon yok, ham skorlar (logit) doğrudan kayba gider.", en: "The step function. SimpleCNN's `fc1` has ReLU here instead; `fc2` has no activation at all, its raw scores (logits) go straight to the loss." } },
       ] },
       { term: "PowerShell", lines: ["$ .venv\\Scripts\\python.exe perceptron_torch.py", "epochs: 2", "w = [0.09470603615045547, 0.4793229401111603], b = -0.48", "[0, 0, 0, 1]"] },
       { p: {
-        tr: R`SimpleCNN'deki bir tam bağlı katman, yan yana duran yüzlerce perceptron gibidir; farkları üç tane: basamak yerine [[relu|ReLU]], perceptron kuralı yerine <code>loss.backward()</code> ile hesaplanan [[gradient|gradyanlar]] ve tek tek örnek yerine [[batch|batch]]'ler.`,
-        en: R`A fully connected layer in SimpleCNN is like hundreds of perceptrons side by side, with three differences: [[relu|ReLU]] instead of the step, [[gradient|gradients]] computed by <code>loss.backward()</code> instead of the perceptron rule, and [[batch|batches]] instead of single examples.`,
+        tr: R`SimpleCNN'deki bir tam bağlı katman, yan yana duran yüzlerce perceptron gibidir; farkları üç tane: basamak yerine [[relu|ReLU]] (son katman <code>fc2</code>'de hiç aktivasyon yok), perceptron kuralı yerine <code>loss.backward()</code> ile hesaplanan [[gradient|gradyanlar]] ve tek tek örnek yerine [[batch|batch]]'ler.`,
+        en: R`A fully connected layer in SimpleCNN is like hundreds of perceptrons side by side, with three differences: [[relu|ReLU]] instead of the step (the last layer, <code>fc2</code>, has no activation at all), [[gradient|gradients]] computed by <code>loss.backward()</code> instead of the perceptron rule, and [[batch|batches]] instead of single examples.`,
       } },
       { links: [
         { chapter: "cnn", tab: "code", section: "c-model", title: { tr: "Modeli tanımlamak: katmanlar", en: "Defining the model: layers" } },
@@ -538,13 +539,17 @@ const CODE = [
     id: "pc-exercises",
     title: PLACE_TITLES["pc-exercises"],
     blocks: [
+      { p: {
+        tr: R`Alıştırmalar kolaydan zora sıralı. Her birinde önce sonucu tahmin edin, sonra <code>Perceptron.py</code>'nin bir kopyasında deneyin.`,
+        en: R`The exercises go from easy to hard. For each one, predict the result first, then try it on a copy of <code>Perceptron.py</code>.`,
+      } },
       { list: [
-        { tr: R`<b>Öğrenme oranı:</b> <code>learning_rate</code>'i 0,1'den 1,0'a çıkarın. AND kaç epoch'ta yakınsıyor? Sonra <code>__init__</code>'te ağırlıkları sıfırla başlatın (<code>np.zeros(n_inputs)</code>) ve iki öğrenme oranını yeniden deneyin. Neden artık fark yok? (İpucu: Matematik, 5. bölümün son adımı.)`,
-          en: R`<b>Learning rate:</b> raise <code>learning_rate</code> from 0.1 to 1.0. In how many epochs does AND converge? Then start the weights at zero in <code>__init__</code> (<code>np.zeros(n_inputs)</code>) and try both learning rates again. Why is there no difference any more? (Hint: Math, the last step of section 5.)` },
-        { tr: R`<b>Seed:</b> <code>seed</code>'i değiştirin. Bulunan sınır ve epoch sayısı neden değişiyor?`, en: R`<b>Seed:</b> change <code>seed</code>. Why do the boundary found and the number of epochs change?` },
-        { tr: R`<b>Yeni kapı:</b> <code>GATES</code>'e NOR'u (<code>[1, 0, 0, 0]</code>) ekleyin. Yakınsamasını bekler misiniz?`, en: R`<b>A new gate:</b> add NOR (<code>[1, 0, 0, 0]</code>) to <code>GATES</code>. Do you expect it to converge?` },
-        { tr: R`<b>Karıştırma:</b> <code>fit</code>'te her epoch'un başında örneklerin sırasını <code>rng.permutation</code> ile karıştırın. Sonuç değişiyor mu?`, en: R`<b>Shuffling:</b> in <code>fit</code>, shuffle the order of the examples with <code>rng.permutation</code> at the start of every epoch. Does the result change?` },
-        { tr: R`<b>XOR'u kurtarın:</b> girdilere üçüncü bir özellik ekleyin: \(x_3 = x_1 x_2\) (<code>X</code>'e üçüncü sütun, <code>n_inputs=3</code>). Perceptron artık XOR'u öğreniyor mu? Neden?`, en: R`<b>Rescue XOR:</b> add a third feature to the inputs: \(x_3 = x_1 x_2\) (a third column in <code>X</code>, <code>n_inputs=3</code>). Does the perceptron learn XOR now? Why?` },
+        { tr: R`<b>Seed:</b> <code>seed</code>'i değiştirin (örneğin 1, 2, 3). Bulunan sınır ve epoch sayısı neden değişiyor? (İpucu: seed başlangıç ağırlıklarını belirler; ayıran pek çok doğru vardır ve kural ulaştığı ilk doğruda durur.)`, en: R`<b>Seed:</b> change <code>seed</code> (to 1, 2, 3, for example). Why do the boundary found and the number of epochs change? (Hint: the seed sets the starting weights; many lines separate the data, and the rule stops at the first one it reaches.)` },
+        { tr: R`<b>Yeni kapı:</b> <code>GATES</code>'e NOR'u (<code>[1, 0, 0, 0]</code>) ekleyin. Çalıştırmadan önce: yakınsamasını bekler misiniz? (İpucu: NOR, OR'un tersidir; Teori'nin 1. kısmında onu hesaplayan \(w_1, w_2, b\)'yi elle bulabiliyor musunuz?)`, en: R`<b>A new gate:</b> add NOR (<code>[1, 0, 0, 0]</code>) to <code>GATES</code>. Before running: do you expect it to converge? (Hint: NOR is the opposite of OR; can you find \(w_1, w_2, b\) that compute it by hand, in section 1 of Theory?)` },
+        { tr: R`<b>Öğrenme oranı:</b> <code>learning_rate</code>'i önce 0,01, sonra 1,0 yapın. AND kaç epoch'ta yakınsıyor? Sonra <code>__init__</code>'te ağırlıkları sıfırla başlatın (<code>np.zeros(n_inputs)</code>) ve aynı öğrenme oranlarını yeniden deneyin. Artık AND her öğrenme oranında aynı hataları yapıp aynı epoch'ta yakınsıyor; neden? (İpucu: Matematik sekmesi, 5. kısmın son adımı: sıfırdan başlayınca \(\eta\) ağırlıkları yalnızca ölçekler.)`,
+          en: R`<b>Learning rate:</b> set <code>learning_rate</code> to 0.01, then to 1.0. In how many epochs does AND converge? Then start the weights at zero in <code>__init__</code> (<code>np.zeros(n_inputs)</code>) and try the same learning rates again. Now AND makes the same mistakes and converges in the same epoch for every learning rate; why? (Hint: Math tab, the last step of section 5: starting from zero, \(\eta\) only scales the weights.)` },
+        { tr: R`<b>Karıştırma:</b> <code>fit</code>'te her epoch'un başında örneklerin sırasını karıştırın. (İpucu: üreteci <code>__init__</code>'te <code>self.rng</code> olarak saklayın; sonra <code>order = self.rng.permutation(len(X))</code> ve <code>zip(X[order], y[order])</code>.) AND yine yakınsıyor mu? XOR'u kurtarıyor mu? Yakınsama teoremi örneklerin sırası hakkında ne diyordu?`, en: R`<b>Shuffling:</b> in <code>fit</code>, shuffle the order of the examples at the start of every epoch. (Hint: keep the generator as <code>self.rng</code> in <code>__init__</code>; then <code>order = self.rng.permutation(len(X))</code> and <code>zip(X[order], y[order])</code>.) Does AND still converge? Does it rescue XOR? What did the convergence theorem say about the order of the examples?` },
+        { tr: R`<b>XOR'u kurtarın:</b> girdilere üçüncü bir özellik ekleyin: \(x_3 = x_1 x_2\) (<code>X</code>'e üçüncü sütun, <code>n_inputs=3</code>; ana programdaki <code>w1, w2 = model.w</code> satırını da üç ağırlığa göre düzeltin). Perceptron artık XOR'u öğreniyor mu? Neden?`, en: R`<b>Rescue XOR:</b> add a third feature to the inputs: \(x_3 = x_1 x_2\) (a third column in <code>X</code>, <code>n_inputs=3</code>; also fix the line <code>w1, w2 = model.w</code> in the main program for three weights). Does the perceptron learn XOR now? Why?` },
       ], ordered: true },
       { callout: "tip", title: { tr: "Son alıştırma için ipucu", en: "Hint for the last exercise" },
         text: { tr: R`Üç boyutta dört nokta \((0,0,0), (0,1,0), (1,0,0), (1,1,1)\) olur ve artık bir düzlemle ayrılabilir: örneğin \(\mathbf w = (1, 1, -2)\), \(b = -0{,}5\). Doğru özelliği elle eklemek işe yarar; MLP'nin gizli katmanı ise böyle özellikleri kendisi öğrenir.`,
@@ -553,7 +558,7 @@ const CODE = [
   },
 ];
 
-createLesson({ tab: "math", main: "#pm-main", toc: "#pm-toc", sections: MATH, widgets: WIDGETS, kicker: { tr: "Bölüm", en: "Section" } });
+createLesson({ tab: "math", main: "#pm-main", toc: "#pm-toc", sections: MATH, widgets: WIDGETS, kicker: { tr: "Kısım", en: "Section" } });
 createLesson({ tab: "code", main: "#pc-main", toc: "#pc-toc", sections: CODE, kicker: { tr: "Adım", en: "Step" },
   source: { url: "/api/source/Perceptron.py", name: "Perceptron.py" } });
 })();

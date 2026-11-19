@@ -60,7 +60,7 @@ const WIDGETS = {
       out.replaceChildren(h("table", { class: "pc-table" },
         h("thead", {}, h("tr", {}, ...[L({ tr: "Parametre", en: "Parameter" }), L({ tr: "Geri yayılım", en: "Backpropagation" }), L({ tr: "Sayısal", en: "Numerical" }), L({ tr: "Fark", en: "Difference" })].map((t) => h("th", { text: t })))),
         h("tbody", {}, ...rows)),
-      h("p", { class: "m-why", text: L({ tr: "Fark 10⁻⁹ civarı ya da daha küçük: geri yayılım doğru. Sayısal türev her parametre için iki ileri hesap ister; geri yayılım hepsini bir geri hesapta bulur.", en: "The difference is around 10⁻⁹ or smaller: backpropagation is right. The numerical derivative takes two forward passes per parameter; backpropagation finds them all in one backward pass." }) }));
+      h("p", { class: "m-why", text: L({ tr: "Fark 10⁻¹⁰'dan küçük: geri yayılım doğru. Sayısal türev her parametre için iki ileri hesap ister; geri yayılım hepsini bir geri hesapta bulur.", en: "The difference is below 10⁻¹⁰: backpropagation is right. The numerical derivative takes two forward passes per parameter; backpropagation finds them all in one backward pass." }) }));
     };
     box.append(h("div", { class: "t-controls" }, again), out);
     draw();
@@ -118,13 +118,17 @@ const MATH = [
       } },
       { eq: R`\mathbf z^{(l)} = \mathbf W^{(l)}\,\mathbf a^{(l-1)} + \mathbf b^{(l)}, \qquad \mathbf a^{(l)} = f\big(\mathbf z^{(l)}\big), \qquad l = 1, \dots, L` },
       { p: {
+        tr: R`<b>Dikkat:</b> \(L\) harfi hem katman sayısı hem kayıp için kullanılır; üst indiste \((L)\) son katman, \(\partial L\)'de kayıp demektir. Teori sekmesindeki 2-2-1 ağda gizli ağırlıklar \(w_{ji} = W^{(1)}_{ji}\), çıktı ağırlıkları \(v_j = W^{(2)}_{1j}\), çıktı biası \(c = b^{(2)}\), çıktının toplamı \(z_o = z^{(2)}\) ve hatası \(\delta_o = \delta^{(2)}\)'dir (\(\delta\), 4. bölümde tanımlanır).`,
+        en: R`<b>Note:</b> the letter \(L\) stands both for the number of layers and for the loss; as a superscript \((L)\) it is the last layer, in \(\partial L\) it is the loss. In the 2-2-1 network of the Theory tab the hidden weights are \(w_{ji} = W^{(1)}_{ji}\), the output weights \(v_j = W^{(2)}_{1j}\), the output bias \(c = b^{(2)}\), the output's sum \(z_o = z^{(2)}\) and its error \(\delta_o = \delta^{(2)}\) (\(\delta\) is defined in section 4).`,
+      } },
+      { p: {
         tr: R`[[forward-pass|İleri hesap]] bu iki satırın katman katman tekrarıdır. [[parameter|Parametre]] sayısı her katman için ağırlıklar artı biaslardır:`,
         en: R`The [[forward-pass|forward pass]] repeats these two lines layer by layer. The number of [[parameter|parameters]] is the weights plus the biases of every layer:`,
       } },
       { eq: R`P = \sum_{l=1}^{L} n_l\,(n_{l-1} + 1)` },
       { p: {
-        tr: R`Teori 2'deki 2-2-1 ağ: \(2\cdot 3 + 1\cdot 3 = 9\) parametre. Deneme alanındaki 2-4-4-1 ağ: \(4\cdot 3 + 4\cdot 5 + 1\cdot 5 = 37\). SimpleCNN'in sonundaki MLP (1024 → 512 → 10): \(512\cdot 1025 + 10\cdot 513 = 529\,930\).`,
-        en: R`The 2-2-1 network of Theory 2: \(2\cdot 3 + 1\cdot 3 = 9\) parameters. The 2-4-4-1 network of the Playground: \(4\cdot 3 + 4\cdot 5 + 1\cdot 5 = 37\). The MLP at the end of SimpleCNN (1024 → 512 → 10): \(512\cdot 1025 + 10\cdot 513 = 529{,}930\).`,
+        tr: R`Teori 2'deki 2-2-1 ağ: \(2\cdot 3 + 1\cdot 3 = 9\) parametre. Deneme alanında 4'er nöronlu iki gizli katmanla kurulan 2-4-4-1 ağ: \(4\cdot 3 + 4\cdot 5 + 1\cdot 5 = 37\). SimpleCNN'in sonundaki MLP (1024 → 512 → 10): \(512\cdot 1025 + 10\cdot 513 = 529\,930\).`,
+        en: R`The 2-2-1 network of Theory 2: \(2\cdot 3 + 1\cdot 3 = 9\) parameters. The 2-4-4-1 network you get in the Playground with two hidden layers of 4:\(4\cdot 3 + 4\cdot 5 + 1\cdot 5 = 37\). The MLP at the end of SimpleCNN (1024 → 512 → 10): \(512\cdot 1025 + 10\cdot 513 = 529{,}930\).`,
       } },
       { derive: {
         title: { tr: "Neden doğrusal olmayan bir aktivasyon gerekir?", en: "Why a nonlinear activation is needed" },
@@ -171,8 +175,8 @@ const MATH = [
       } },
       { h: { tr: "Kaybolan gradyan", en: "The vanishing gradient" } },
       { p: {
-        tr: R`Bir sonraki bölümde göreceğimiz gibi, bir hata sinyali her katmandan geçerken \(f'(z)\) ve bir ağırlıkla çarpılır. Sigmoid'le her katmanda en az 4 kat küçülür: 10 katman sonra \((1/4)^{10} \approx 10^{-6}\). İlk katmanlar neredeyse hiç öğrenmez: [[vanishing-gradient|kaybolan gradyan]]. ReLU'nun pozitif taraftaki eğimi 1 olduğu için bu sorunu büyük ölçüde ortadan kaldırır; SimpleCNN de ReLU kullanır.`,
-        en: R`As we will see in the next section, an error signal is multiplied by \(f'(z)\) and a weight at every layer it passes. With the sigmoid it shrinks at least 4-fold per layer: after 10 layers \((1/4)^{10} \approx 10^{-6}\). The first layers barely learn: the [[vanishing-gradient|vanishing gradient]]. ReLU's slope is 1 on the positive side, which largely removes the problem; SimpleCNN uses ReLU too.`,
+        tr: R`4. bölümde göreceğimiz gibi, bir hata sinyali her katmandan geçerken \(f'(z)\) ve bir ağırlıkla çarpılır. Sigmoid'de bu çarpan en fazla \(1/4\)'tür; ağırlıklar büyük değilse sinyal her katmanda en az 4 kat küçülür: 10 katmandan sonra türev çarpanlarının çarpımı en fazla \((1/4)^{10} \approx 10^{-6}\). İlk katmanlar neredeyse hiç öğrenmez: [[vanishing-gradient|kaybolan gradyan]]. ReLU'nun pozitif taraftaki eğimi 1 olduğu için bu sorunu büyük ölçüde ortadan kaldırır; SimpleCNN de ReLU kullanır.`,
+        en: R`As we will see in section 4, an error signal is multiplied by \(f'(z)\) and a weight at every layer it passes. With the sigmoid that factor is at most \(1/4\); unless the weights are large, the signal shrinks at least 4-fold per layer: after 10 layers the product of the derivative factors is at most \((1/4)^{10} \approx 10^{-6}\). The first layers barely learn: the [[vanishing-gradient|vanishing gradient]]. ReLU's slope is 1 on the positive side, which largely removes the problem; SimpleCNN uses ReLU too.`,
       } },
       { links: [{ tab: "theory", section: "ml-act" }, { chapter: "cnn", tab: "math", section: "m-act", title: { tr: "Aktivasyon fonksiyonları ve türevleri", en: "Activation functions and their derivatives" } }] },
     ],
@@ -194,7 +198,7 @@ const MATH = [
         title: { tr: "∂L/∂z = ŷ − y", en: "∂L/∂z = ŷ − y" },
         steps: [
           { tex: R`\frac{\partial L}{\partial \hat y} = -\frac{y}{\hat y} + \frac{1 - y}{1 - \hat y}`, why: { tr: R`\(\ln\)'nin türevi \(1/u\).`, en: R`The derivative of \(\ln u\) is \(1/u\).` } },
-          { tex: R`\frac{\partial \hat y}{\partial z} = \hat y\,(1 - \hat y)`, why: { tr: "Önceki bölümden: sigmoid'in türevi.", en: "From the previous section: the sigmoid's derivative." } },
+          { tex: R`\frac{\partial \hat y}{\partial z} = \hat y\,(1 - \hat y)`, why: { tr: "Önceki kısımdan: sigmoid'in türevi.", en: "From the previous section: the sigmoid's derivative." } },
           { tex: R`\frac{\partial L}{\partial z} = -y\,(1 - \hat y) + (1 - y)\,\hat y`, why: { tr: "Zincir kuralı: iki türevi çarpın; paydalar sadeleşir.", en: "The chain rule: multiply the two derivatives; the denominators cancel." } },
           { tex: R`= \hat y - y`, why: { tr: R`Açıp toplayınca \(-y + y\hat y + \hat y - y\hat y\) kalır. Çıktıdaki hata sinyali, tahmin ile etiketin farkıdır; ne kadar yanlışsa o kadar büyük.`, en: R`Expanding gives \(-y + y\hat y + \hat y - y\hat y\). The error signal at the output is the difference between the prediction and the label; the more wrong, the larger.` } },
         ],
@@ -208,7 +212,7 @@ const MATH = [
       { callout: "info", title: { tr: "Çok sınıflı durum", en: "Many classes" },
         text: { tr: R`SimpleCNN'in 10 sınıfı var: sigmoid yerine [[softmax|softmax]], ikili yerine çok sınıflı çapraz entropi. Türev aynı biçime iner: \(\partial L/\partial z_k = p_k - y_k\).`,
           en: R`SimpleCNN has 10 classes: [[softmax|softmax]] instead of the sigmoid, and the multiclass cross-entropy. The derivative comes out in the same form: \(\partial L/\partial z_k = p_k - y_k\).` } },
-      { links: [{ tab: "theory", section: "ml-loss" }, { chapter: "cnn", tab: "math", section: "m-softmax", title: { tr: "Softmax ve cross-entropy", en: "Softmax and cross-entropy" } }] },
+      { links: [{ tab: "theory", section: "ml-loss" }, { chapter: "cnn", tab: "math", section: "m-softmax", title: { tr: "Softmax ve çapraz entropi", en: "Softmax and cross-entropy" } }] },
     ],
   },
   {
@@ -241,8 +245,8 @@ const MATH = [
         { tr: R`<b>Gradyanlar:</b> (3) ve (4); sonra her parametreyi \(\theta \leftarrow \theta - \eta\,\partial L/\partial\theta\) ile güncelle.`, en: R`<b>Gradients:</b> (3) and (4); then update every parameter with \(\theta \leftarrow \theta - \eta\,\partial L/\partial\theta\).` },
       ], ordered: true },
       { p: {
-        tr: R`<b>Maliyet:</b> ileri hesap her ağırlık için bir çarpma yapar; geri hesap her ağırlık için iki (biri (2)'de, biri (3)'te). Yani bütün gradyanlar yaklaşık iki ileri hesap tutarındadır, parametre sayısından bağımsız. Sayısal türevle her parametre için ayrı iki ileri hesap gerekirdi. Aşağıda ikisini karşılaştırın; [[backprop|geri yayılımı]] kodlarken bu kontrolü yapmak iyi bir alışkanlıktır.`,
-        en: R`<b>Cost:</b> the forward pass does one multiplication per weight; the backward pass does two per weight (one in (2), one in (3)). So all the gradients together cost about two forward passes, whatever the number of parameters. With numerical derivatives it would take two forward passes for each parameter. Compare the two below; checking this is a good habit when coding [[backprop|backpropagation]].`,
+        tr: R`<b>Maliyet:</b> ileri hesap her ağırlık için bir çarpma yapar; geri hesap her ağırlık için iki (biri (2)'de, biri (3)'te). Yani geri hesap, parametre sayısı ne olursa olsun, yaklaşık iki ileri hesap tutarındadır ve bütün gradyanları birden verir. Sayısal türevle her parametre için ayrı iki ileri hesap gerekirdi. Aşağıda ikisini karşılaştırın; [[backprop|geri yayılımı]] kodlarken bu kontrolü yapmak iyi bir alışkanlıktır.`,
+        en: R`<b>Cost:</b> the forward pass does one multiplication per weight; the backward pass does two per weight (one in (2), one in (3)). So the backward pass costs about two forward passes, whatever the number of parameters, and gives all the gradients at once. With numerical derivatives it would take two forward passes for each parameter. Compare the two below; checking this is a good habit when coding [[backprop|backpropagation]].`,
       } },
       { widget: "gradcheck" },
       { links: [{ tab: "theory", section: "ml-backprop" }, { tab: "code", section: "mc-backward" },
@@ -275,8 +279,8 @@ const MATH = [
         ],
       } },
       { p: {
-        tr: R`Rastgele ama hangi ölçekte? \(z = \sum_i w_i x_i\)'nin varyansı, bağımsız ve sıfır ortalamalı terimler için \(n_{\text{in}}\,\mathrm{Var}(w)\,\mathrm{Var}(x)\)'tir. \(\mathrm{Var}(w) = 1/n_{\text{in}}\) seçmek (LeCun/Xavier başlangıcı) sinyali katmandan katmana aynı büyüklükte tutar; ReLU yarısını sıfırladığı için orada \(2/n_{\text{in}}\) kullanılır (He başlangıcı). Çok büyük ağırlıklar sigmoid ve tanh'ı doyurur (gradyan kaybolur), çok küçükler sinyali söndürür. Bu bölümdeki bütün kodlar bu kuralı kullanır.`,
-        en: R`Random, but at what scale? For independent zero-mean terms, the variance of \(z = \sum_i w_i x_i\) is \(n_{\text{in}}\,\mathrm{Var}(w)\,\mathrm{Var}(x)\). Choosing \(\mathrm{Var}(w) = 1/n_{\text{in}}\) (LeCun/Xavier initialization) keeps the signal the same size from layer to layer; ReLU zeroes half of it, so there \(2/n_{\text{in}}\) is used (He initialization). Weights that are too large saturate the sigmoid and tanh (the gradient vanishes); weights that are too small fade the signal. All the code in this chapter uses this rule.`,
+        tr: R`Rastgele ama hangi ölçekte? \(z = \sum_i w_i x_i\)'nin varyansı, bağımsız ve sıfır ortalamalı terimler için \(n_{\text{in}}\,\mathrm{Var}(w)\,\mathrm{Var}(x)\)'tir. \(\mathrm{Var}(w) = 1/n_{\text{in}}\) seçmek (LeCun başlangıcı; Xavier/Glorot başlangıcı bunun ileri ve geri yönü dengeleyen \(2/(n_{\text{in}} + n_{\text{out}})\) biçimidir) sinyali katmandan katmana aynı büyüklükte tutar; ReLU yarısını sıfırladığı için orada \(2/n_{\text{in}}\) kullanılır (He başlangıcı). Çok büyük ağırlıklar sigmoid ve tanh'ı doyurur (gradyan kaybolur), çok küçükler sinyali söndürür. Bu bölümdeki bütün kodlar bu kuralı kullanır.`,
+        en: R`Random, but at what scale? For independent zero-mean terms, the variance of \(z = \sum_i w_i x_i\) is \(n_{\text{in}}\,\mathrm{Var}(w)\,\mathrm{Var}(x)\). Choosing \(\mathrm{Var}(w) = 1/n_{\text{in}}\) (LeCun initialization; Xavier/Glorot initialization is its variant \(2/(n_{\text{in}} + n_{\text{out}})\), which balances the forward and backward directions) keeps the signal the same size from layer to layer; ReLU zeroes half of it, so there \(2/n_{\text{in}}\) is used (He initialization). Weights that are too large saturate the sigmoid and tanh (the gradient vanishes); weights that are too small fade the signal. All the code in this chapter uses this rule.`,
       } },
       { links: [{ tab: "play" }, { tab: "code", section: "mc-class" }, { chapter: "cnn", tab: "math", section: "m-opt", title: { tr: "Optimizasyon: SGD, Momentum, Adam", en: "Optimization: SGD, Momentum, Adam" } }] },
     ],
@@ -286,8 +290,8 @@ const MATH = [
     title: PLACE_TITLES["mm-universal"],
     blocks: [
       { callout: "info", title: { tr: "Teorem (Cybenko 1989, Hornik 1991)", en: "Theorem (Cybenko 1989, Hornik 1991)" },
-        text: { tr: R`\(f\), \([0,1]^n\) üzerinde sürekli bir fonksiyon ve \(\varepsilon > 0\) olsun. Öyle bir \(H\) ve \(v_j, \mathbf w_j, b_j\) vardır ki \(F(\mathbf x) = \sum_{j=1}^{H} v_j\,\sigma(\mathbf w_j\cdot\mathbf x + b_j)\) her \(\mathbf x\) için \(|F(\mathbf x) - f(\mathbf x)| < \varepsilon\) sağlar. Cybenko sigmoid için ispatladı; Hornik sınırlı ve sabit olmayan her aktivasyon için, Leshno ve arkadaşları (1993) polinom olmayan her aktivasyon için (ReLU dahil) gösterdi.`,
-          en: R`Let \(f\) be a continuous function on \([0,1]^n\) and \(\varepsilon > 0\). There are \(H\) and \(v_j, \mathbf w_j, b_j\) such that \(F(\mathbf x) = \sum_{j=1}^{H} v_j\,\sigma(\mathbf w_j\cdot\mathbf x + b_j)\) satisfies \(|F(\mathbf x) - f(\mathbf x)| < \varepsilon\) for every \(\mathbf x\). Cybenko proved it for the sigmoid; Hornik showed it for every bounded, non-constant activation, and Leshno and colleagues (1993) for every non-polynomial activation (ReLU included).` } },
+        text: { tr: R`\(f\), \([0,1]^n\) üzerinde sürekli bir fonksiyon ve \(\varepsilon > 0\) olsun. Öyle bir \(H\) ve \(v_j, \mathbf w_j, b_j\) vardır ki \(F(\mathbf x) = \sum_{j=1}^{H} v_j\,\sigma(\mathbf w_j\cdot\mathbf x + b_j)\) her \(\mathbf x\) için \(|F(\mathbf x) - f(\mathbf x)| < \varepsilon\) sağlar. Cybenko sigmoid için ispatladı; Hornik sürekli, sınırlı ve sabit olmayan her aktivasyon için, Leshno ve arkadaşları (1993) polinom olmayan her aktivasyon için (ReLU dahil) gösterdi.`,
+          en: R`Let \(f\) be a continuous function on \([0,1]^n\) and \(\varepsilon > 0\). There are \(H\) and \(v_j, \mathbf w_j, b_j\) such that \(F(\mathbf x) = \sum_{j=1}^{H} v_j\,\sigma(\mathbf w_j\cdot\mathbf x + b_j)\) satisfies \(|F(\mathbf x) - f(\mathbf x)| < \varepsilon\) for every \(\mathbf x\). Cybenko proved it for the sigmoid; Hornik showed it for every continuous, bounded, non-constant activation, and Leshno and colleagues (1993) for every non-polynomial activation (ReLU included).` } },
       { p: {
         tr: R`Bir boyutta neden doğru olduğunu görmek kolay. Ana fikir: iki sigmoid bir "tepe" yapar, tepelerle de istediğimiz şekli kurarız.`,
         en: R`In one dimension it is easy to see why it is true. The main idea: two sigmoids make a "bump", and with bumps we can build any shape.`,
@@ -301,7 +305,7 @@ const MATH = [
             en: R`\sigma\big(k(x - a)\big) - \sigma\big(k(x - b)\big) \approx \begin{cases} 1 & a < x < b \\ 0 & \text{elsewhere} \end{cases}` },
             why: { tr: R`İki basamağın farkı \([a, b]\) aralığında 1 olan bir tepedir: iki gizli nöron.`, en: R`The difference of two steps is a bump that is 1 on \([a, b]\): two hidden neurons.` } },
           { tex: R`F(x) = \sum_{i=1}^{N} f(c_i)\,\Big[\sigma\big(k(x - a_{i})\big) - \sigma\big(k(x - a_{i+1})\big)\Big]`,
-            why: { tr: R`Aralığı \(N\) parçaya bölün ve her parçaya, ortasındaki \(f(c_i)\) yüksekliğinde bir tepe koyun: \(2N\) nöronluk bir merdiven.`, en: R`Split the interval into \(N\) pieces and put a bump of height \(f(c_i)\), the value at its middle, on each piece: a staircase of \(2N\) neurons.` } },
+            why: { tr: R`\([0, 1]\) aralığını \(N\) eşit parçaya \([a_i, a_{i+1}]\) bölün ve her parçaya, ortasındaki değer \(f(c_i)\) yüksekliğinde bir tepe koyun: \(2N\) nöronluk bir merdiven.`, en: R`Split the interval \([0, 1]\) into \(N\) equal pieces \([a_i, a_{i+1}]\) and put a bump of height \(f(c_i)\), the value at its middle, on each piece: a staircase of \(2N\) neurons.` } },
           { tex: R`|F(x) - f(x)| \le \max_{|x - x'| \le 1/N} |f(x) - f(x')| \xrightarrow{\;N \to \infty\;} 0`,
             why: { tr: R`\(f\) sürekli olduğu için (kapalı aralıkta düzgün sürekli) parçalar inceldikçe merdiven \(f\)'ye istediğimiz kadar yaklaşır (\(k\) yeterince büyük seçilirse).`, en: R`Since \(f\) is continuous (uniformly, on a closed interval), the staircase gets as close to \(f\) as we like as the pieces get thinner (with \(k\) large enough).` } },
         ],
@@ -369,8 +373,8 @@ const CODE = [
     title: PLACE_TITLES["mc-plan"],
     blocks: [
       { p: {
-        tr: R`Bu bölümde, depo kökündeki <code>MLP.py</code>'yi adım adım okuyacağız: tek gizli katmanlı (tanh) ve sigmoid çıktılı bir ağ, çapraz entropi kaybı, mini-batch gradyan inişi ve elle yazılmış geri yayılım. Hepsi NumPy ile, yaklaşık 130 satır. Program üç şey yapar: geri yayılımı sayısal türevle kontrol eder, XOR'u öğrenir ve "iki hilal" verisinde eğri bir sınır öğrenir.`,
-        en: R`In this part we read <code>MLP.py</code> at the root of the repository step by step: a network with one hidden layer (tanh) and a sigmoid output, the cross-entropy loss, mini-batch gradient descent and hand-written backpropagation. All in NumPy, about 130 lines. The program does three things: it checks backpropagation against numerical derivatives, learns XOR and learns a curved boundary on the "two moons" data.`,
+        tr: R`Bu bölümde, depo kökündeki <code>MLP.py</code>'yi adım adım okuyacağız: tek gizli katmanlı (tanh) ve sigmoid çıktılı bir ağ, çapraz entropi kaybı, mini-batch gradyan inişi ve elle yazılmış geri yayılım. Hepsi NumPy ile, yaklaşık 150 satır. Program üç şey yapar: geri yayılımı sayısal türevle kontrol eder, XOR'u öğrenir ve "iki hilal" verisinde eğri bir sınır öğrenir.`,
+        en: R`In this part we read <code>MLP.py</code> at the root of the repository step by step: a network with one hidden layer (tanh) and a sigmoid output, the cross-entropy loss, mini-batch gradient descent and hand-written backpropagation. All in NumPy, about 150 lines. The program does three things: it checks backpropagation against numerical derivatives, learns XOR and learns a curved boundary on the "two moons" data.`,
       } },
       { table: {
         head: [{ tr: "Kodda", en: "In the code" }, { tr: "Şekil", en: "Shape" }, { tr: "Matematikte", en: "In the math" }],
@@ -399,7 +403,7 @@ const CODE = [
         { at: "hidden_units = 8", text: { tr: "Gizli katmandaki nöron sayısı. 2 de XOR için yeter (Teori 2), ama bazen takılır; 8 daha güvenli.", en: "The number of neurons in the hidden layer. 2 is enough for XOR (Theory 2) but sometimes gets stuck; 8 is safer." } },
         { at: "learning_rate = 0.5", text: { tr: "Öğrenme oranı η. Bu küçük ağ için büyük bir değer işe yarıyor.", en: "The learning rate η. A large value works for this small network." } },
         { at: "rng = np.random.default_rng(seed)", text: { tr: "Bütün rastgelelik (ağırlıklar, veri, karıştırma) tek bir üreticiden: aynı seed, aynı sonuç.", en: "All randomness (weights, data, shuffling) comes from one generator: the same seed, the same result." } },
-        { at: "def make_moons(n, noise=0.25):", text: { tr: "Gürültü 0,25: hilaller biraz iç içe geçer; %100 doğruluk mümkün değil.", en: "Noise 0.25: the moons overlap a little; 100% accuracy is not possible." } },
+        { at: "def make_moons(n, noise=0.25):", text: { tr: "Gürültü 0,25: hilaller biraz iç içe geçer; hiçbir sınır yeni noktalarda %100 doğru olamaz.", en: "Noise 0.25: the moons overlap a little; no boundary can be 100% right on new points." } },
       ] } },
     ],
   },
@@ -420,7 +424,7 @@ const CODE = [
     title: PLACE_TITLES["mc-class"],
     blocks: [
       { p: {
-        tr: R`Ağırlıklar rastgele ve \(1/\sqrt{n_{\text{in}}}\) ölçeğinde başlar, biaslar sıfırdan (Matematik, 5. bölüm). <code>forward</code> bir batch'i iki satırda hesaplar ve geri yayılım için ara sonuçları (<code>X</code>, <code>H</code>, <code>Y_hat</code>) saklar.`,
+        tr: R`Ağırlıklar rastgele ve \(1/\sqrt{n_{\text{in}}}\) ölçeğinde başlar, biaslar sıfırdan (Matematik, 5. kısım). <code>forward</code> bir batch'i iki satırda hesaplar ve geri yayılım için ara sonuçları (<code>X</code>, <code>H</code>, <code>Y_hat</code>) saklar.`,
         en: R`The weights start random, at the scale \(1/\sqrt{n_{\text{in}}}\), and the biases at zero (Math, section 5). <code>forward</code> computes a batch in two lines and keeps the intermediate results (<code>X</code>, <code>H</code>, <code>Y_hat</code>) for backpropagation.`,
       } },
       { file: { from: "class MLP:", to: "return self.Y_hat[:, 0]", notes: [
@@ -436,7 +440,7 @@ const CODE = [
     title: PLACE_TITLES["mc-backward"],
     blocks: [
       { p: {
-        tr: R`Kayıp, ortalama çapraz entropi. <code>backward</code> ise Matematik 4. bölümdeki dört denklemin birebir kodudur; tek fark, her şeyin bir batch için matris olarak yazılması ve ortalama alındığı için \(1/n\) çarpanı.`,
+        tr: R`Kayıp, ortalama çapraz entropi. <code>backward</code> ise Matematik 4. kısımdaki dört denklemin birebir kodudur; tek fark, her şeyin bir batch için matris olarak yazılması ve ortalama alındığı için \(1/n\) çarpanı.`,
         en: R`The loss is the mean cross-entropy. <code>backward</code> is the four equations of Math section 4, line for line; the only differences are that everything is written as matrices for a batch, and the factor \(1/n\) because we take the mean.`,
       } },
       { file: { from: "    def loss(self, y_hat, y):", to: "return dW1, db1, dW2, db2", notes: [
@@ -525,20 +529,20 @@ const CODE = [
     title: PLACE_TITLES["mc-exercises"],
     blocks: [
       { list: [
-        { tr: R`<b>Gizli nöron sayısı:</b> <code>hidden_units</code>'i 2'ye indirin ve <code>seed</code>'i 0'dan 9'a değiştirin. XOR kaç seed'de takılıyor? 8 nöronla neden takılmıyor?`, en: R`<b>Hidden neurons:</b> lower <code>hidden_units</code> to 2 and change <code>seed</code> from 0 to 9. For how many seeds does XOR get stuck? Why not with 8 neurons?` },
-        { tr: R`<b>Bir hata ekleyin:</b> <code>backward</code>'da <code>tanh_derivative(self.H)</code>'ı silin. Gradyan kontrolü ne diyor? XOR yine öğreniliyor mu?`, en: R`<b>Add a bug:</b> in <code>backward</code>, delete <code>tanh_derivative(self.H)</code>. What does the gradient check say? Is XOR still learned?` },
-        { tr: R`<b>Sıfırdan başlatın:</b> <code>W1</code> ve <code>W2</code>'yi <code>np.zeros</code> ile başlatın. Ne oluyor? (Matematik, 5. bölüm.)`, en: R`<b>Start from zero:</b> initialize <code>W1</code> and <code>W2</code> with <code>np.zeros</code>. What happens? (Math, section 5.)` },
-        { tr: R`<b>ReLU:</b> gizli katmanda tanh yerine ReLU kullanın: <code>np.maximum(0, Z1)</code> ve türevi <code>(Z1 &gt; 0)</code>. Başlangıç ölçeğini \(\sqrt{2/n_{\text{in}}}\) yapın.`, en: R`<b>ReLU:</b> use ReLU instead of tanh in the hidden layer: <code>np.maximum(0, Z1)</code> and its derivative <code>(Z1 &gt; 0)</code>. Make the starting scale \(\sqrt{2/n_{\text{in}}}\).` },
-        { tr: R`<b>Aşırı uyum:</b> iki hilalde <code>hidden_units = 64</code> ve <code>epochs_moons = 3000</code> yapın, eğitim verisini 40 örneğe indirin. Eğitim ve test doğruluğu nasıl değişiyor?`, en: R`<b>Overfitting:</b> on two moons set <code>hidden_units = 64</code> and <code>epochs_moons = 3000</code>, and cut the training data to 40 examples. How do the training and test accuracy change?` },
+        { tr: R`<b>Gizli nöron sayısı:</b> <code>hidden_units</code>'i 2'ye indirin ve <code>seed</code>'i 0'dan 9'a değiştirin. XOR kaç seed'de takılıyor? 8 nöronla neden takılmıyor? <i>İpucu:</i> takılan bir çalıştırmada kayıp 0,35 civarında kalır (\(\ln 2 / 2\): iki nokta \(\hat y \approx 0{,}5\) alır) ve doğruluk %50'dir; bizim denememizde 10 seed'den 4'ü takıldı. Teori 2'deki "Bazen takılır" notu sebebini anlatır.`, en: R`<b>Hidden neurons:</b> lower <code>hidden_units</code> to 2 and change <code>seed</code> from 0 to 9. For how many seeds does XOR get stuck? Why not with 8 neurons? <i>Hint:</i> in a stuck run the loss stays near 0.35 (\(\ln 2 / 2\): two points get \(\hat y \approx 0.5\)) and the accuracy is 50%; in our run 4 of the 10 seeds got stuck. The "Sometimes it gets stuck" note in Theory 2 explains why.` },
+        { tr: R`<b>Bir hata ekleyin:</b> <code>backward</code>'da <code>* tanh_derivative(self.H)</code>'ı silin. Gradyan kontrolü ne diyor? XOR yine öğreniliyor mu? İki hilal? <i>İpucu:</i> farkın \(10^{-11}\)'den kaç kat büyüdüğüne bakın. Yanlış bir gradyan çoğu zaman yine kabaca doğru yönü gösterir; bu yüzden böyle bir hatayı yalnızca sonuçlara bakarak fark etmek zordur.`, en: R`<b>Add a bug:</b> in <code>backward</code>, delete <code>* tanh_derivative(self.H)</code>. What does the gradient check say? Is XOR still learned? And two moons? <i>Hint:</i> look at how many times larger than \(10^{-11}\) the difference gets. A wrong gradient often still points roughly the right way, which is why such a bug is hard to notice from the results alone.` },
+        { tr: R`<b>Sıfırdan başlatın:</b> <code>W1</code> ve <code>W2</code>'yi <code>np.zeros</code> ile başlatın. Ne oluyor? (Matematik, 5. kısım.) <i>İpucu:</i> tanh ile <code>H = tanh(0) = 0</code> olur; <code>dW2 = H.T @ delta2</code> ve <code>delta1</code>'in içindeki <code>W2</code> neye eşit? Hangi parametre değişebilen tek parametre olarak kalır?`, en: R`<b>Start from zero:</b> initialize <code>W1</code> and <code>W2</code> with <code>np.zeros</code>. What happens? (Math, section 5.) <i>Hint:</i> with tanh, <code>H = tanh(0) = 0</code>; what are <code>dW2 = H.T @ delta2</code> and the <code>W2</code> inside <code>delta1</code> equal to? Which parameter is the only one left that can change?` },
+        { tr: R`<b>Aşırı uyum:</b> iki hilalde <code>hidden_units = 64</code> ve <code>epochs_moons = 3000</code> yapın, eğitim verisini 40 örneğe indirin (<code>make_moons(400)</code> yerine <code>make_moons(40)</code>). Eğitim ve test doğruluğu nasıl değişiyor? <i>Beklenen:</i> eğitimde %100, testte ise öncekinden (%90,5) düşük.`, en: R`<b>Overfitting:</b> on two moons set <code>hidden_units = 64</code> and <code>epochs_moons = 3000</code>, and cut the training data to 40 examples (<code>make_moons(40)</code> instead of <code>make_moons(400)</code>). How do the training and test accuracy change? <i>Expected:</i> 100% in training, and lower than before (90.5%) on the test data.` },
+        { tr: R`<b>ReLU:</b> gizli katmanda tanh yerine ReLU kullanın: <code>forward</code>'da <code>np.maximum(0, self.Z1)</code>, <code>backward</code>'da türev olarak <code>(self.Z1 &gt; 0)</code>. <code>W1</code>'in başlangıç ölçeğini \(\sqrt{2/n_{\text{in}}}\) yapın. <i>Dikkat:</i> gradyan kontrolü şimdi büyük bir fark (\(\sim 10^{-2}\)) gösterebilir, kodunuz doğru olsa bile: XOR'un \((0, 0)\) girdisinde biaslar sıfır olduğu için <code>Z1</code> tam 0'dır, yani ReLU'nun kırık noktasında; orada sayısal türev iki yandaki eğimlerin ortalamasını (\(1/2\)) verir. Kontrolü <code>Z1</code>'in hiçbir yerde tam 0 olmadığı girdilerle, örneğin iki hilal verisiyle yapın.`, en: R`<b>ReLU:</b> use ReLU instead of tanh in the hidden layer: <code>np.maximum(0, self.Z1)</code> in <code>forward</code> and <code>(self.Z1 &gt; 0)</code> as the derivative in <code>backward</code>. Make the starting scale of <code>W1</code> \(\sqrt{2/n_{\text{in}}}\). <i>Careful:</i> the gradient check may now show a large difference (\(\sim 10^{-2}\)) even if your code is right: for XOR's input \((0, 0)\), with zero biases, <code>Z1</code> is exactly 0, at ReLU's kink, where the numerical derivative gives the average of the slopes on the two sides (\(1/2\)). Run the check on inputs where no <code>Z1</code> is exactly 0, for example the two-moons data.` },
       ], ordered: true },
       { callout: "tip", title: { tr: "Deneme alanında da deneyin", en: "Try it in the Playground too" },
-        text: { tr: R`Son alıştırmanın görsel hâli: Deneme alanında az nokta ve çok nöronla sınırın noktaların etrafında nasıl kıvrıldığına bakın.`,
-          en: R`The visual version of the last exercise: in the Playground, with few points and many neurons, watch how the boundary curls around the points.` } },
+        text: { tr: R`4. alıştırmanın görsel hâli: Deneme alanında az nokta ve çok nöronla sınırın noktaların etrafında nasıl kıvrıldığına bakın.`,
+          en: R`The visual version of exercise 4: in the Playground, with few points and many neurons, watch how the boundary curls around the points.` } },
     ],
   },
 ];
 
-createLesson({ tab: "math", main: "#mm-main", toc: "#mm-toc", sections: MATH, widgets: WIDGETS, kicker: { tr: "Bölüm", en: "Section" } });
+createLesson({ tab: "math", main: "#mm-main", toc: "#mm-toc", sections: MATH, widgets: WIDGETS, kicker: { tr: "Kısım", en: "Section" } });
 createLesson({ tab: "code", main: "#mc-main", toc: "#mc-toc", sections: CODE, kicker: { tr: "Adım", en: "Step" },
   source: { url: "/api/source/MLP.py", name: "MLP.py" } });
 })();

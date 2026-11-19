@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title data-en="SimpleCNN Dashboard">SimpleCNN Paneli</title>
+  <title data-en="CNN · Chapter 3">CNN · Bölüm 3</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232a78d6'/%3E%3Cg fill='%23fff'%3E%3Crect x='7' y='7' width='5' height='5' rx='1'/%3E%3Crect x='14' y='7' width='5' height='5' rx='1' opacity='.6'/%3E%3Crect x='21' y='7' width='4' height='5' rx='1' opacity='.3'/%3E%3Crect x='7' y='14' width='5' height='5' rx='1' opacity='.6'/%3E%3Crect x='14' y='14' width='5' height='5' rx='1'/%3E%3Crect x='7' y='21' width='5' height='4' rx='1' opacity='.3'/%3E%3Crect x='21' y='21' width='4' height='4' rx='1'/%3E%3C/g%3E%3C/svg%3E">
   <script>
     // Apply the saved theme before the first paint (no flash of the wrong theme)
@@ -22,8 +22,8 @@
         <button type="button" class="brand-btn" id="chapter-btn" aria-expanded="false" aria-controls="chapter-menu">
           <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7"/><g><rect x="7" y="7" width="5" height="5" rx="1"/><rect x="14" y="7" width="5" height="5" rx="1" opacity=".6"/><rect x="21" y="7" width="4" height="5" rx="1" opacity=".3"/><rect x="7" y="14" width="5" height="5" rx="1" opacity=".6"/><rect x="14" y="14" width="5" height="5" rx="1"/><rect x="7" y="21" width="5" height="4" rx="1" opacity=".3"/><rect x="21" y="21" width="4" height="4" rx="1"/></g></svg>
           <span class="brand-text">
-            <span class="brand-title" data-i18n="top.title">SimpleCNN<span class="h1-tail"> Paneli</span></span>
-            <span class="brand-sub" data-i18n="top.sub">MNIST el yazısı rakamlar · eğitim ve çıkarım</span>
+            <span class="brand-title" data-i18n="top.title">Evrişimli ağ<span class="h1-tail"> (CNN)</span></span>
+            <span class="brand-sub" data-i18n="top.sub">Bölüm 3 · SimpleCNN: MNIST'te eğitim ve çıkarım</span>
           </span>
           <svg class="brand-caret" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg>
         </button>
@@ -168,7 +168,7 @@
           <div class="chart" id="chart-acc" data-height="220"></div>
         </div>
       </div>
-      <p class="footnote" data-i18n="train.footnote">Eğitim kaybı doğrulamadan yüksek görünebilir: eğitimde Dropout açık, doğrulamada kapalıdır.</p>
+      <p class="footnote" data-i18n="train.footnote">Eğitim kaybı doğrulamadan yüksek görünebilir: eğitimde Dropout açık, doğrulamada kapalıdır; ayrıca eğitim kaybı epoch boyunca, model henüz gelişirken ortalanır.</p>
 
       <div class="row two">
         <div class="card">
@@ -288,7 +288,9 @@
       <div class="card t-intro">
         <div class="t-intro-text">
           <h2 data-i18n="th.intro.h">Evrişimli sinir ağı (CNN) nasıl çalışır?</h2>
-          <p data-i18n="th.intro.p1">Bir [[cnn|CNN]], görüntüdeki yerel desenleri (kenar, köşe, kıvrım) küçük [[kernel|filtrelerle]] yakalar ve bu desenleri katman katman birleştirerek "bu bir 7" gibi bir karara varır. Aşağıdaki her bölüm SimpleCNN'in bir yapı taşını açıklar. Örnekler, yukarıda seçili görüntü ve modelin gerçek [[parameter|ağırlıklarıyla]] tarayıcınızda canlı hesaplanır.</p>
+          <p data-i18n="th.intro.p1"><a href="/mlp#teori/ml-images" data-go="theory:ml-images" data-chapter="mlp">Bölüm 2</a>'nin sonunda MLP'nin görüntülerdeki iki zayıflığını gördük: görüntüyü 784 sayılık bir vektöre düzleştirdiği için piksellerin komşuluğunu bilmez ve aynı çizgiyi her konumda ayrı ağırlıklarla yeniden öğrenmek zorundadır. Bir [[cnn|CNN]] (evrişimli sinir ağı) ikisini iki fikirle çözer: <b>yerel bağlantı</b> (her nöron görüntünün yalnızca küçük bir bölgesine bakar) ve <b>ağırlık paylaşımı</b> (aynı küçük [[kernel|filtre]] görüntünün her yerinde kullanılır). Böylece kenar, köşe, kıvrım gibi yerel desenleri yakalar ve onları katman katman birleştirerek "bu bir 7" gibi bir karara varır.</p>
+          <p data-i18n="th.intro.prev">Geri kalanı önceki bölümlerden tanıdık: her nöron yine <a href="/perceptron#teori/p-neuron" data-go="theory:p-neuron" data-chapter="perceptron">Bölüm 1</a>'deki hesabı yapar (ağırlıklı toplam, bias, aktivasyon), ağ yine bir [[loss|kaybı]] [[backprop|geri yayılım]] ve [[gradient-descent|gradyan inişiyle]] küçülterek öğrenir ve SimpleCNN'in son iki katmanı küçük bir [[mlp|MLP]]'dir. Fikrin kökü Kunihiko Fukushima'nın <i>Neocognitron</i>'udur (1980); Yann LeCun ve arkadaşları 1989'da evrişimli bir ağı geri yayılımla eğitip el yazısı posta kodlarını okuttu. Örnekler, yukarıda seçili görüntü ve modelin gerçek [[parameter|ağırlıklarıyla]] tarayıcınızda canlı hesaplanır.</p>
+          <p data-i18n="th.intro.goals"><b>Bu bölümün sonunda</b> bir evrişim çıktısının tek bir pikselini elle hesaplayabilecek ve katman çıktılarının boyutunu bulabileceksiniz; havuzlama, BatchNorm ve Dropout'un ne yaptığını ve eğitimde ve [[inference|çıkarımda]] nasıl farklı davrandıklarını açıklayabileceksiniz; SimpleCNN'in 28×28 bir görüntüyü 10 olasılığa nasıl çevirdiğini adım adım izleyebileceksiniz. Kısımlar verinin ağdaki sırasını izler. En uzunu BatchNorm (2); ilk okumada onu atlayıp sonra dönebilirsiniz.</p>
           <p data-i18n="th.intro.p2"><b>Eğitimin etkisini görmek için</b> sağ alttaki <b>Gösterilen model</b> anahtarıyla <i>Eğitim öncesi</i> ve <i>Eğitilmiş</i> arasında geçiş yapın: eğitim öncesi model, eğitimin başladığı rastgele ağırlıklardır. Filtrelerin, [[feature-map|öznitelik haritalarının]] ve tahminin nasıl değiştiğine bakın.</p>
         </div>
         <figure class="schematic">
@@ -296,7 +298,7 @@
             <svg id="t-schematic" viewBox="0 0 1120 262" role="img"
                  aria-label="SimpleCNN mimarisi: 1×28×28 giriş, Conv 5×5 (32 filtre) + BatchNorm + ReLU ile 32×24×24, MaxPool ve Dropout ile 32×12×12, Conv 5×5 (64 filtre) + BatchNorm + ReLU ile 64×8×8, MaxPool ve Dropout ile 64×4×4, 1024 değerlik vektör, 512 nöronluk FC1 ve 10 sınıflı Softmax çıkışı. Eğitimde kayıp geri yayılımla tüm ağırlıkları günceller." data-i18n-attr="aria-label=a.schematic"></svg>
           </div>
-          <figcaption data-i18n="th.schem.cap">Her yığın bir katmanın çıktısıdır: yüksekliği uzamsal boyutu (28 → 4), derinliği [[channel|kanal]] sayısını gösterir. Öndeki görüntüler seçili rakam için gerçek çıktılardır; evrişim bloklarında yukarıda seçili filtre, ikinci blokta en güçlü tepki veren harita gösterilir. Okların üzerindeki işlemlere tıklayarak ilgili bölüme gidin.</figcaption>
+          <figcaption data-i18n="th.schem.cap">Her yığın bir katmanın çıktısıdır: yüksekliği uzamsal boyutu (28 → 4), derinliği [[channel|kanal]] sayısını gösterir. Öndeki görüntüler seçili rakam için gerçek çıktılardır: ilk evrişim bloğunda yukarıda seçili filtrenin haritası, ikinci blokta en güçlü tepki veren harita gösterilir. Okların üzerindeki işlemlere tıklayarak ilgili bölüme gidin.</figcaption>
         </figure>
         <div class="t-filters" id="t-filters">
           <p class="sub"><span id="t-filters-title">Modelin öğrendiği 32 Conv1 filtresi.</span> <span data-i18n="th.filters.tail">Birine tıklayarak örneklerde kullanılacak filtreyi seçin (mavi negatif, kırmızı pozitif ağırlık).</span></p>
@@ -308,12 +310,14 @@
       <article class="card t-section" id="t-conv">
         <div class="t-text">
           <div class="t-head"><span class="t-num">1</span><h2 data-i18n="th.conv.h">Evrişim (Convolution)</h2></div>
-          <p data-i18n="th.conv.p1">Evrişim katmanı, [[kernel|<b>çekirdek</b>]] (kernel, filtre) denen küçük bir ağırlık matrisini görüntünün üzerinde kaydırır. Her konumda çekirdek ile altındaki piksellerin eleman eleman çarpımları toplanır ve [[parameter|bias]] eklenir; sonuç, çıktının bir pikseli olur. Ortaya çıkan [[feature-map|<b>öznitelik haritası</b>]], filtrenin aradığı desenin görüntünün <i>neresinde</i> bulunduğunu gösterir.</p>
+          <p data-i18n="th.conv.p1">Evrişim katmanı, [[kernel|<b>çekirdek</b>]] (kernel, filtre) denen küçük bir ağırlık matrisini görüntünün üzerinde kaydırır. Her konumda çekirdek ile altındaki piksellerin eleman eleman çarpımları toplanır ve [[bias|bias]] eklenir; sonuç, çıktının bir pikseli olur. Bu, Bölüm 1'deki nöronun hesabının aynısıdır (ağırlıklı toplam + bias); fark, bu nöronun 784 pikselin hepsine değil yalnızca çekirdeğin altındaki küçük bölgeye bakmasıdır. Ortaya çıkan [[feature-map|<b>öznitelik haritası</b>]], filtrenin aradığı desenin görüntünün <i>neresinde</i> ve ne kadar güçlü bulunduğunu gösterir.</p>
           <div class="formula">\(\displaystyle y_{i,j} = \sum_{m}\sum_{n} x_{i\cdot s+m,\; j\cdot s+n}\, w_{m,n} + b\)</div>
-          <p data-i18n="th.conv.p2">Aynı çekirdek görüntünün her yerinde kullanılır (<b>ağırlık paylaşımı</b>). Böylece az [[parameter|parametreyle]], desen nerede olursa olsun yakalanır. Filtre değerleri elle seçilmez, eğitimde öğrenilir.</p>
+          <p data-i18n="th.conv.xcorr"><b>Not:</b> Matematikteki evrişimde çekirdek önce 180° döndürülür. PyTorch'un <code>nn.Conv2d</code>'si, yukarıdaki formül ve buradaki örnekler döndürmeden çarpar; bunun adı çapraz korelasyondur. Filtreler öğrenildiği için fark önemsizdir: gerekirse ağ döndürülmüş filtreyi öğrenir.</p>
+          <p data-i18n="th.conv.p2">Aynı çekirdek görüntünün her yerinde kullanılır (<b>ağırlık paylaşımı</b>). Bölüm 2'deki MLP'de tek bir gizli nöron 784 + 1 = 785 [[parameter|parametre]] taşır ve her ağırlığı tek bir piksel konumuna bağlıdır; Conv1'in bir filtresi ise 25 + 1 = 26 parametreyle 24×24 = 576 konumun hepsine bakar. Üstelik rakam bir piksel kayarsa öznitelik haritası da bir piksel kayar: desen aynı filtreyle yine bulunur. Filtre değerleri elle seçilmez, eğitimde [[backprop|geri yayılımla]] öğrenilir; menüdeki Sobel gibi çekirdekler ise klasik görüntü işlemede elle tasarlanmış örneklerdir.</p>
           <p data-i18n="th.conv.p3">Çıktı boyutunu çekirdek boyutu <i>k</i>, [[padding|dolgu]] (padding) <i>p</i> ve [[stride|adım]] (stride) <i>s</i> belirler:</p>
           <div class="formula">\(\displaystyle H_{\text{out}} = \left\lfloor \frac{H_{\text{in}} - k + 2p}{s} \right\rfloor + 1\)<span class="formula-live" id="t-conv-size"></span></div>
-          <div class="in-model" data-i18n="th.conv.model"><b>SimpleCNN'de:</b> Conv1, 32 adet 5×5 filtreyle 28×28 girişten 32 harita (24×24) üretir. Conv2, 64 filtreyle 12×12'den 8×8'e iner. Conv1'in toplam [[parameter|parametre]] sayısı yalnızca 32·(5·5) + 32 = 832'dir.</div>
+          <p data-i18n="th.conv.try"><b>Deneyin:</b> <i>Dikey kenar</i> çekirdeğini seçip <b>▶ Kaydır</b>'a basın: rakamın dikey çizgilerinin bir yanında kırmızı (pozitif), öbür yanında mavi (negatif) bir şerit oluşur; yatay çizgilerin ortası ise neredeyse sıfır kalır. Sonra <i>Yatay kenar</i>'a geçin. Padding'i 1 yapın: 3×3 çekirdekte çıktı girişle aynı boyutta (28×28) kalır; stride 2 ise boyutu yaklaşık yarıya indirir (26 → 13). Son olarak <i>Modelin filtresi</i>'ni seçin ve sağ alttaki anahtarla eğitim öncesini ve sonrasını karşılaştırın.</p>
+          <div class="in-model" data-i18n="th.conv.model"><b>SimpleCNN'de:</b> Conv1, 32 adet 5×5 filtreyle 1×28×28 girişten 32 harita (24×24) üretir: 32·(5·5) + 32 = 832 [[parameter|parametre]]. Conv2'nin girişinde 32 [[channel|kanal]] vardır ve her filtresi bunların hepsine birden bakar: bir Conv2 filtresi 32×5×5 ağırlıktır ve 32 kanaldaki bütün çarpımlar tek bir toplamda birleşir. 64 filtre 12×12'den 64 adet 8×8 harita üretir: 64·(32·5·5) + 64 = 51.264 parametre. İki evrişim katmanı birlikte 52.096 parametredir, Bölüm 2'deki 512 nöronlu tek bir gizli katmanın (401.920) yaklaşık sekizde biri.</div>
         </div>
         <div class="t-demo">
           <div class="t-controls">
@@ -427,10 +431,11 @@
       <article class="card t-section" id="t-act">
         <div class="t-text">
           <div class="t-head"><span class="t-num">3</span><h2 data-i18n="th.act.h">Aktivasyon fonksiyonu</h2></div>
-          <p data-i18n="th.act.p1">[[convolution|Evrişim]] ve [[fully-connected|tam bağlı]] katmanlar <b>doğrusal</b> işlemlerdir. Kaç tanesini üst üste koyarsanız koyun, sonuç yine tek bir doğrusal işleme eşittir ve ağ karmaşık desenleri öğrenemez. Her katmandan sonra uygulanan <b>doğrusal olmayan</b> bir aktivasyon fonksiyonu bu sınırı kaldırır.</p>
+          <p data-i18n="th.act.p1">[[activation|Aktivasyon fonksiyonlarını]] <a href="/mlp#teori/ml-act" data-go="theory:ml-act" data-chapter="mlp">Bölüm 2</a>'de türevleriyle birlikte gördük. Hatırlatma: [[convolution|evrişim]] ve [[fully-connected|tam bağlı]] katmanlar <b>doğrusal</b> işlemlerdir; araya <b>doğrusal olmayan</b> bir fonksiyon girmezse kaç tanesini üst üste koyarsanız koyun sonuç tek bir doğrusal katmana eşit olur. CNN'de yeni olan tek şey, aktivasyonun bir öznitelik haritasının her pikseline ayrı ayrı uygulanmasıdır: haritanın boyutu değişmez, yalnızca değerleri değişir.</p>
           <div class="formula" id="t-act-formula"></div>
           <p id="t-act-desc"></p>
-          <div class="in-model" data-i18n="th.act.model"><b>SimpleCNN'de:</b> [[relu|ReLU]], her [[batchnorm|BatchNorm]]'dan sonra ve FC1'in çıkışında kullanılır. Hızlı hesaplanır ve pozitif tarafta [[gradient|gradyanı]] küçültmez (sönümlenen gradyan sorunu yaşamaz).</div>
+          <p data-i18n="th.act.try"><b>Deneyin:</b> ReLU ile Sigmoid'i karşılaştırın. ReLU'dan sonra haritanın büyük kısmı tam 0'dır (örnekteki "Negatif değerlerin oranı" kadarı); geriye yalnızca filtrenin güçlü tepki verdiği yerler kalır. Sigmoid'den sonra hiçbir değer 0 olmaz: desenin olmadığı yerler bile 0 ile 0,5 arasında bir değer taşır.</p>
+          <div class="in-model" data-i18n="th.act.model"><b>SimpleCNN'de:</b> [[relu|ReLU]], her [[batchnorm|BatchNorm]]'dan sonra ve FC1'in çıkışında kullanılır. Hesabı ucuzdur ve pozitif tarafta türevi 1 olduğu için [[gradient|gradyanı]] küçültmez; Bölüm 2'deki [[vanishing-gradient|kaybolan gradyan]] sorununu büyük ölçüde azaltır. Bedeli: negatif tarafta türevi 0'dır; hiçbir girdide pozitif olmayan bir nöron hiç öğrenemez ("ölü ReLU"). Leaky ReLU bunun için vardır.</div>
         </div>
         <div class="t-demo">
           <div class="t-controls"><div class="seg" id="t-act-seg" role="group" aria-label="Aktivasyon fonksiyonu" data-i18n-attr="aria-label=a.act"></div></div>
@@ -449,10 +454,11 @@
       <article class="card t-section" id="t-pool">
         <div class="t-text">
           <div class="t-head"><span class="t-num">4</span><h2 data-i18n="th.pool.h">Havuzlama (Pooling)</h2></div>
-          <p data-i18n="th.pool.p1">Havuzlama katmanı [[feature-map|öznitelik haritasını]] küçültür. Harita çakışmayan küçük bölgelere ayrılır ve her bölgeden tek bir değer alınır: <b>max pooling</b> en büyük değeri, <b>average pooling</b> ortalamayı seçer.</p>
+          <p data-i18n="th.pool.p1">Havuzlama katmanı [[feature-map|öznitelik haritasını]] küçültür. Harita çakışmayan küçük bölgelere ayrılır ve her bölgeden tek bir değer alınır: <b>max pooling</b> en büyük değeri, <b>average pooling</b> ortalamayı seçer. Her [[channel|kanal]] ayrı ayrı havuzlanır: kanal sayısı değişmez, yalnızca yükseklik ve genişlik küçülür.</p>
           <div class="formula">\(\displaystyle y_{i,j} = \max_{m,n \in \{0,1\}} x_{2i+m,\; 2j+n}\)</div>
-          <p data-i18n="th.pool.p2">Böylece sonraki katmanların hesap yükü azalır ve desenin birkaç piksel kayması sonucu pek değiştirmez (küçük kaymalara dayanıklılık). Ayrıca sonraki katmanların [[receptive-field|algı alanı]] büyür. Havuzlamanın öğrenilen bir [[parameter|parametresi]] yoktur.</p>
-          <div class="in-model" data-i18n="th.pool.model"><b>SimpleCNN'de:</b> İki evrişim bloğunun sonunda 2×2 max pooling ([[stride|stride]] 2) kullanılır: 24×24 → 12×12 ve 8×8 → 4×4. Her biri değer sayısını dörtte birine indirir.</div>
+          <p data-i18n="th.pool.p2">Böylece sonraki katmanların hesap yükü azalır. Max pooling, bir desenin 2×2 bölgenin içinde tam nerede olduğunu önemsemediği için bir piksellik kaymalarda sonuç çoğu zaman değişmez (küçük kaymalara dayanıklılık; tam bir kayma değişmezliği değil). Ayrıca sonraki katmanların [[receptive-field|algı alanı]] büyür: Conv2'nin 5×5 filtresi 12×12'lik haritada 5×5 değere, yani giriş görüntüsünde 14×14 piksellik bir bölgeye bakar. Havuzlamanın öğrenilen bir [[parameter|parametresi]] yoktur.</p>
+          <p data-i18n="th.pool.try"><b>Deneyin:</b> Çıktının üzerinde gezinip her değerin hangi 2×2 bölgeden geldiğine bakın. Sonra <i>Average pooling</i>'e geçin: ince çizgiler soluklaşır, çünkü güçlü bir değer bölgedeki zayıf komşularıyla ortalanır; max pooling ise en güçlü tepkiyi korur.</p>
+          <div class="in-model" data-i18n="th.pool.model"><b>SimpleCNN'de:</b> İki evrişim bloğunun sonunda 2×2 max pooling ([[stride|stride]] 2) kullanılır: 32×24×24 → 32×12×12 ve 64×8×8 → 64×4×4. Her biri değer sayısını dörtte birine indirir. Son havuzlamadan çıkan bir değer, giriş görüntüsünün 16×16 piksellik bir bölgesine bağlıdır.</div>
         </div>
         <div class="t-demo">
           <div class="t-controls"><div class="seg" id="t-pool-seg" role="group" aria-label="Havuzlama türü" data-i18n-attr="aria-label=a.pool"></div></div>
@@ -476,10 +482,11 @@
       <article class="card t-section" id="t-drop">
         <div class="t-text">
           <div class="t-head"><span class="t-num">5</span><h2>Dropout</h2></div>
-          <p data-i18n="th.drop.p1">Dropout, <b>eğitim sırasında</b> her [[forward-pass|ileri geçişte]] değerlerin rastgele bir kısmını (oran <i>p</i>) sıfırlar. Her adımda farklı bir alt ağ eğitilmiş olur. Ağ tek tek nöronlara güvenemez, birbirini tamamlayan sağlam öznitelikler öğrenir; bu da ezberlemeyi ([[overfitting|overfitting]]) azaltır.</p>
+          <p data-i18n="th.drop.p1">Dropout, <b>yalnızca eğitim sırasında</b> her [[forward-pass|ileri hesapta]] değerlerin rastgele bir kısmını (oran <i>p</i>) sıfırlar. Her adımda farklı bir alt ağ eğitilmiş olur. Hiçbir nöron belirli komşularının orada olacağına güvenemez; her öznitelik tek başına da işe yarar olmak zorundadır. Bu, eğitim verisini ezberlemeyi ([[overfitting|overfitting]]) azaltır.</p>
           <div class="formula" data-i18n="th.drop.f">\(\displaystyle \tilde{h} = \begin{cases} 0 & \text{olasılık } p \\ \dfrac{h}{1-p} & \text{olasılık } 1-p \end{cases}\)</div>
-          <p data-i18n="th.drop.p2">Kalan değerler 1/(1 − p) ile büyütülür; böylece ortalama aktivasyon değişmez ve [[inference|<b>çıkarımda</b>]] Dropout hiçbir şey yapmaz, tüm değerler olduğu gibi geçer.</p>
-          <div class="in-model" data-i18n="th.drop.model"><b>SimpleCNN'de:</b> İlk havuzlamadan sonra p = 0,45, ikinciden sonra p = 0,35. Eğitim [[loss|kaybının]] [[val-set|doğrulama]] kaybından yüksek görünmesinin bir nedeni de budur.</div>
+          <p data-i18n="th.drop.p2">Kalan değerler 1/(1 − p) ile büyütülür; böylece her değerin ortalaması (beklenen değeri) değişmez: \((1-p)\cdot \frac{h}{1-p} = h\). Bu sayede [[inference|<b>çıkarımda</b>]] Dropout hiçbir şey yapmaz: tüm değerler olduğu gibi geçer ve sonuç rastgele değildir.</p>
+          <p data-i18n="th.drop.try"><b>Deneyin:</b> <i>Eğitim</i> modunda <b>Yeni maske</b>'ye birkaç kez basın: her seferinde başka değerler sıfırlanır. p'yi büyütün: sıfırlanan oran p'ye yaklaşır, ama 1/(1 − p) ile ölçeklenmiş ortalama öncekine yakın kalır. Sonra <i>Çıkarım</i>'a geçin: hiçbir değer değişmez.</p>
+          <div class="in-model" data-i18n="th.drop.model"><b>SimpleCNN'de:</b> İlk havuzlamadan sonra p = 0,45, ikinciden sonra p = 0,35. Eğitim [[loss|kaybının]] [[val-set|doğrulama]] kaybından yüksek görünmesinin bir nedeni budur; öbür nedeni, eğitim kaybının epoch boyunca, model henüz gelişirken ölçülüp ortalanmasıdır.</div>
         </div>
         <div class="t-demo" data-needs-model>
           <p class="no-model-msg" data-i18n="th.nomodel">Bu örnek eğitilmiş modelin ağırlıklarını kullanır. Önce Eğitim sekmesinden modeli eğitin.</p>
@@ -501,12 +508,13 @@
       <article class="card t-section" id="t-softmax">
         <div class="t-text">
           <div class="t-head"><span class="t-num">6</span><h2 data-i18n="th.sm.h">Tam bağlı katman, Softmax ve kayıp</h2></div>
-          <p data-i18n="th.sm.p1">Son havuzlamanın çıktısı (64×4×4 = 1024 değer) tek bir vektöre [[flatten|düzleştirilir]] ve [[fully-connected|<b>tam bağlı</b>]] (fully connected) katmanlara verilir. Burada her çıkış nöronu, tüm girişlerin ağırlıklı toplamıdır:</p>
-          <div class="formula">\(\displaystyle y_j = h\Big(\sum_i w_{ji}\, x_i + b_j\Big)\)</div>
-          <p data-i18n="th.sm.p2">Son katman her rakam için bir [[logit|<b>skor</b>]] (logit) üretir. [[softmax|<b>Softmax</b>]] bu skorları toplamı 1 olan olasılıklara çevirir; en yüksek skor en yüksek olasılığı alır:</p>
+          <p data-i18n="th.sm.p1">Son havuzlamanın çıktısı (64×4×4 = 1024 değer) tek bir vektöre [[flatten|düzleştirilir]] ve [[fully-connected|<b>tam bağlı</b>]] (fully connected) katmanlara verilir. Bu kısım <a href="/mlp#teori/ml-images" data-go="theory:ml-images" data-chapter="mlp">Bölüm 2</a>'deki MLP'nin ta kendisidir; tek fark, girişinin ham pikseller değil evrişim bloklarının çıkardığı 1024 öznitelik olmasıdır. Düzleştirmek burada sorun değildir, çünkü yerel desenleri evrişim katmanları zaten buldu. Her nöron yine tüm girişlerin ağırlıklı toplamını alır:</p>
+          <div class="formula">\(\displaystyle a_j = f\Big(\sum_i w_{ji}\, x_i + b_j\Big)\)</div>
+          <p data-i18n="th.sm.p2">Son katman her rakam için bir [[logit|<b>skor</b>]] (logit) üretir. Bölüm 2'de iki sınıf için tek bir sigmoid çıktısı yetiyordu; 10 sınıfta [[softmax|<b>softmax</b>]] bu 10 skoru toplamı 1 olan olasılıklara çevirir. En yüksek skor en yüksek olasılığı alır; bütün skorlara aynı sayıyı eklemek olasılıkları değiştirmez:</p>
           <div class="formula">\(\displaystyle p_k = \frac{e^{z_k}}{\sum_j e^{z_j}}\)</div>
-          <p data-i18n="th.sm.p3">[[loss|<b>Kayıp</b>]], tahminin ne kadar yanlış olduğunu tek bir sayıyla ölçer. Sınıflandırmada [[cross-entropy|<b>Cross-Entropy</b>]] kullanılır: doğru sınıfa verilen olasılık p ise kayıp −log p'dir. Doğru sınıftan emin olan model sıfıra yakın kayıp alır, doğru sınıfa düşük olasılık veren model büyük ceza alır.</p>
+          <p data-i18n="th.sm.p3">[[loss|<b>Kayıp</b>]] da Bölüm 2'deki [[cross-entropy|<b>çapraz entropinin</b>]] (cross-entropy) 10 sınıflı hâlidir: doğru sınıfa verilen olasılık \(p\) ise kayıp \(-\log p\)'dir. Doğru sınıftan emin olan model sıfıra yakın kayıp alır, doğru sınıfa düşük olasılık veren model büyük ceza alır. Çıktıdaki gradyan da yine çok basittir: her skor için \(p_k - y_k\) (\(y_k\) doğru sınıfta 1, ötekilerde 0); Bölüm 2'deki \(\hat y - y\)'nin aynısı.</p>
           <div class="formula" data-i18n="th.sm.f">\(\displaystyle L = -\log p_{\text{doğru sınıf}}\)<span class="formula-live" id="t-ce-live"></span></div>
+          <p data-i18n="th.sm.try"><b>Deneyin:</b> <b>Hepsini 0 yap</b>'a basın: her rakam %10 alır ve kayıp \(-\log 0{,}1 \approx 2{,}30\) olur; Eğitim sekmesindeki kayıp da eğitimin başında bu değere yakındır. Sonra doğru sınıfın skorunu artırın: kayıp 0'a yaklaşır. Yanlış bir rakamın skorunu artırınca kayıp hızla büyür.</p>
           <div class="in-model" data-i18n="th.sm.model"><b>SimpleCNN'de:</b> FC1 1024 → 512 ([[relu|ReLU]]), FC2 512 → 10. Modelde ayrı bir Softmax katmanı yoktur; <code>nn.CrossEntropyLoss</code> softmax'ı kendi içinde uygular.</div>
         </div>
         <div class="t-demo">
@@ -523,7 +531,7 @@
             <div>
               <div class="mini-title" data-i18n="th.sm.label">Doğru sınıf</div>
               <div class="seg digits" id="t-ce-label" role="group" aria-label="Doğru sınıf" data-i18n-attr="aria-label=a.cls"></div>
-              <div class="ce-value"><span data-i18n="th.sm.ce">Cross-Entropy kaybı</span><strong id="t-ce-value">—</strong></div>
+              <div class="ce-value"><span data-i18n="th.sm.ce">Çapraz entropi kaybı</span><strong id="t-ce-value">—</strong></div>
             </div>
             <div><div class="mini-title" data-i18n="th.sm.plot">Kayıp \(= -\log p\), doğru sınıfın olasılığına göre (turuncu nokta: şu anki durum)</div><div class="chart" id="t-ce-plot" data-height="170"></div></div>
           </div>
@@ -534,9 +542,9 @@
       <article class="card t-section" id="t-opt">
         <div class="t-text">
           <div class="t-head"><span class="t-num">7</span><h2 data-i18n="th.opt.h">Geri yayılım ve optimizasyon</h2></div>
-          <p data-i18n="th.opt.p1">Eğitim, [[loss|kaybı]] en küçük yapan [[parameter|ağırlıkları]] arar. [[backprop|<b>Geri yayılım</b>]] (backpropagation), zincir kuralıyla kaybın her ağırlığa göre türevini, yani [[gradient|<b>gradyanı</b>]] hesaplar. Gradyan kaybın en hızlı arttığı yönü gösterir; [[gradient-descent|<b>gradyan inişi</b>]] ağırlıkları bunun tersi yönünde küçük adımlarla günceller:</p>
+          <p data-i18n="th.opt.p1">Eğitim, [[loss|kaybı]] en küçük yapan [[parameter|ağırlıkları]] arar. Yöntem <a href="/mlp#teori/ml-backprop" data-go="theory:ml-backprop" data-chapter="mlp">Bölüm 2</a>'dekiyle aynıdır: [[backprop|<b>geri yayılım</b>]] zincir kuralıyla kaybın her ağırlığa göre türevini, yani [[gradient|<b>gradyanı</b>]] hesaplar; [[gradient-descent|<b>gradyan inişi</b>]] ağırlıkları gradyanın tersi yönünde küçük adımlarla günceller. Evrişimde tek yenilik şudur: bir filtre ağırlığı her konumda kullanıldığı için gradyanı, bütün konumlardan gelen katkıların toplamıdır.</p>
           <div class="formula">\(\displaystyle \theta \leftarrow \theta - \eta\, \nabla L(\theta)\)</div>
-          <p data-i18n="th.opt.p2">Üç yöntem de aynı gradyanı kullanır ama adımı farklı hesaplar. Adımın ölçeğini [[learning-rate|<b>öğrenme oranı</b>]] η belirler. Sağda üçünü aynı kayıp yüzeyinde yarıştırın: yüzeyi sürükleyerek döndürün, bir noktasına tıklayıp oradan başlatın, adım kaydırıcısıyla zamanda ileri geri gidin.</p>
+          <p data-i18n="th.opt.p2">Üç yöntem de aynı gradyanı kullanır ama adımı farklı hesaplar. Adımın ölçeğini [[learning-rate|<b>öğrenme oranı</b>]] η belirler. Sağda üçünü aynı kayıp yüzeyinde yarıştırın: yüzeyi sürükleyerek döndürün, bir noktasına tıklayıp oradan başlatın, adım kaydırıcısıyla zamanda ileri geri gidin. Bu yüzeyler iki parametreli oyuncak örneklerdir ve gradyan tam hesaplanır. SimpleCNN'in kayıp yüzeyi 582.218 boyutludur ve gradyanı her [[batch|batch]]'te biraz gürültülüdür (SGD'deki "stokastik" buradan gelir); ama dar vadiler ve eyer noktaları orada da vardır.</p>
           <div class="opt-methods" id="t-opt-methods"></div>
           <div class="in-model" data-i18n="th.opt.model"><b>SimpleCNN'de:</b> [[adam|Adam]], η = 0,001 ile kullanılır. Her [[batch|batch]]'te <code>loss.backward()</code> gradyanları hesaplar, <code>optimizer.step()</code> ağırlıkları günceller (Eğitim sekmesindeki 5 adım).</div>
         </div>
@@ -558,12 +566,22 @@
           <div><div class="mini-title" id="t-opt-loss-title"></div><div class="chart" id="t-opt-loss" data-height="170"></div></div>
         </div>
       </article>
+
+      <!-- Recap and self-check (reuses the intro card's text styles) -->
+      <div class="card t-intro" id="t-recap">
+        <div class="t-intro-text">
+          <h2 data-i18n="th.recap.h">Özet ve kendinizi sınayın</h2>
+          <p data-i18n="th.recap.p"><b>Özet:</b> Bir CNN, MLP'nin nöronunu, kaybını ve öğrenme yöntemini olduğu gibi kullanır; yeni olan, görüntünün yapısına uygun katmanlardır. [[convolution|<b>Evrişim</b>]] küçük bir filtreyi her konumda yeniden kullanarak yerel desenleri bulur; [[batchnorm|<b>BatchNorm</b>]] her kanalı ortak bir ölçeğe getirip eğitimi kolaylaştırır; [[relu|<b>ReLU</b>]] doğrusal olmayan adımı ekler; [[pooling|<b>havuzlama</b>]] haritaları küçültüp algı alanını büyütür; [[dropout|<b>Dropout</b>]] eğitimde ezberlemeyi azaltır. Sonda düzleştirilen öznitelikleri bir MLP sınıflandırır; softmax ve çapraz entropi tahmini ölçer, geri yayılım ve Adam 582.218 parametrenin hepsini günceller. BatchNorm ve Dropout, eğitimde ve çıkarımda farklı davranan iki katmandır.</p>
+          <p data-i18n="th.recap.q"><b>Kendinizi sınayın:</b> (1) 28×28 bir girişe 3×3'lük bir filtre padding 0, stride 1 ile uygulanırsa çıktı kaç × kaç olur? (2) Bir Conv2 filtresinde kaç ağırlık vardır ve neden 25 değil? (3) Dropout çıkarımda neden kapalıdır ve eğitimde kalan değerler neden 1/(1 − p) ile büyütülür? (4) Bütün skorları 0 olan bir modelin çapraz entropi kaybı kaçtır? Önce kendiniz cevaplayın, sonra aşağıdan kontrol edin.</p>
+          <details class="t-answers" data-i18n="th.recap.a"><summary>Cevaplar</summary><p>(1) \((28 - 3 + 2\cdot 0)/1 + 1 = 26\), yani 26×26 (Evrişim kısmındaki formül). (2) 32·5·5 = 800 ağırlık (ve 1 bias): Conv2'nin girdisinde 32 kanal vardır ve her filtre hepsine birden bakar. (3) Çıkarımda tahminin rastgele değil, ağın tamamından gelmesini isteriz; eğitimde kalan değerler 1/(1 − p) ile büyütüldüğü için her değerin beklenen değeri zaten aynıdır, çıkarımda bir düzeltme gerekmez. (4) Her rakam %10 alır: \(-\log 0{,}1 = \ln 10 \approx 2{,}30\).</p></details>
+        </div>
+      </div>
     </section>
 
     <!-- ============================== CODING ============================== -->
     <section class="panel" id="panel-math" role="tabpanel" aria-labelledby="tab-math" hidden>
       <div class="tut">
-        <nav class="tut-toc" aria-label="Matematik bölümleri" data-i18n-attr="aria-label=a.mtoc">
+        <nav class="tut-toc" aria-label="Matematik kısımları" data-i18n-attr="aria-label=a.mtoc">
           <div class="tut-toc-head">
             <span class="tb-label" data-i18n="math.kicker">Formüllerle</span>
             <strong data-i18n="math.title">CNN'in matematiği</strong>

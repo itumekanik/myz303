@@ -574,7 +574,8 @@ function nextChapterCard() {
   const inner = [h("span", { text: L({ tr: "Sıradaki bölüm:", en: "Next chapter:" }) }),
     h("strong", { text: `${k + 2} · ${L(next.title)}` })];
   return next.url
-    ? h("a", { class: "pc-next link", href: next.url }, ...inner, h("span", { class: "pc-next-go", text: "→" }))
+    // a learner who finishes a chapter starts the next one with its theory, not its training tab
+    ? h("a", { class: "pc-next link", href: next.url + TAB_HASHES.theory }, ...inner, h("span", { class: "pc-next-go", text: "→" }))
     : h("div", { class: "pc-next" }, ...inner, h("span", { class: "ch-soon", text: L({ tr: "yakında", en: "coming soon" }) }));
 }
 

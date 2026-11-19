@@ -5,8 +5,9 @@
  *
  * Texts are { tr, en } pairs of HTML; formulas are LaTeX between \( and \) (typeset by
  * math.js), [[key|text]] links a glossary term and <a data-go="tab:section"> links another
- * tab. Uses the helpers from i18n.js, app.js and glossary.js (h, $, L, navigate, termify,
- * placeLabel, fmtNum, texNum).
+ * tab (add data-chapter="mlp" for another chapter's page). Blocks: p, list, h, eq, derive, widget,
+ * model, callout, table, links ([tab, section, chapter?]). Uses the helpers from i18n.js, app.js and
+ * glossary.js (h, $, L, navigate, termify, placeLabel, fmtNum, texNum).
  */
 (() => {
 const R = String.raw;
@@ -21,14 +22,25 @@ const SECTIONS = [
     title: { tr: "Gösterim, boyutlar ve parametreler", en: "Notation, shapes and parameters" },
     blocks: [
       { p: {
-        tr: R`Teori sekmesinde her yapı taşının ne yaptığını görsel olarak gördük. Burada aynı yapı taşlarını formüllerle ele alıyoruz: her bölümde önce <b>ileri yayılım</b> (girdiden çıktıyı hesaplamak), sonra eğitim için gereken <b>geri yayılım</b> (türevler) var. Türetmeleri <b>Sonraki adım</b> düğmesiyle satır satır açabilir, etkileşimli örneklerde sayıları değiştirip formüllerin nasıl tepki verdiğini görebilirsiniz.`,
+        tr: R`Teori sekmesinde her yapı taşının ne yaptığını görsel olarak gördük. Burada aynı yapı taşlarını formüllerle ele alıyoruz: her kısımda önce <b>ileri yayılım</b> (girdiden çıktıyı hesaplamak), sonra eğitim için gereken <b>geri yayılım</b> (türevler) var. Türetmeleri <b>Sonraki adım</b> düğmesiyle satır satır açabilir, etkileşimli örneklerde sayıları değiştirip formüllerin nasıl tepki verdiğini görebilirsiniz.`,
         en: R`The Theory tab showed what each building block does. Here we take the same blocks with formulas: every section first gives the <b>forward pass</b> (computing the output from the input), then the <b>backward pass</b> (the derivatives) that training needs. Open derivations line by line with the <b>Next step</b> button, and change the numbers in the interactive examples to see how the formulas react.`,
       } },
+      { p: {
+        tr: R`Bu sekme, <a href="#" data-go="math:mm-forward" data-chapter="mlp">MLP bölümünün Matematik sekmesinin</a> devamıdır. Orada ileri hesabı, aktivasyon türevlerini, çapraz entropinin gradyanı \(\hat y - y\)'yi, geri yayılımın dört denklemini ve başlangıç ağırlıklarını türettiniz. Bunları burada yeniden türetmiyoruz, kısaca hatırlatıp kullanıyoruz. Yeni olan, CNN'e özgü katmanlardır. Bu sekmenin sonunda şunları yapabileceksiniz:`,
+        en: R`This tab continues <a href="#" data-go="math:mm-forward" data-chapter="mlp">chapter 2's Math tab</a>. There you derived the forward pass, the activation derivatives, the cross-entropy gradient \(\hat y - y\), the four equations of backpropagation and the initial weights. We do not derive them again here; we recall them briefly and use them. What is new are the layers specific to a CNN. By the end of this tab you will be able to:`,
+      } },
+      { list: [
+        { tr: R`bir evrişim katmanının çıktı boyutunu, parametre sayısını ve işlem sayısını hesaplamak (kısım 2);`, en: R`compute a convolution layer's output size, number of parameters and number of operations (section 2);` },
+        { tr: R`evrişim, BatchNorm, havuzlama ve dropout için \(\delta_y\)'den \(\delta_x\)'e giden geri kuralı yazmak (kısım 2, 3, 5, 6);`, en: R`write the backward rule from \(\delta_y\) to \(\delta_x\) for convolution, BatchNorm, pooling and dropout (sections 2, 3, 5, 6);` },
+        { tr: R`MLP bölümündeki \(\hat y - y\) gradyanının 10 sınıfta \(\mathbf p - \mathbf y\) olduğunu göstermek (kısım 8);`, en: R`show that chapter 2's gradient \(\hat y - y\) becomes \(\mathbf p - \mathbf y\) for 10 classes (section 8);` },
+        { tr: R`SimpleCNN'in bütün geri yayılımını bu kurallardan kurmak ve Adam'ın güncelleme kuralını okumak (kısım 9, 10).`, en: R`assemble SimpleCNN's whole backward pass from these rules and read Adam's update rule (sections 9, 10).` },
+      ] },
       { h: { tr: "Semboller", en: "Symbols" } },
       { table: {
         head: [{ tr: "Sembol", en: "Symbol" }, { tr: "Anlamı", en: "Meaning" }],
         rows: [
-          [R`\(x,\ y\)`, { tr: "bir katmanın girdisi ve çıktısı", en: "a layer's input and output" }],
+          [R`\(x,\ y\)`, { tr: R`bir katmanın girdisi ve çıktısı (8. kısımda \(\mathbf y\), MLP bölümündeki gibi doğru etiketi gösterir)`, en: R`a layer's input and output (in section 8, \(\mathbf y\) is the correct label, as in chapter 2)` }],
+          [R`\(z,\ a = f(z)\)`, { tr: "aktivasyondan önceki ve sonraki değer (MLP bölümündeki gibi)", en: "the value before and after the activation (as in chapter 2)" }],
           [R`\(w,\ \mathbf{W},\ b\)`, { tr: "ağırlıklar (tek tek ve matris olarak) ve bias", en: "weights (one by one and as a matrix) and bias" }],
           [R`\(N,\ C,\ H\times W\)`, { tr: "batch'teki görüntü sayısı, kanal sayısı, yükseklik × genişlik", en: "images in the batch, number of channels, height × width" }],
           [R`\(L\)`, { tr: "kayıp: bütün batch için tek bir sayı", en: "the loss: a single number for the whole batch" }],
@@ -39,8 +51,8 @@ const SECTIONS = [
         ],
       } },
       { callout: "info", title: { tr: "Neden hep δ?", en: "Why δ everywhere?" }, text: {
-        tr: R`Geri yayılımda her katman, çıktısına göre türevi \(\delta_y\) alır, girdisine göre türevi \(\delta_x\) hesaplar ve bir önceki katmana verir. Her bölümde bu kuralı, yani \(\delta_y\)'den \(\delta_x\)'e nasıl gidileceğini yazacağız.`,
-        en: R`In backpropagation every layer receives the derivative with respect to its output, \(\delta_y\), computes the derivative with respect to its input, \(\delta_x\), and passes it to the layer before. Each section writes down this rule: how to get from \(\delta_y\) to \(\delta_x\).`,
+        tr: R`Geri yayılımda her katman, çıktısına göre türevi \(\delta_y\) alır, girdisine göre türevi \(\delta_x\) hesaplar ve bir önceki katmana verir. Her kısımda bu kuralı, yani \(\delta_y\)'den \(\delta_x\)'e nasıl gidileceğini yazacağız. MLP bölümünde \(\boldsymbol\delta^{(l)} = \partial L/\partial\mathbf z^{(l)}\) idi: tam bağlı katmanın çıktısına göre türev. Burada her işlemi (evrişim, BatchNorm, ReLU, havuzlama…) ayrı bir katman sayıyoruz ve \(\delta_y\) o işlemin çıktısına göre türevdir; tam bağlı bir katman için ikisi aynı şeydir.`,
+        en: R`In backpropagation every layer receives the derivative with respect to its output, \(\delta_y\), computes the derivative with respect to its input, \(\delta_x\), and passes it to the layer before. Each section writes down this rule: how to get from \(\delta_y\) to \(\delta_x\). In chapter 2, \(\boldsymbol\delta^{(l)} = \partial L/\partial\mathbf z^{(l)}\): the derivative with respect to a fully connected layer's output. Here every operation (convolution, BatchNorm, ReLU, pooling…) counts as a layer of its own, and \(\delta_y\) is the derivative with respect to that operation's output; for a fully connected layer the two are the same thing.`,
       } },
       { h: { tr: "SimpleCNN'in boyutları", en: "SimpleCNN's shapes" } },
       { table: {
@@ -67,10 +79,10 @@ const SECTIONS = [
       } },
       { eq: R`w \sim \mathcal{U}\!\left(-\frac{1}{\sqrt{n_{\text{in}}}},\ \frac{1}{\sqrt{n_{\text{in}}}}\right)` },
       { p: {
-        tr: R`\(n_{\text{in}}\), bir çıkışın bağlı olduğu giriş sayısıdır (fan-in): Conv1'de \(1\cdot5\cdot5 = 25\), yani ağırlıklar ±0,2 aralığında; FC1'de 1024, yani ±0,031. Aralığın \(n_{\text{in}}\) ile daralmasının nedeni şudur: \(\operatorname{Var}(w) = \frac{1}{3n_{\text{in}}}\) olduğundan, \(n_{\text{in}}\) terimli \(\sum_i w_i x_i\) toplamının varyansı \(n_{\text{in}}\cdot\frac{1}{3n_{\text{in}}}\,\mathbb{E}[x^2] = \frac{1}{3}\,\mathbb{E}[x^2]\) olur ve giriş sayısından bağımsızdır. Böylece değerler katmandan katmana patlamaz ya da sönmez. BatchNorm'da başlangıçta \(\gamma = 1,\ \beta = 0\)'dır. Paneldeki <b>eğitim öncesi</b> model tam olarak bu ağırlıklardır.`,
-        en: R`\(n_{\text{in}}\) is the number of inputs an output is connected to (fan-in): 25 for Conv1 (\(1\cdot5\cdot5\)), so the weights are within ±0.2; 1024 for FC1, so ±0.031. The range shrinks with \(n_{\text{in}}\) for a reason: since \(\operatorname{Var}(w) = \frac{1}{3n_{\text{in}}}\), the variance of the sum \(\sum_i w_i x_i\) of \(n_{\text{in}}\) terms is \(n_{\text{in}}\cdot\frac{1}{3n_{\text{in}}}\,\mathbb{E}[x^2] = \frac{1}{3}\,\mathbb{E}[x^2]\), independent of the number of inputs. So values neither explode nor vanish from layer to layer. BatchNorm starts with \(\gamma = 1,\ \beta = 0\). The dashboard's <b>before-training</b> model is exactly these weights.`,
+        tr: R`\(n_{\text{in}}\), bir çıkışın bağlı olduğu giriş sayısıdır (fan-in): Conv1'de \(1\cdot5\cdot5 = 25\), yani ağırlıklar ±0,2 aralığında; FC1'de 1024, yani ±0,031. Bu dağılımın varyansı \(\operatorname{Var}(w) = \frac{1}{3n_{\text{in}}}\)'tir. <a href="#" data-go="math:mm-train" data-chapter="mlp">MLP bölümündeki</a> hesapla, \(n_{\text{in}}\) terimli \(\sum_i w_i x_i\) toplamının varyansı \(n_{\text{in}}\cdot\frac{1}{3n_{\text{in}}}\,\mathbb{E}[x^2] = \frac{1}{3}\,\mathbb{E}[x^2]\) olur: giriş sayısından bağımsızdır, ama oradaki LeCun kuralının (\(\operatorname{Var}(w) = 1/n_{\text{in}}\)) üçte biri, ReLU için önerilen He kuralının (\(2/n_{\text{in}}\)) altıda biridir. Yani bu başlangıçla sinyal, normalleştirme olmasa ReLU'lu her katmanda varyans olarak yaklaşık 6 kat küçülürdü. SimpleCNN'de bu bir sorun değildir: her evrişimden sonra gelen BatchNorm (3. kısım) ölçeği yeniden ayarlar, sonda da yalnızca iki tam bağlı katman vardır. BatchNorm'da başlangıçta \(\gamma = 1,\ \beta = 0\)'dır. Paneldeki <b>eğitim öncesi</b> model tam olarak bu ağırlıklardır.`,
+        en: R`\(n_{\text{in}}\) is the number of inputs an output is connected to (fan-in): 25 for Conv1 (\(1\cdot5\cdot5\)), so the weights are within ±0.2; 1024 for FC1, so ±0.031. This distribution has variance \(\operatorname{Var}(w) = \frac{1}{3n_{\text{in}}}\). With the calculation from <a href="#" data-go="math:mm-train" data-chapter="mlp">chapter 2</a>, the variance of the sum \(\sum_i w_i x_i\) of \(n_{\text{in}}\) terms is \(n_{\text{in}}\cdot\frac{1}{3n_{\text{in}}}\,\mathbb{E}[x^2] = \frac{1}{3}\,\mathbb{E}[x^2]\): independent of the number of inputs, but a third of what the LeCun rule there gives (\(\operatorname{Var}(w) = 1/n_{\text{in}}\)) and a sixth of the He rule recommended for ReLU (\(2/n_{\text{in}}\)). So with this start, and without normalization, the signal's variance would shrink about 6-fold in every layer with a ReLU. In SimpleCNN this is not a problem: the BatchNorm after every convolution (section 3) resets the scale, and at the end there are only two fully connected layers. BatchNorm starts with \(\gamma = 1,\ \beta = 0\). The dashboard's <b>before-training</b> model is exactly these weights.`,
       } },
-      { links: [["theory", "t-schematic"], ["code", "c-model"]] },
+      { links: [["theory", "t-schematic"], ["code", "c-model"], ["math", "mm-train", "mlp"]] },
     ],
   },
 
@@ -121,8 +133,8 @@ const SECTIONS = [
           tr: R`\(y_{i,j}\)'nin toplamında \(w_{m,n}\) yalnızca bir terimde geçer ve o terimin çarpanı \(x_{i+m,\,j+n}\)'dir.`,
           en: R`\(w_{m,n}\) appears in only one term of the sum for \(y_{i,j}\), multiplied by \(x_{i+m,\,j+n}\).` } },
         { tex: R`\frac{\partial L}{\partial w_{m,n}} = \sum_{i,j} \delta_{i,j}\; x_{i+m,\;j+n} \qquad \frac{\partial L}{\partial b} = \sum_{i,j}\delta_{i,j}`, why: {
-          tr: R`Sonuç yine bir korelasyondur: girdi bu kez filtreyle değil, çıktı gradyanı \(\delta\) ile taranır.`,
-          en: R`The result is again a correlation: this time the input is scanned with the output gradient \(\delta\) instead of the filter.` } },
+          tr: R`Sonuç yine bir korelasyondur: girdi bu kez filtreyle değil, çıktı gradyanı \(\delta\) ile taranır. Bu, MLP bölümündeki (3) denkleminin (gradyan = girdi × hata) ağırlık paylaşımlı hâlidir: ağırlığın kullanıldığı bütün konumların "girdi × hata" katkıları toplanır.`,
+          en: R`The result is again a correlation: this time the input is scanned with the output gradient \(\delta\) instead of the filter. This is chapter 2's equation (3) (gradient = input × error) with weight sharing: the "input × error" contributions of every position where the weight is used add up.` } },
         { tex: R`\frac{\partial L}{\partial x_{u,v}} = \sum_{m,n} \delta_{u-m,\;v-n}\; w_{m,n}`, why: {
           tr: R`Girdi pikseli \(x_{u,v}\), filtrenin \((m,n)\) hücresi üzerine geldiği her çıktıyı, yani \(y_{u-m,\,v-n}\)'yi etkiler. Görüntünün dışına düşen \(\delta\) değerleri sıfır sayılır.`,
           en: R`The input pixel \(x_{u,v}\) affects every output where the filter's cell \((m,n)\) lands on it, i.e. \(y_{u-m,\,v-n}\). \(\delta\) values outside the image count as zero.` } },
@@ -130,6 +142,10 @@ const SECTIONS = [
           tr: R`Bu, kenarlarına \(k-1\) sıra sıfır eklenmiş \(\delta\)'nın, 180° çevrilmiş filtreyle korelasyonudur (\(\star\): ileri yayılımdaki işlem). İleri yayılımda çevirmediğimiz filtre, geri yayılımda çevrilmiş olarak karşımıza çıkar.`,
           en: R`This is a correlation (\(\star\), the forward operation) of \(\delta\), padded with \(k-1\) rows of zeros, with the filter rotated by 180°. The filter we did not flip in the forward pass shows up flipped in the backward pass.` } },
       ] } },
+      { p: {
+        tr: R`Çok kanallı katmanda aynı kurallar her (çıkış kanalı \(o\), giriş kanalı \(c\)) çifti için geçerlidir: \(\dfrac{\partial L}{\partial w_{o,c,m,n}} = \sum_{i,j}\delta_{o,i,j}\,x_{c,\,i+m,\,j+n}\) ve \(\delta_{x,c} = \sum_{o}\operatorname{pad}_{k-1}(\delta_{y,o}) \star \operatorname{rot}_{180}(w_{o,c})\). Her giriş kanalı, kendisine bakan bütün çıkış kanallarının gradyanlarını toplar; tam bağlı katmandaki \(\mathbf W^\top\boldsymbol\delta\)'nın evrişimdeki karşılığı budur.`,
+        en: R`In a multi-channel layer the same rules hold for every pair (output channel \(o\), input channel \(c\)): \(\dfrac{\partial L}{\partial w_{o,c,m,n}} = \sum_{i,j}\delta_{o,i,j}\,x_{c,\,i+m,\,j+n}\) and \(\delta_{x,c} = \sum_{o}\operatorname{pad}_{k-1}(\delta_{y,o}) \star \operatorname{rot}_{180}(w_{o,c})\). Every input channel collects the gradients of all the output channels that look at it; this is the convolutional counterpart of the fully connected layer's \(\mathbf W^\top\boldsymbol\delta\).`,
+      } },
       { model: {
         tr: R`<b>SimpleCNN'de:</b> Conv1'in ağırlık gradyanı, batch'teki 256 görüntünün her birinde 24×24 konumun katkılarının toplamıdır (kayıp batch ortalaması olduğu için \(1/256\) ile ölçeklenir). Conv1'in girdi gradyanı ise hiç hesaplanmaz: giriş görüntüsü öğrenilen bir şey değildir.`,
         en: R`<b>In SimpleCNN:</b> Conv1's weight gradient sums the contributions of 24×24 positions in each of the 256 images of the batch (scaled by \(1/256\), since the loss is the batch mean). Conv1's input gradient is not computed at all: the input image is not learned.`,
@@ -144,8 +160,8 @@ const SECTIONS = [
     title: { tr: "Batch Normalization", en: "Batch normalization" },
     blocks: [
       { p: {
-        tr: R`[[batchnorm|BatchNorm]] her kanal için ayrı çalışır. Bir kanalın batch'teki bütün değerleri \(x_1,\dots,x_m\) olsun; Conv1'den sonra \(m = N\cdot H\cdot W = 256\cdot24\cdot24 = 147.456\). Eğitimde dört adım uygulanır:`,
-        en: R`[[batchnorm|BatchNorm]] works on each channel separately. Let \(x_1,\dots,x_m\) be all values of one channel in the batch; after Conv1, \(m = N\cdot H\cdot W = 256\cdot24\cdot24 = 147{,}456\). Training applies four steps:`,
+        tr: R`MLP bölümünde sinyalin ölçeğini başlangıç ağırlıklarını dikkatle seçerek korumaya çalıştık; [[batchnorm|BatchNorm]] bunu eğitimin her adımında, ölçeği veriden ölçerek yapar. Her kanal için ayrı çalışır. Bir kanalın batch'teki bütün değerleri \(x_1,\dots,x_m\) olsun; Conv1'den sonra \(m = N\cdot H\cdot W = 256\cdot24\cdot24 = 147.456\). Eğitimde dört adım uygulanır:`,
+        en: R`In chapter 2 we tried to keep the signal's scale by choosing the initial weights carefully; [[batchnorm|BatchNorm]] does it at every training step, by measuring the scale from the data. It works on each channel separately. Let \(x_1,\dots,x_m\) be all values of one channel in the batch; after Conv1, \(m = N\cdot H\cdot W = 256\cdot24\cdot24 = 147{,}456\). Training applies four steps:`,
       } },
       { eq: R`\mu = \frac{1}{m}\sum_{i=1}^{m} x_i \qquad \sigma^2 = \frac{1}{m}\sum_{i=1}^{m}(x_i-\mu)^2 \qquad \hat{x}_i = \frac{x_i-\mu}{\sqrt{\sigma^2+\varepsilon}} \qquad y_i = \gamma\,\hat{x}_i + \beta` },
       { p: {
@@ -193,6 +209,10 @@ const SECTIONS = [
           tr: R`3. ve 4. adımı yerine koyup sadeleştirince. Yorum: gelen gradyandan ortalaması ve \(\hat x\) yönündeki bileşeni çıkarılır; bu yüzden \(\sum_i \partial L/\partial x_i = 0\). Kanalın bütün değerlerini birlikte kaydırmak normalleştirmenin sonucunu değiştirmez, gradyan da bu yönde sıfırdır.`,
           en: R`Substituting steps 3 and 4 and simplifying. Reading: the mean of the incoming gradient and its component along \(\hat x\) are removed, so \(\sum_i \partial L/\partial x_i = 0\). Shifting all values of a channel together does not change the normalized result, so the gradient in that direction is zero.` } },
       ] } },
+      { p: {
+        tr: R`Son satırın bir sonucu: BatchNorm'dan hemen önceki evrişimin bias'ı \(b_o\), kanalın bütün değerlerine aynı miktarda eklenir, yani gradyanı \(\partial L/\partial b_o = \sum_i \partial L/\partial x_i = 0\)'dır (yuvarlama hataları dışında). Ortalama çıkarılınca bias zaten yok olur; bu yüzden BatchNorm'dan önceki evrişimlerde genellikle <code>bias=False</code> yazılır. SimpleCNN'de Conv1 ve Conv2'nin 32 + 64 = 96 bias'ı bu nedenle gereksizdir (bu sekmenin 1. kısmındaki tabloda sayıldılar).`,
+        en: R`A consequence of the last line: the bias \(b_o\) of the convolution right before BatchNorm is added equally to every value of the channel, so its gradient is \(\partial L/\partial b_o = \sum_i \partial L/\partial x_i = 0\) (up to rounding errors). Subtracting the mean removes the bias anyway; that is why convolutions before BatchNorm are usually written with <code>bias=False</code>. In SimpleCNN the 32 + 64 = 96 biases of Conv1 and Conv2 are therefore redundant (the table in section 1 counts them).`,
+      } },
       { links: [["theory", "t-bn"]] },
     ],
   },
@@ -203,13 +223,13 @@ const SECTIONS = [
     title: { tr: "Aktivasyon fonksiyonları ve türevleri", en: "Activation functions and their derivatives" },
     blocks: [
       { p: {
-        tr: R`[[activation|Aktivasyon]] her değere ayrı uygulanır: \(a_i = f(z_i)\). Bu yüzden geri yayılımı da eleman eleman ve çok basittir:`,
-        en: R`An [[activation|activation]] is applied to every value separately: \(a_i = f(z_i)\). Its backward pass is therefore element-wise and very simple:`,
+        tr: R`Bu bölüm büyük ölçüde <a href="#" data-go="math:mm-act" data-chapter="mlp">MLP bölümünün</a> kısa bir hatırlatmasıdır. [[activation|Aktivasyon]] her değere ayrı uygulanır: \(a_i = f(z_i)\). Bu yüzden geri yayılımı da eleman eleman ve çok basittir; MLP bölümündeki (2) denkleminin \(\odot f'(\mathbf z^{(l)})\) çarpanı tam olarak budur:`,
+        en: R`This section is mostly a short recap of <a href="#" data-go="math:mm-act" data-chapter="mlp">chapter 2</a>. An [[activation|activation]] is applied to every value separately: \(a_i = f(z_i)\). Its backward pass is therefore element-wise and very simple; it is exactly the factor \(\odot f'(\mathbf z^{(l)})\) in chapter 2's equation (2):`,
       } },
       { eq: R`\frac{\partial L}{\partial z_i} = f'(z_i)\;\frac{\partial L}{\partial a_i} \qquad\Longleftrightarrow\qquad \delta_z = f'(z)\odot\delta_a` },
       { p: {
-        tr: R`Yani bir aktivasyonun eğitime etkisini <b>türevi</b> belirler. Üç fonksiyonu ve türevlerini karşılaştırın:`,
-        en: R`So an activation's effect on training is set by its <b>derivative</b>. Compare three functions and their derivatives:`,
+        tr: R`Yani bir aktivasyonun eğitime etkisini <b>türevi</b> belirler. Üç fonksiyonu ve türevlerini karşılaştırın; ℓ kaydırıcısıyla katman sayısını artırıp sigmoid'le ReLU arasında gradyanın kaç kat küçüldüğüne bakın:`,
+        en: R`So an activation's effect on training is set by its <b>derivative</b>. Compare three functions and their derivatives; raise the number of layers with the ℓ slider and see how many times smaller the gradient gets with the sigmoid compared with ReLU:`,
       } },
       { widget: "act" },
       { h: { tr: "ReLU", en: "ReLU" } },
@@ -218,8 +238,8 @@ const SECTIONS = [
         tr: R`[[relu|ReLU]] geri yayılımda bir kapıdır: pozitif girişlerde gradyanı olduğu gibi geçirir, negatiflerde durdurur (\(z = 0\)'da türev tanımsızdır, PyTorch 0 alır). Hiçbir girişte pozitif olmayan bir nöron hiç gradyan almaz ve bir daha öğrenemez; buna "ölü ReLU" denir.`,
         en: R`[[relu|ReLU]] is a gate in the backward pass: it lets the gradient through unchanged for positive inputs and blocks it for negative ones (the derivative is undefined at \(z = 0\); PyTorch uses 0). A neuron that is never positive gets no gradient and can never learn again: a "dead ReLU".`,
       } },
-      { h: { tr: "Sigmoid ve gradyanın sönümlenmesi", en: "Sigmoid and vanishing gradients" } },
-      { derive: { title: { tr: "Sigmoid'in türevi", en: "The derivative of the sigmoid" }, steps: [
+      { h: { tr: "Sigmoid ve kaybolan gradyan", en: "Sigmoid and the vanishing gradient" } },
+      { derive: { title: { tr: "Hatırlatma: sigmoid'in türevi (MLP bölümü)", en: "Recap: the derivative of the sigmoid (chapter 2)" }, steps: [
         { tex: R`\sigma(z) = \frac{1}{1+e^{-z}} = \left(1+e^{-z}\right)^{-1}`, why: { tr: "Tanım.", en: "The definition." } },
         { tex: R`\sigma'(z) = -\left(1+e^{-z}\right)^{-2}\cdot\left(-e^{-z}\right) = \frac{e^{-z}}{\left(1+e^{-z}\right)^2}`, why: {
           tr: R`Zincir kuralı: dış fonksiyon \(u^{-1}\), iç fonksiyon \(u = 1+e^{-z}\).`,
@@ -232,10 +252,10 @@ const SECTIONS = [
           en: R`\(u(1-u)\) is largest at \(u = 1/2\).` } },
       ] } },
       { p: {
-        tr: R`Gradyan \(\ell\) katman geriye giderken her katmanda bir \(f'\) ile çarpılır. Sigmoid'de bu çarpanların her biri en fazla \(1/4\) olduğu için (ağırlıkların etkisi bir yana) gradyan \((1/4)^\ell\) hızıyla küçülür: 10 katmanda yaklaşık milyonda bire iner. ReLU'nun pozitif taraftaki türevi 1 olduğu için bu sorun yaşanmaz; derin ağlarda ReLU'nun tercih edilmesinin ana nedeni budur. Tanh, sigmoid'in ölçeklenmiş hâlidir: \(\tanh(z) = 2\sigma(2z)-1\), \(\tanh'(z) = 1-\tanh^2(z)\). Türevi en fazla 1'dir ama \(|z|\) büyüdükçe o da sıfıra yaklaşır (doyma).`,
-        en: R`Going back through \(\ell\) layers, the gradient is multiplied by an \(f'\) in every layer. For the sigmoid each factor is at most \(1/4\), so (leaving the weights aside) the gradient shrinks like \((1/4)^\ell\): to about one millionth after 10 layers. ReLU's derivative is 1 on the positive side, so it does not have this problem; that is the main reason deep networks prefer it. Tanh is a rescaled sigmoid: \(\tanh(z) = 2\sigma(2z)-1\), \(\tanh'(z) = 1-\tanh^2(z)\). Its derivative is at most 1, but it also approaches zero as \(|z|\) grows (saturation).`,
+        tr: R`Gradyan \(\ell\) katman geriye giderken her katmanda bir \(f'\) ile çarpılır. Sigmoid'de bu çarpanların her biri en fazla \(1/4\) olduğu için (ağırlıkların etkisi bir yana) gradyan \((1/4)^\ell\) hızıyla küçülür: 10 katmanda yaklaşık milyonda bire iner ([[vanishing-gradient|kaybolan gradyan]]). ReLU'nun pozitif taraftaki türevi 1 olduğu için bu sorun yaşanmaz; derin ağlarda ReLU'nun tercih edilmesinin ana nedeni budur. Tanh, sigmoid'in ölçeklenmiş hâlidir: \(\tanh(z) = 2\sigma(2z)-1\), \(\tanh'(z) = 1-\tanh^2(z)\). Türevi en fazla 1'dir ama \(|z|\) büyüdükçe o da sıfıra yaklaşır (doyma).`,
+        en: R`Going back through \(\ell\) layers, the gradient is multiplied by an \(f'\) in every layer. For the sigmoid each factor is at most \(1/4\), so (leaving the weights aside) the gradient shrinks like \((1/4)^\ell\): to about one millionth after 10 layers (the [[vanishing-gradient|vanishing gradient]]). ReLU's derivative is 1 on the positive side, so it does not have this problem; that is the main reason deep networks prefer it. Tanh is a rescaled sigmoid: \(\tanh(z) = 2\sigma(2z)-1\), \(\tanh'(z) = 1-\tanh^2(z)\). Its derivative is at most 1, but it also approaches zero as \(|z|\) grows (saturation).`,
       } },
-      { links: [["theory", "t-act"]] },
+      { links: [["theory", "t-act"], ["math", "mm-act", "mlp"]] },
     ],
   },
 
@@ -256,8 +276,8 @@ const SECTIONS = [
       } },
       { eq: R`\frac{\partial L}{\partial x_{u,v}} = \delta_{i,j}\cdot\mathbb{1}\!\left[(u,v) = \arg\max_{(i,j)\text{ penceresi}} x\right]`, eqEn: R`\frac{\partial L}{\partial x_{u,v}} = \delta_{i,j}\cdot\mathbb{1}\!\left[(u,v) = \arg\max_{\text{window }(i,j)} x\right]` },
       { p: {
-        tr: R`PyTorch ileri yayılımda kazananın konumunu saklar ve geri yayılımda gradyanı oraya yazar; diğer üç konum sıfır alır. Average pooling'de ise gradyan dört konuma eşit paylaştırılır: \(\delta_{i,j}/4\). Aşağıda deneyin:`,
-        en: R`PyTorch remembers the winner's position in the forward pass and writes the gradient there in the backward pass; the other three positions get zero. With average pooling the gradient is split equally over the four positions: \(\delta_{i,j}/4\). Try it below:`,
+        tr: R`PyTorch ileri yayılımda kazananın konumunu saklar ve geri yayılımda gradyanı oraya yazar; diğer üç konum sıfır alır. Average pooling'de ise gradyan dört konuma eşit paylaştırılır: \(\delta_{i,j}/4\). Aşağıda deneyin: max ile average arasında geçiş yapın ve <b>Yeni sayılar</b>'a basın. Max pooling'de 16 girdi konumundan kaçı gradyan alıyor? Average pooling'de kaçı?`,
+        en: R`PyTorch remembers the winner's position in the forward pass and writes the gradient there in the backward pass; the other three positions get zero. With average pooling the gradient is split equally over the four positions: \(\delta_{i,j}/4\). Try it below: switch between max and average and press <b>New numbers</b>. With max pooling, how many of the 16 input positions get a gradient? With average pooling?`,
       } },
       { widget: "pool" },
       { h: { tr: "Algı alanı nasıl büyür?", en: "How the receptive field grows" } },
@@ -310,6 +330,10 @@ const SECTIONS = [
         en: R`The backward pass uses the same mask: dropped values get no gradient, and the gradient of the others is scaled up by the same factor:`,
       } },
       { eq: R`\frac{\partial L}{\partial h_i} = \frac{r_i}{1-p}\,\frac{\partial L}{\partial \tilde h_i}` },
+      { p: {
+        tr: R`Aşağıda \(p\)'yi değiştirin ve <b>Yeni maske</b>'ye birkaç kez basın: tek bir maskenin çıktısı her seferinde değişir, ama 10.000 maskenin ortalaması \(h\)'de kalır. \(p\)'yi 0,9'a doğru götürünce ölçülen varyansın \(\frac{p}{1-p}h^2\) formülüne uyarak ne kadar hızlı büyüdüğüne bakın.`,
+        en: R`Below, change \(p\) and press <b>New mask</b> a few times: the output of a single mask changes every time, but the mean of 10,000 masks stays at \(h\). Move \(p\) towards 0.9 and watch how fast the measured variance grows, following the formula \(\frac{p}{1-p}h^2\).`,
+      } },
       { widget: "drop" },
       { model: {
         tr: R`<b>SimpleCNN'de:</b> \(p = 0{,}45\) → kalanlar \(1/0{,}55 \approx 1{,}82\) ile; \(p = 0{,}35\) → \(1/0{,}65 \approx 1{,}54\) ile büyütülür.`,
@@ -334,6 +358,10 @@ const SECTIONS = [
         en: R`The [[fully-connected|fully connected layer]] multiplies this vector by a matrix and adds a bias. In FC1, \(\mathbf{W}\in\mathbb{R}^{512\times1024}\):`,
       } },
       { eq: R`\mathbf{y} = \mathbf{W}\mathbf{x} + \mathbf{b} \qquad y_j = \sum_{i} W_{j i}\, x_i + b_j` },
+      { p: {
+        tr: R`Bu, <a href="#" data-go="math:mm-forward" data-chapter="mlp">MLP bölümündeki</a> \(\mathbf z^{(l)} = \mathbf W^{(l)}\mathbf a^{(l-1)} + \mathbf b^{(l)}\) satırının ta kendisidir: FC1 ve FC2, SimpleCNN'in sonunda 1024 → 512 → 10 bir MLP oluşturur. Aşağıdaki gradyanlar da MLP bölümünün (3) ve (4) denklemleri ile (2)'nin \(\mathbf W^\top\boldsymbol\delta\) kısmıdır; burada kısaca tekrar ediyoruz.`,
+        en: R`This is exactly the line \(\mathbf z^{(l)} = \mathbf W^{(l)}\mathbf a^{(l-1)} + \mathbf b^{(l)}\) of <a href="#" data-go="math:mm-forward" data-chapter="mlp">chapter 2</a>: FC1 and FC2 form a 1024 → 512 → 10 MLP at the end of SimpleCNN. The gradients below are chapter 2's equations (3) and (4) and the \(\mathbf W^\top\boldsymbol\delta\) part of (2); we repeat them briefly here.`,
+      } },
       { h: { tr: "Geri yayılım", en: "Backward pass" } },
       { derive: { title: { tr: "Matris, bias ve girdi gradyanı", en: "Matrix, bias and input gradients" }, steps: [
         { tex: R`\frac{\partial y_j}{\partial W_{ji}} = x_i \;\;\Rightarrow\;\; \frac{\partial L}{\partial W_{ji}} = \delta_j\, x_i`, why: {
@@ -344,7 +372,7 @@ const SECTIONS = [
           en: R`All \((j,i)\) together form an outer product: \(512\times1\) times \(1\times1024\) = \(512\times1024\), the shape of \(\mathbf{W}\). A gradient always has the shape of its parameter; an easy way to check a calculation.` } },
         { tex: R`\frac{\partial L}{\partial \mathbf{b}} = \boldsymbol{\delta}`, why: { tr: R`Çünkü \(\partial y_j/\partial b_j = 1\).`, en: R`Because \(\partial y_j/\partial b_j = 1\).` } },
         { tex: R`\frac{\partial L}{\partial x_i} = \sum_j W_{ji}\,\delta_j \;\;\Rightarrow\;\; \frac{\partial L}{\partial \mathbf{x}} = \mathbf{W}^{\top}\boldsymbol{\delta}`, why: {
-          tr: R`\(x_i\) bütün \(y_j\)'lere katkı verir ve katkılar toplanır. İleri yayılımda \(\mathbf{W}\), geri yayılımda devriği \(\mathbf{W}^\top\) kullanılır.`,
+          tr: R`\(x_i\) bütün \(y_j\)'lere katkı verir ve katkılar toplanır. İleri yayılımda \(\mathbf{W}\), geri yayılımda transpozu \(\mathbf{W}^\top\) kullanılır.`,
           en: R`\(x_i\) contributes to every \(y_j\), and the contributions add up. The forward pass uses \(\mathbf{W}\), the backward pass its transpose \(\mathbf{W}^\top\).` } },
         { tex: R`\frac{\partial L}{\partial \mathbf{W}} = \sum_{n=1}^{N} \boldsymbol{\delta}^{(n)}\,\mathbf{x}^{(n)\top} = \Delta^{\top} X`, why: {
           tr: R`Bir batch'te her görüntünün dış çarpımı toplanır. Satırları \(\mathbf{x}^{(n)}\) olan \(X\in\mathbb{R}^{N\times1024}\) ve satırları \(\boldsymbol\delta^{(n)}\) olan \(\Delta\in\mathbb{R}^{N\times512}\) ile bu tek bir matris çarpımıdır; [[gpu|GPU]]'lar tam olarak bu işlemde hızlıdır.`,
@@ -357,19 +385,23 @@ const SECTIONS = [
       } },
       { p: { tr: R`Çıktıdan gelen gradyan \(\boldsymbol\delta\) ise:`, en: R`If the gradient coming from the output is \(\boldsymbol\delta\):` } },
       { eq: R`\boldsymbol{\delta} = \begin{pmatrix} 1 \\ -2 \end{pmatrix} \;\;\Rightarrow\;\; \frac{\partial L}{\partial \mathbf{W}} = \boldsymbol{\delta}\,\mathbf{x}^{\top} = \begin{pmatrix} 2 & 1 & -1 \\ -4 & -2 & 2 \end{pmatrix},\qquad \frac{\partial L}{\partial \mathbf{x}} = \mathbf{W}^{\top}\boldsymbol{\delta} = \begin{pmatrix} 1 \\ -7 \\ 0 \end{pmatrix}` },
-      { links: [["theory", "t-softmax"], ["code", "c-forward"]] },
+      { links: [["theory", "t-softmax"], ["code", "c-forward"], ["math", "mm-backprop", "mlp"]] },
     ],
   },
 
   // ------------------------------------------------------------------ 8
   {
     id: "m-softmax",
-    title: { tr: "Softmax ve cross-entropy", en: "Softmax and cross-entropy" },
+    title: { tr: "Softmax ve çapraz entropi", en: "Softmax and cross-entropy" },
     blocks: [
       { eq: R`p_k = \operatorname{softmax}(\mathbf{z})_k = \frac{e^{z_k}}{\sum_{j=1}^{K} e^{z_j}} \qquad L = -\sum_{k=1}^{K} y_k \log p_k = -\log p_c` },
       { p: {
-        tr: R`\(\mathbf{z}\): FC2'nin 10 [[logit|logiti]]; \(c\): doğru sınıf; \(\mathbf{y}\): doğru sınıfta 1, diğerlerinde 0 olan "one-hot" vektör. Bütün logitler eşitken \(p_k = 1/10\) ve \(L = \log 10 \approx 2{,}303\): eğitimin başındaki kayıp tam olarak budur.`,
-        en: R`\(\mathbf{z}\): the 10 [[logit|logits]] of FC2; \(c\): the correct class; \(\mathbf{y}\): the "one-hot" vector, 1 at the correct class and 0 elsewhere. With all logits equal, \(p_k = 1/10\) and \(L = \log 10 \approx 2.303\): exactly the loss at the start of training.`,
+        tr: R`\(\mathbf{z}\): FC2'nin 10 [[logit|logiti]]; \(c\): doğru sınıf; \(\mathbf{y}\): doğru sınıfta 1, diğerlerinde 0 olan "one-hot" vektör; \(\log\): MLP bölümündeki \(\ln\), yani doğal logaritma. Bütün logitler eşitken \(p_k = 1/10\) ve \(L = \log 10 \approx 2{,}303\). Eğitimin başında logitler küçük ve birbirine yakın olduğu için kayıp bu değere yakın çıkar; çok farklıysa (örneğin 5) başlangıçta bir şeyler yanlıştır.`,
+        en: R`\(\mathbf{z}\): the 10 [[logit|logits]] of FC2; \(c\): the correct class; \(\mathbf{y}\): the "one-hot" vector, 1 at the correct class and 0 elsewhere; \(\log\): chapter 2's \(\ln\), the natural logarithm. With all logits equal, \(p_k = 1/10\) and \(L = \log 10 \approx 2.303\). At the start of training the logits are small and close to each other, so the loss comes out close to this value; if it is very different (say 5), something is wrong with the setup.`,
+      } },
+      { callout: "info", title: { tr: "MLP bölümüyle bağlantı: iki sınıfta softmax = sigmoid", en: "The link to chapter 2: with two classes, softmax = sigmoid" }, text: {
+        tr: R`\(K = 2\) iken \(p_1 = \dfrac{e^{z_1}}{e^{z_0}+e^{z_1}} = \dfrac{1}{1+e^{-(z_1-z_0)}} = \sigma(z_1 - z_0)\): softmax sigmoid'e, çok sınıflı çapraz entropi de <a href="#" data-go="math:mm-loss" data-chapter="mlp">MLP bölümündeki</a> ikili çapraz entropiye iner. Aşağıda bulacağımız \(p_k - y_k\) gradyanı, oradaki \(\hat y - y\)'nin 10 sınıflı hâlidir.`,
+        en: R`With \(K = 2\), \(p_1 = \dfrac{e^{z_1}}{e^{z_0}+e^{z_1}} = \dfrac{1}{1+e^{-(z_1-z_0)}} = \sigma(z_1 - z_0)\): softmax reduces to the sigmoid, and the multiclass cross-entropy to the binary cross-entropy of <a href="#" data-go="math:mm-loss" data-chapter="mlp">chapter 2</a>. The gradient \(p_k - y_k\) we find below is the 10-class version of \(\hat y - y\) there.`,
       } },
       { h: { tr: "Sayısal kararlılık", en: "Numerical stability" } },
       { p: {
@@ -383,7 +415,7 @@ const SECTIONS = [
       } },
       { eq: R`L = -z_c + \log\sum_{j} e^{z_j}` },
       { h: { tr: "Gradyan: tahmin eksi hedef", en: "The gradient: prediction minus target" } },
-      { derive: { title: { tr: "Cross-entropy'nin logitlere göre türevi", en: "The derivative of cross-entropy with respect to the logits" }, steps: [
+      { derive: { title: { tr: "Çapraz entropinin logitlere göre türevi", en: "The derivative of cross-entropy with respect to the logits" }, steps: [
         { tex: R`L = -z_c + \log\sum_j e^{z_j}`, why: {
           tr: R`Log-sum-exp biçimi: \(-\log p_c = -\log e^{z_c} + \log\sum_j e^{z_j}\).`,
           en: R`The log-sum-exp form: \(-\log p_c = -\log e^{z_c} + \log\sum_j e^{z_j}\).` } },
@@ -404,7 +436,7 @@ const SECTIONS = [
       } },
       { widget: "softmax" },
       { callout: "info", title: { tr: "Softmax'ın Jacobian'ı", en: "The softmax Jacobian" }, text: {
-        tr: R`Softmax tek başına türevlenirse \(\dfrac{\partial p_k}{\partial z_j} = p_k\,\bigl(\mathbb{1}[k=j] - p_j\bigr)\), yani \(K\times K\) bir matris çıkar. Cross-entropy ile birleştirince bu matris \(\mathbf{p} - \mathbf{y}\)'ye sadeleşir; kütüphanelerin ikisini tek bir işlem olarak uygulamasının bir nedeni de budur.`,
+        tr: R`Softmax tek başına türevlenirse \(\dfrac{\partial p_k}{\partial z_j} = p_k\,\bigl(\mathbb{1}[k=j] - p_j\bigr)\), yani \(K\times K\) bir matris çıkar. Çapraz entropiyle birleştirince bu matris \(\mathbf{p} - \mathbf{y}\)'ye sadeleşir; kütüphanelerin ikisini tek bir işlem olarak uygulamasının bir nedeni de budur.`,
         en: R`Differentiating softmax on its own gives \(\dfrac{\partial p_k}{\partial z_j} = p_k\,\bigl(\mathbb{1}[k=j] - p_j\bigr)\), a \(K\times K\) matrix. Combined with cross-entropy it simplifies to \(\mathbf{p} - \mathbf{y}\); one reason libraries implement the two as a single operation.`,
       } },
       { links: [["theory", "t-softmax"], ["code", "c-setup-train"]] },
@@ -422,8 +454,12 @@ const SECTIONS = [
       } },
       { eq: R`\delta_{k-1} = \left(\frac{\partial f_k}{\partial x_k}\right)^{\!\top}\delta_k \qquad \frac{\partial L}{\partial \theta_k} = \left(\frac{\partial f_k}{\partial \theta_k}\right)^{\!\top}\delta_k` },
       { p: {
-        tr: R`Her katman yalnızca kendi yerel türevini bilir: gelen \(\delta\)'yı alır, girdisine göre gradyanı bir önceki katmana verir ve varsa kendi parametrelerinin gradyanını hesaplar. Ağın tamamını hiçbir katmanın bilmesi gerekmez. Bütün döngüyü tek bir nöronla sayılarla izleyelim:`,
-        en: R`Every layer only knows its own local derivative: it takes the incoming \(\delta\), passes the gradient with respect to its input to the layer before, and computes the gradient of its own parameters, if any. No layer needs to know the whole network. Let us follow the whole loop with numbers for a single neuron:`,
+        tr: R`Her katman yalnızca kendi yerel türevini bilir: gelen \(\delta\)'yı alır, girdisine göre gradyanı bir önceki katmana verir ve varsa kendi parametrelerinin gradyanını hesaplar. Ağın tamamını hiçbir katmanın bilmesi gerekmez.`,
+        en: R`Every layer only knows its own local derivative: it takes the incoming \(\delta\), passes the gradient with respect to its input to the layer before, and computes the gradient of its own parameters, if any. No layer needs to know the whole network.`,
+      } },
+      { p: {
+        tr: R`<a href="#" data-go="math:mm-backprop" data-chapter="mlp">MLP bölümünün dört denklemi</a> bu kuralın özel hâlidir. (2) numaralı denklem, aşağıdaki tablonun iki satırının art arda uygulanmasıdır: tam bağlı katman \(\mathbf W^\top\boldsymbol\delta\) verir, aktivasyon onu \(\odot f'(\mathbf z)\) ile çarpar. (3) ve (4) tam bağlı katmanın parametre gradyanlarıdır, (1) de softmax + çapraz entropi satırının iki sınıflı hâli. CNN'de yeni olan yalnızca katman türleridir: her yeni katman için gereken tek şey, kendi geri kuralıdır. Bütün döngüyü, MLP bölümündeki gibi, tek bir nöronla sayılarla hatırlayalım (bu kez kayıp kare hata):`,
+        en: R`<a href="#" data-go="math:mm-backprop" data-chapter="mlp">Chapter 2's four equations</a> are special cases of this rule. Equation (2) is two rows of the table below applied one after the other: the fully connected layer gives \(\mathbf W^\top\boldsymbol\delta\), and the activation multiplies it by \(\odot f'(\mathbf z)\). (3) and (4) are the fully connected layer's parameter gradients, and (1) is the two-class version of the softmax + cross-entropy row. What is new in a CNN are only the kinds of layers: each new layer needs nothing but its own backward rule. Let us recall the whole loop with numbers for a single neuron, as in chapter 2 (this time with the squared error as the loss):`,
       } },
       { derive: { title: { tr: "Tek bir nöronla bir eğitim adımı", en: "One training step with a single neuron" }, steps: [
         { tex: {
@@ -458,7 +494,7 @@ const SECTIONS = [
           [{ tr: "Düzleştirme", en: "Flatten" }, { tr: "yeniden şekillendirme", en: "reshape" }, { tr: "geri şekillendirme", en: "reshape back" }, "—"],
           ["Dropout", R`\(r\odot h/(1-p)\)`, R`\(r\odot\delta/(1-p)\)`, "—"],
           ["MaxPool", { tr: "pencere maksimumu", en: "window maximum" }, { tr: R`\(\delta\) kazanana`, en: R`\(\delta\) to the winner` }, "—"],
-          ["BatchNorm", R`\(\gamma\hat x+\beta\)`, { tr: "3. bölüm, 6. adım", en: "section 3, step 6" }, R`\(\sum\delta\hat x,\ \sum\delta\)`],
+          ["BatchNorm", R`\(\gamma\hat x+\beta\)`, { tr: "3. kısım, 6. adım", en: "section 3, step 6" }, R`\(\sum\delta\hat x,\ \sum\delta\)`],
           ["Conv", R`\(w\star x+b\)`, R`\(\operatorname{pad}(\delta)\star\operatorname{rot}_{180}(w)\)`, R`\(x\star\delta,\ \sum\delta\)`],
         ],
       } },
@@ -471,7 +507,7 @@ const SECTIONS = [
         en: R`<code>backward()</code> does not write into each parameter's <code>.grad</code>, it <b>adds</b> to it: \(g \leftarrow g + \partial L/\partial\theta\). That is needed when the same parameter is used in several places. So every step first calls <code>optimizer.zero_grad()</code>.`,
       } },
       { callout: "tip", title: { tr: "Sayısal gradyan kontrolü", en: "Numerical gradient check" }, text: {
-        tr: R`Bir türetmeyi sınamanın en kolay yolu sonlu farktır: \(\dfrac{\partial L}{\partial\theta} \approx \dfrac{L(\theta+h) - L(\theta-h)}{2h}\); hatası \(h^2\) mertebesindedir. Softmax bölümündeki örnek bu kontrolü canlı yapıyor.`,
+        tr: R`Bir türetmeyi sınamanın en kolay yolu sonlu farktır: \(\dfrac{\partial L}{\partial\theta} \approx \dfrac{L(\theta+h) - L(\theta-h)}{2h}\); hatası \(h^2\) mertebesindedir. Softmax kısmındaki örnek bu kontrolü canlı yapıyor.`,
         en: R`The easiest way to test a derivation is a finite difference: \(\dfrac{\partial L}{\partial\theta} \approx \dfrac{L(\theta+h) - L(\theta-h)}{2h}\), with an error of order \(h^2\). The example in the softmax section runs this check live.`,
       } },
       { links: [["code", "c-train-epoch"], ["theory", "t-opt"]] },
@@ -489,22 +525,22 @@ const SECTIONS = [
       } },
       { eq: R`\nabla L(\theta) = \frac{1}{M}\sum_{n=1}^{M}\nabla \ell_n(\theta) \qquad \hat{\mathbf{g}} = \frac{1}{N}\sum_{n\in B}\nabla \ell_n(\theta)` },
       { p: {
-        tr: R`\(M = 48.000\) görüntünün hepsiyle tek adım atmak yerine [[sgd|SGD]], rastgele bir batch \(B\) ile gradyanı tahmin eder. Batch rastgele seçildiği için tahmin yansızdır, \(\mathbb{E}[\hat{\mathbf g}] = \nabla L\); varyansı ise \(1/N\) ile azalır. Büyük batch, daha az gürültülü ama daha pahalı adımlar demektir.`,
-        en: R`Instead of one step with all \(M = 48{,}000\) images, [[sgd|SGD]] estimates the gradient from a random batch \(B\). Since the batch is random the estimate is unbiased, \(\mathbb{E}[\hat{\mathbf g}] = \nabla L\), and its variance falls as \(1/N\). A large batch means less noisy but more expensive steps.`,
+        tr: R`\(M = 48.000\) görüntünün hepsiyle tek adım atmak yerine [[sgd|SGD]], rastgele bir batch \(B\) ile gradyanı tahmin eder. Batch rastgele seçildiği için tahmin yansızdır, \(\mathbb{E}[\hat{\mathbf g}] = \nabla L\); varyansı ise \(1/N\) ile azalır. Büyük batch, daha az gürültülü ama daha pahalı adımlar demektir. Bu, <a href="#" data-go="math:mm-train" data-chapter="mlp">MLP bölümündeki</a> mini-batch gradyan inişidir (orada batch büyüklüğü \(B\) idi, burada \(N = 256\)); yeni olan, aşağıdaki iki iyileştirmedir.`,
+        en: R`Instead of one step with all \(M = 48{,}000\) images, [[sgd|SGD]] estimates the gradient from a random batch \(B\). Since the batch is random the estimate is unbiased, \(\mathbb{E}[\hat{\mathbf g}] = \nabla L\), and its variance falls as \(1/N\). A large batch means less noisy but more expensive steps. This is the mini-batch gradient descent of <a href="#" data-go="math:mm-train" data-chapter="mlp">chapter 2</a> (there the batch size was \(B\), here \(N = 256\)); what is new are the two improvements below.`,
       } },
       { eq: R`\text{SGD:}\qquad \theta_t = \theta_{t-1} - \eta\,\mathbf{g}_t` },
       { h: { tr: "Momentum", en: "Momentum" } },
       { eq: R`\mathbf{v}_t = \mu\,\mathbf{v}_{t-1} + \mathbf{g}_t \qquad \theta_t = \theta_{t-1} - \eta\,\mathbf{v}_t` },
       { p: {
-        tr: R`Hız \(\mathbf v\), geçmiş gradyanların üstel ağırlıklı toplamıdır: \(\mathbf v_t = \sum_{i\le t}\mu^{t-i}\mathbf g_i\). Gradyan hep aynıysa bu geometrik seri \(\mathbf g/(1-\mu)\)'ya yakınsar: \(\mu = 0{,}9\) ile tutarlı yönlerde adım 10 kat büyür, yönü sürekli değişen bileşenler ise birbirini götürür ([[momentum|momentum]]).`,
-        en: R`The velocity \(\mathbf v\) is an exponentially weighted sum of past gradients: \(\mathbf v_t = \sum_{i\le t}\mu^{t-i}\mathbf g_i\). If the gradient stays the same, this geometric series converges to \(\mathbf g/(1-\mu)\): with \(\mu = 0.9\) the step grows tenfold in consistent directions, while components whose sign keeps changing cancel out ([[momentum|momentum]]).`,
+        tr: R`Hız \(\mathbf v\), geçmiş gradyanların üstel ağırlıklı toplamıdır: \(\mathbf v_t = \sum_{i\le t}\mu^{t-i}\mathbf g_i\). Gradyan hep aynıysa bu geometrik seri \(\mathbf g/(1-\mu)\)'ya yakınsar: \(\mu = 0{,}9\) ile tutarlı yönlerde adım 10 kat büyür, yönü sürekli değişen bileşenler ise birbirini götürür ([[momentum|momentum]]). Buradaki \(\mu\) momentum katsayısıdır; BatchNorm'daki ortalamayla karıştırmayın.`,
+        en: R`The velocity \(\mathbf v\) is an exponentially weighted sum of past gradients: \(\mathbf v_t = \sum_{i\le t}\mu^{t-i}\mathbf g_i\). If the gradient stays the same, this geometric series converges to \(\mathbf g/(1-\mu)\): with \(\mu = 0.9\) the step grows tenfold in consistent directions, while components whose sign keeps changing cancel out ([[momentum|momentum]]). Here \(\mu\) is the momentum coefficient; do not confuse it with BatchNorm's mean.`,
       } },
       { h: { tr: "Adam", en: "Adam" } },
       { eq: R`\mathbf{m}_t = \beta_1\mathbf{m}_{t-1} + (1-\beta_1)\,\mathbf{g}_t \qquad \mathbf{v}_t = \beta_2\mathbf{v}_{t-1} + (1-\beta_2)\,\mathbf{g}_t^2` },
       { eq: R`\hat{\mathbf{m}}_t = \frac{\mathbf{m}_t}{1-\beta_1^t} \qquad \hat{\mathbf{v}}_t = \frac{\mathbf{v}_t}{1-\beta_2^t} \qquad \theta_t = \theta_{t-1} - \eta\,\frac{\hat{\mathbf{m}}_t}{\sqrt{\hat{\mathbf{v}}_t}+\epsilon}` },
       { p: {
-        tr: R`[[adam|Adam]]'da \(\mathbf m\) gradyanın, \(\mathbf v\) karesinin hareketli ortalamasıdır; bütün işlemler parametre başınadır (\(\mathbf g_t^2\) eleman eleman kare). \(\mathbf m\) ve \(\mathbf v\) sıfırdan başladığı için ilk adımlarda sıfıra doğru çekiktir; bias düzeltmesi bunu giderir:`,
-        en: R`In [[adam|Adam]], \(\mathbf m\) is a moving average of the gradient and \(\mathbf v\) of its square; everything is per parameter (\(\mathbf g_t^2\) is an element-wise square). Since \(\mathbf m\) and \(\mathbf v\) start at zero, they are biased towards zero in the first steps; the bias correction removes that:`,
+        tr: R`[[adam|Adam]]'da \(\mathbf m\) gradyanın, \(\mathbf v\) karesinin hareketli ortalamasıdır; bütün işlemler parametre başınadır (\(\mathbf g_t^2\) eleman eleman kare). Buradaki \(\mathbf v\), momentumdaki hızla aynı şey değildir; ikisi de literatürde bu harfle yazılır. \(\mathbf m\) ve \(\mathbf v\) sıfırdan başladığı için ilk adımlarda sıfıra doğru çekiktir; bias düzeltmesi bunu giderir:`,
+        en: R`In [[adam|Adam]], \(\mathbf m\) is a moving average of the gradient and \(\mathbf v\) of its square; everything is per parameter (\(\mathbf g_t^2\) is an element-wise square). This \(\mathbf v\) is not the velocity of momentum; the literature writes both with this letter. Since \(\mathbf m\) and \(\mathbf v\) start at zero, they are biased towards zero in the first steps; the bias correction removes that:`,
       } },
       { derive: { title: { tr: "Bias düzeltmesi neden 1 − βᵗ?", en: "Why is the bias correction 1 − βᵗ?" }, steps: [
         { tex: R`\mathbf{m}_t = (1-\beta_1)\sum_{i=1}^{t}\beta_1^{\,t-i}\,\mathbf{g}_i`, why: {
@@ -517,15 +553,22 @@ const SECTIONS = [
           en: R`Dividing makes the estimate unbiased. For example at \(t = 1\), \(\mathbf m_1 = 0.1\,\mathbf g_1\) but \(\hat{\mathbf m}_1 = \mathbf g_1\). The same holds for \(\mathbf v\) with \(\beta_2\).` } },
       ] } },
       { p: {
-        tr: R`Gradyan sabitse \(\hat{\mathbf m} = \mathbf g\), \(\hat{\mathbf v} = \mathbf g^2\) ve adım \(\eta\,\mathbf g/|\mathbf g| = \eta\,\operatorname{sign}(\mathbf g)\) olur: gradyanın büyüklüğü ne olursa olsun her parametre adım başına yaklaşık \(\eta\) kadar hareket eder. Adam'ın [[learning-rate|öğrenme oranı]] seçimini kolaylaştırmasının nedeni budur. Aşağıda ilk adımları hesaplayın; bias düzeltmesini kapatıp ne değiştiğine bakın.`,
-        en: R`If the gradient is constant, \(\hat{\mathbf m} = \mathbf g\), \(\hat{\mathbf v} = \mathbf g^2\) and the step is \(\eta\,\mathbf g/|\mathbf g| = \eta\,\operatorname{sign}(\mathbf g)\): whatever the size of the gradient, every parameter moves about \(\eta\) per step. That is why Adam makes the [[learning-rate|learning rate]] easy to choose. Compute the first steps below; turn the bias correction off and see what changes.`,
+        tr: R`Gradyan sabitse \(\hat{\mathbf m} = \mathbf g\), \(\hat{\mathbf v} = \mathbf g^2\) ve adım \(\eta\,\mathbf g/|\mathbf g| = \eta\,\operatorname{sign}(\mathbf g)\) olur: gradyanın büyüklüğü ne olursa olsun her parametre adım başına yaklaşık \(\eta\) kadar hareket eder. Adam'ın [[learning-rate|öğrenme oranı]] seçimini kolaylaştırmasının nedeni budur. Aşağıda ilk adımları hesaplayın: önce sabit 0,5 ile sabit 0,001 gradyanını karşılaştırın (adım boyu değişiyor mu?), sonra işaret değiştiren gradyanı seçin, en sonda da bias düzeltmesini kapatıp ilk adımlara bakın.`,
+        en: R`If the gradient is constant, \(\hat{\mathbf m} = \mathbf g\), \(\hat{\mathbf v} = \mathbf g^2\) and the step is \(\eta\,\mathbf g/|\mathbf g| = \eta\,\operatorname{sign}(\mathbf g)\): whatever the size of the gradient, every parameter moves about \(\eta\) per step. That is why Adam makes the [[learning-rate|learning rate]] easy to choose. Compute the first steps below: first compare the constant gradients 0.5 and 0.001 (does the step size change?), then pick the alternating gradient, and finally turn the bias correction off and look at the first steps.`,
       } },
       { widget: "adam" },
       { model: {
         tr: R`<b>SimpleCNN'de:</b> Adam, \(\eta = 0{,}001\), \(\beta_1 = 0{,}9\), \(\beta_2 = 0{,}999\), \(\epsilon = 10^{-8}\); 10 epoch × 188 batch = 1880 adım.`,
         en: R`<b>In SimpleCNN:</b> Adam with \(\eta = 0.001\), \(\beta_1 = 0.9\), \(\beta_2 = 0.999\), \(\epsilon = 10^{-8}\); 10 epochs × 188 batches = 1880 steps.`,
       } },
-      { links: [["theory", "t-opt"], ["code", "c-setup-train"]] },
+      { h: { tr: "Özet: bu sekmede ne öğrendik?", en: "Recap: what did this tab add?" } },
+      { list: [
+        { tr: R`Evrişim, yalnızca yerel bağlantıları olan ve ağırlıklarını paylaşan bir tam bağlı katman gibidir: ağırlık gradyanı "girdi × hata"nın bütün konumlar üzerinden toplamı, girdi gradyanı da 180° çevrilmiş filtreyle bir korelasyondur.`, en: R`A convolution is like a fully connected layer with only local connections and shared weights: the weight gradient is "input × error" summed over all positions, and the input gradient is a correlation with the filter rotated by 180°.` },
+        { tr: R`BatchNorm her kanalı ölçeklendirir; gradyanından ortalama ve \(\hat x\) bileşeni çıkarılır. Havuzlama gradyanı kazanana, dropout aynı maskeyle kalanlara iletir.`, en: R`BatchNorm rescales every channel; the mean and the \(\hat x\) component are removed from its gradient. Pooling sends the gradient to the winner, dropout to the survivors of the same mask.` },
+        { tr: R`Softmax + çapraz entropinin gradyanı \(\mathbf p - \mathbf y\): MLP bölümündeki \(\hat y - y\)'nin 10 sınıflı hâli.`, en: R`The gradient of softmax + cross-entropy is \(\mathbf p - \mathbf y\): the 10-class version of chapter 2's \(\hat y - y\).` },
+        { tr: R`Geri yayılım, her katmanın yerel kuralının sondan başa zincirlenmesidir; <code>loss.backward()</code> bunu otomatik yapar. Adam, gradyanın yönü tutarlıyken her parametrenin adımını, gradyanın büyüklüğünden bağımsız olarak yaklaşık \(\eta\)'da tutar.`, en: R`Backpropagation chains every layer's local rule from the end to the start; <code>loss.backward()</code> does it automatically. While the gradient's direction is consistent, Adam keeps every parameter's step near \(\eta\), whatever the size of its gradient.` },
+      ] },
+      { links: [["theory", "t-opt"], ["code", "c-setup-train"], ["math", "mm-train", "mlp"]] },
     ],
   },
 ];
@@ -1010,6 +1053,11 @@ function derivation(block, key) {
 
 function renderBlock(block, key) {
   if (block.p) return htmlNode("p", {}, block.p);
+  if (block.list) {
+    const list = h(block.ordered ? "ol" : "ul", { class: "tut-list" });
+    for (const item of block.list) list.append(htmlNode("li", {}, item));
+    return list;
+  }
   if (block.h) return h("h3", { class: "m-h3", text: L(block.h) });
   if (block.eq) return eqBox(I18N.lang === "en" && block.eqEn ? block.eqEn : T(block.eq));
   if (block.derive) return derivation(block.derive, key);
@@ -1028,7 +1076,8 @@ function renderBlock(block, key) {
   }
   if (block.links) {
     return h("div", { class: "m-links" }, h("span", { text: L({ tr: "Ayrıca bakın:", en: "See also:" }) }),
-      ...block.links.map(([tab, section]) => h("a", { href: "#", "data-go": `${tab}:${section}`, text: `${placeLabel({ tab, section })} →` })));
+      ...block.links.map(([tab, section, chapter]) => h("a", { href: "#", "data-go": `${tab}:${section}`, "data-chapter": chapter,
+        text: `${placeLabel({ chapter, tab, section })} →` })));
   }
   return null;
 }
@@ -1045,7 +1094,7 @@ function renderMath() {
     const article = h("article", { class: "card tut-step m-step", id: section.id },
       h("header", { class: "tut-step-head" },
         h("span", { class: "tut-num", text: String(k + 1) }),
-        h("div", {}, h("span", { class: "tut-kicker", text: L({ tr: `Bölüm ${k + 1} / ${SECTIONS.length}`, en: `Section ${k + 1} of ${SECTIONS.length}` }) }),
+        h("div", {}, h("span", { class: "tut-kicker", text: L({ tr: `Kısım ${k + 1} / ${SECTIONS.length}`, en: `Section ${k + 1} of ${SECTIONS.length}` }) }),
           h("h2", { text: title }))));
     section.blocks.forEach((block, b) => {
       const node = renderBlock(block, `${section.id}:${b}`);

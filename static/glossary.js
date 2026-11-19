@@ -151,8 +151,8 @@ const GLOSSARY = {
     name: { tr: "Marj", en: "Margin" },
     aka: ["boşluk", "gap", "gamma", "γ", "aralık"],
     def: {
-      tr: "Bir [[decision-boundary|karar sınırı]] ile ona en yakın örnek arasındaki uzaklık. Marj büyükse sınıflar birbirinden belirgin biçimde ayrıdır. Perceptronun yaptığı düzeltme sayısı en fazla \\((R/\\gamma)^2\\)'dir (\\(\\gamma\\) marj, \\(R\\) en uzak örneğin uzaklığı): marj küçüldükçe öğrenme uzar.",
-      en: "The distance between a [[decision-boundary|decision boundary]] and the example closest to it. A large margin means the classes are clearly apart. The number of corrections the perceptron makes is at most \\((R/\\gamma)^2\\) (\\(\\gamma\\) the margin, \\(R\\) the distance of the farthest example): the smaller the margin, the longer learning takes.",
+      tr: "Bir [[decision-boundary|karar sınırı]] ile ona en yakın örnek arasındaki uzaklık. Marj büyükse sınıflar birbirinden belirgin biçimde ayrıdır. Perceptronun yaptığı düzeltme sayısı en fazla \\((R/\\gamma)^2\\)'dir (\\(\\gamma\\) marj, \\(R\\) en uzak örneğin orijine uzaklığı; kesin tanımlar perceptron bölümünün Matematik sekmesinde): marj küçüldükçe öğrenme uzar.",
+      en: "The distance between a [[decision-boundary|decision boundary]] and the example closest to it. A large margin means the classes are clearly apart. The number of corrections the perceptron makes is at most \\((R/\\gamma)^2\\) (\\(\\gamma\\) the margin, \\(R\\) the distance of the farthest example from the origin; the perceptron chapter's Math tab defines both exactly): the smaller the margin, the longer learning takes.",
     },
     link: [{ chapter: "perceptron", tab: "theory", section: "p-converge" }, { chapter: "perceptron", tab: "math", section: "pm-converge" }],
   },
@@ -284,8 +284,8 @@ const GLOSSARY = {
     name: { tr: "Epoch", en: "Epoch" },
     aka: ["epok", "devir", "tur", "epochs"],
     def: {
-      tr: "Eğitim verisinin tamamının modelden bir kez geçirilmesi. Veri [[batch|batch]]'ler hâlinde verildiği için bir epoch, batch sayısı kadar [[step|eğitim adımından]] oluşur. Her epoch sonunda model [[val-set|doğrulama setinde]] ölçülür.",
-      en: "One pass of the whole training set through the model. Because the data comes in [[batch|batches]], one epoch consists of as many [[step|training steps]] as there are batches. The model is measured on the [[val-set|validation set]] after every epoch.",
+      tr: "Eğitim verisinin tamamının modelden bir kez geçirilmesi. Veri [[batch|batch]]'ler hâlinde verilirse bir epoch, batch sayısı kadar [[step|eğitim adımından]] oluşur (perceptronda her örnek ayrı bir adımdır). Genellikle her epoch sonunda model [[val-set|doğrulama setinde]] ölçülür.",
+      en: "One pass of the whole training set through the model. When the data comes in [[batch|batches]], one epoch consists of as many [[step|training steps]] as there are batches (for the perceptron every example is its own step). The model is usually measured on the [[val-set|validation set]] after every epoch.",
     },
     model: {
       tr: "48.000 eğitim görüntüsü / 256 = 188 batch, yani epoch başına 188 adım.",
@@ -782,8 +782,8 @@ const GLOSSARY = {
     name: { tr: "ReLU", en: "ReLU" },
     aka: ["rectified linear unit", "doğrultulmuş doğrusal birim", "F.relu"],
     def: {
-      tr: "En basit ve en yaygın [[activation|aktivasyon fonksiyonu]]: <span class=\"g-formula\">\\(\\mathrm{ReLU}(x) = \\max(0, x)\\)</span>. Negatif değerleri sıfırlar, pozitifleri olduğu gibi bırakır. Hesabı çok ucuzdur ve pozitif bölgede gradyanı 1 olduğu için derin ağlar onunla hızlı öğrenir.",
-      en: "The simplest and most common [[activation|activation function]]: <span class=\"g-formula\">\\(\\mathrm{ReLU}(x) = \\max(0, x)\\)</span>. It sets negative values to zero and leaves positive ones unchanged. It is very cheap to compute, and since its gradient is 1 for positive inputs, deep networks learn quickly with it.",
+      tr: "En basit ve en yaygın [[activation|aktivasyon fonksiyonu]]: <span class=\"g-formula\">\\(\\mathrm{ReLU}(z) = \\max(0, z)\\)</span>. Negatif değerleri sıfırlar, pozitifleri olduğu gibi bırakır. Hesabı çok ucuzdur ve pozitif bölgede gradyanı 1 olduğu için derin ağlar onunla hızlı öğrenir.",
+      en: "The simplest and most common [[activation|activation function]]: <span class=\"g-formula\">\\(\\mathrm{ReLU}(z) = \\max(0, z)\\)</span>. It sets negative values to zero and leaves positive ones unchanged. It is very cheap to compute, and since its gradient is 1 for positive inputs, deep networks learn quickly with it.",
     },
     model: {
       tr: "Her [[batchnorm|BatchNorm]]'dan sonra ve FC1'den sonra.",
@@ -810,8 +810,8 @@ const GLOSSARY = {
     name: { tr: "Dropout", en: "Dropout" },
     aka: ["seyreltme", "bırakma", "drop", "regularization", "düzenlileştirme"],
     def: {
-      tr: "Eğitim sırasında her adımda değerlerin rastgele bir kısmını (oran <i>p</i>) sıfırlayan, kalanları 1/(1 − p) ile büyüten katman. Ağ tek tek nöronlara güvenemediği için birbirini tamamlayan sağlam öznitelikler öğrenir ve [[overfitting|ezberleme]] azalır. Değerlendirmede kapalıdır.",
-      en: "A layer that, during training, zeroes a random fraction <i>p</i> of the values at every step and scales the rest by 1/(1 − p). The network cannot rely on single neurons, so it learns robust features that back each other up, and [[overfitting|memorization]] decreases. It is off during evaluation.",
+      tr: "Eğitim sırasında her adımda değerlerin rastgele bir kısmını (oran <i>p</i>) sıfırlayan, kalanları 1/(1 − p) ile büyüten katman. Hiçbir nöron belirli komşularının orada olacağına güvenemediği için her öznitelik tek başına da işe yarar olmak zorundadır ve [[overfitting|ezberleme]] azalır. Değerlendirmede kapalıdır.",
+      en: "A layer that, during training, zeroes a random fraction <i>p</i> of the values at every step and scales the rest by 1/(1 − p). No neuron can count on particular neighbours being there, so every feature has to be useful on its own too, and [[overfitting|memorization]] decreases. It is off during evaluation.",
     },
     model: {
       tr: "Birinci havuzlamadan sonra p = 0,45, ikinciden sonra p = 0,35.",

@@ -502,8 +502,8 @@ const BN_TEXT = {
 
   "s1.h": { tr: "Sorun: her kanal farklı bir ölçekte", en: "The problem: every channel has its own scale" },
   "s1.p": {
-    tr: "<p><b>BatchNorm neyi normalleştirir?</b> SimpleCNN'de sıra <b>Conv1 → BatchNorm → ReLU</b>'dur; yani BatchNorm'un girdisi \\(x\\), Conv1'in çıktısıdır. Conv1'in bir [[kernel|filtresi]] 28×28 görüntünün üzerinde kaydırılır ve 24×24 konumun her birinde <b>tek bir sayı</b> üretir: 5×5 filtre ile altındaki 5×5 pikselin çarpımlarının toplamı, artı bias. Bu sayı, filtrenin aradığı desenin o konumda ne kadar güçlü bulunduğunu söyler: büyük pozitif değer \"desen burada var\", negatif değer \"burada tersi var\" demektir. Bu 576 sayı bir [[feature-map|öznitelik haritası]] oluşturur; 2. adımdaki kırmızı-mavi haritalar tam olarak bunlardır. Hesabın kendisi 1. bölümde (Evrişim) adım adım gösteriliyor.</p><p>Conv1'in 32 filtresinin her biri farklı bir desene bakar ve çıktıları farklı aralıklarda olur: kiminin değerleri dar bir aralıkta toplanır, kimininki geniş bir aralığa yayılır; kiminin ortalaması pozitif, kiminin negatiftir. Üstelik ağırlıklar her adımda değiştiği için bu aralıklar eğitim boyunca kayar; sonraki katman sürekli kayan girdilere uyum sağlamak zorunda kalır. Eğitim yavaşlar ve [[learning-rate|öğrenme oranını]] küçük tutmak gerekir.</p><p>BatchNorm her kanalı aynı başlangıç ölçeğine çeker. Grafikte her çubuk, bir kanalın bu batch'teki değer aralığıdır (ortalama ± 1 standart sapma). Mavi bant, normalleştirmeden sonra <b>bütün kanalların</b> geleceği aralıktır: dar kanallar genişler, geniş olanlar daralır, kaymış olanlar ortalanır.</p>",
-    en: "<p><b>What does BatchNorm normalize?</b> In SimpleCNN the order is <b>Conv1 → BatchNorm → ReLU</b>, so BatchNorm's input \\(x\\) is Conv1's output. One Conv1 [[kernel|filter]] slides over the 28×28 image and produces <b>a single number</b> at each of the 24×24 positions: the sum of the products of the 5×5 filter and the 5×5 pixels under it, plus a bias. That number says how strongly the pattern the filter looks for is present at that position: a large positive value means \"the pattern is here\", a negative one \"its opposite is here\". These 576 numbers form a [[feature-map|feature map]]; the red and blue maps in step 2 are exactly these. Section 1 (Convolution) shows the calculation step by step.</p><p>Each of Conv1's 32 filters looks for a different pattern, and their outputs fall in different ranges: some channels' values stay in a narrow range, others spread widely; some have a positive mean, others a negative one. And since the weights change at every step, these ranges drift during training; the next layer has to keep adapting to inputs that keep moving. Training slows down and the [[learning-rate|learning rate]] has to stay small.</p><p>BatchNorm brings every channel to the same starting scale. In the chart, each bar is one channel's range in this batch (mean ± 1 standard deviation). The blue band is where <b>every channel</b> ends up after normalization: narrow channels are widened, wide ones narrowed, shifted ones centered.</p>",
+    tr: "<p><b>BatchNorm neyi normalleştirir?</b> SimpleCNN'de sıra <b>Conv1 → BatchNorm → ReLU</b>'dur; yani BatchNorm'un girdisi \\(x\\), Conv1'in çıktısıdır. Conv1'in bir [[kernel|filtresi]] 28×28 görüntünün üzerinde kaydırılır ve 24×24 konumun her birinde <b>tek bir sayı</b> üretir: 5×5 filtre ile altındaki 5×5 pikselin çarpımlarının toplamı, artı bias. Bu sayı, filtrenin aradığı desenin o konumda ne kadar güçlü bulunduğunu söyler: büyük pozitif değer \"desen burada var\", negatif değer \"burada tersi var\" demektir. Bu 576 sayı bir [[feature-map|öznitelik haritası]] oluşturur; 2. adımdaki kırmızı-mavi haritalar tam olarak bunlardır. Hesabın kendisi 1. kısımda (Evrişim) adım adım gösteriliyor.</p><p>Conv1'in 32 filtresinin her biri farklı bir desene bakar ve çıktıları farklı aralıklarda olur: kiminin değerleri dar bir aralıkta toplanır, kimininki geniş bir aralığa yayılır; kiminin ortalaması pozitif, kiminin negatiftir. Üstelik ağırlıklar her adımda değiştiği için bu aralıklar eğitim boyunca kayar; sonraki katman sürekli kayan girdilere uyum sağlamak zorunda kalır. BatchNorm'u öneren makale (Ioffe ve Szegedy, 2015) bu kaymayı asıl sorun olarak gördü; sonraki çalışmalar yararın daha çok kayıp yüzeyini düzgünleştirmesinden geldiğini gösterdi. Pratikteki sonuç ise açık: BatchNorm'lu ağlar daha büyük [[learning-rate|öğrenme oranlarıyla]], daha hızlı ve kararlı eğitilir.</p><p>BatchNorm her kanalı aynı başlangıç ölçeğine çeker. Grafikte her çubuk, bir kanalın bu batch'teki değer aralığıdır (ortalama ± 1 standart sapma). Mavi bant, normalleştirmeden sonra <b>bütün kanalların</b> geleceği aralıktır: dar kanallar genişler, geniş olanlar daralır, kaymış olanlar ortalanır.</p>",
+    en: "<p><b>What does BatchNorm normalize?</b> In SimpleCNN the order is <b>Conv1 → BatchNorm → ReLU</b>, so BatchNorm's input \\(x\\) is Conv1's output. One Conv1 [[kernel|filter]] slides over the 28×28 image and produces <b>a single number</b> at each of the 24×24 positions: the sum of the products of the 5×5 filter and the 5×5 pixels under it, plus a bias. That number says how strongly the pattern the filter looks for is present at that position: a large positive value means \"the pattern is here\", a negative one \"its opposite is here\". These 576 numbers form a [[feature-map|feature map]]; the red and blue maps in step 2 are exactly these. Section 1 (Convolution) shows the calculation step by step.</p><p>Each of Conv1's 32 filters looks for a different pattern, and their outputs fall in different ranges: some channels' values stay in a narrow range, others spread widely; some have a positive mean, others a negative one. And since the weights change at every step, these ranges drift during training; the next layer has to keep adapting to inputs that keep moving. The paper that introduced BatchNorm (Ioffe and Szegedy, 2015) saw this drift as the main problem; later work showed that the benefit comes more from making the loss surface smoother. The practical result is clear either way: networks with BatchNorm train faster and more stably, with larger [[learning-rate|learning rates]].</p><p>BatchNorm brings every channel to the same starting scale. In the chart, each bar is one channel's range in this batch (mean ± 1 standard deviation). The blue band is where <b>every channel</b> ends up after normalization: narrow channels are widened, wide ones narrowed, shifted ones centered.</p>",
   },
   "s1.cap": { tr: "Bir çubuğa tıklayarak o filtreyi seçin; sonraki adımlar seçili filtre için hesaplanır.", en: "Click a bar to select that filter; the next steps are computed for the selected filter." },
 
@@ -846,28 +846,28 @@ function updateBN() {
 const ACTIVATIONS = {
   relu: {
     label: "ReLU", f: (x) => Math.max(0, x), y: [-1, 4],
-    formula: "\\(\\displaystyle \\mathrm{ReLU}(x) = \\max(0,\\, x)\\)",
+    formula: "\\(\\displaystyle \\mathrm{ReLU}(z) = \\max(0,\\, z)\\)",
     desc: { tr: "Negatif değerleri 0 yapar, pozitifleri olduğu gibi geçirir. Haritada mavi (negatif) bölgelerin tamamen kaybolduğuna dikkat edin.",
       en: "Sets negative values to 0 and passes positive values unchanged. Notice how the blue (negative) regions disappear completely from the map." },
   },
   leaky: {
     label: "Leaky ReLU", f: (x) => (x > 0 ? x : 0.01 * x), y: [-1, 4],
     formula: {
-      tr: "\\(\\displaystyle \\mathrm{LReLU}(x) = \\begin{cases} x & x > 0 \\text{ ise} \\\\ 0{,}01\\, x & \\text{aksi hâlde} \\end{cases}\\)",
-      en: "\\(\\displaystyle \\mathrm{LReLU}(x) = \\begin{cases} x & \\text{if } x > 0 \\\\ 0.01\\, x & \\text{otherwise} \\end{cases}\\)",
+      tr: "\\(\\displaystyle \\mathrm{LReLU}(z) = \\begin{cases} z & z > 0 \\text{ ise} \\\\ 0{,}01\\, z & \\text{aksi hâlde} \\end{cases}\\)",
+      en: "\\(\\displaystyle \\mathrm{LReLU}(z) = \\begin{cases} z & \\text{if } z > 0 \\\\ 0.01\\, z & \\text{otherwise} \\end{cases}\\)",
     },
     desc: { tr: "ReLU gibidir ama negatif tarafta küçük bir eğim (0,01) bırakır; böylece negatif girişlerde de [[gradient|gradyan]] tamamen sıfırlanmaz.",
       en: "Like ReLU, but keeps a small slope (0.01) on the negative side, so the [[gradient|gradient]] does not vanish entirely for negative inputs." },
   },
   sigmoid: {
     label: "Sigmoid", f: (x) => 1 / (1 + Math.exp(-x)), y: [-0.25, 1.25],
-    formula: "\\(\\displaystyle \\sigma(x) = \\frac{1}{1 + e^{-x}}\\)",
-    desc: { tr: "Her değeri 0 ile 1 arasına sıkıştırır. |x| büyüdükçe eğimi sıfıra yaklaşır; derin ağlarda [[gradient|gradyanın]] sönümlenmesine yol açabilir.",
-      en: "Squeezes every value into the range 0 to 1. Its slope approaches zero as |x| grows, which can make [[gradient|gradients]] vanish in deep networks." },
+    formula: "\\(\\displaystyle \\sigma(z) = \\frac{1}{1 + e^{-z}}\\)",
+    desc: { tr: "Her değeri 0 ile 1 arasına sıkıştırır. Eğimi en fazla 0,25'tir ve |z| büyüdükçe sıfıra yaklaşır; derin ağlarda [[vanishing-gradient|kaybolan gradyana]] yol açabilir.",
+      en: "Squeezes every value into the range 0 to 1. Its slope is at most 0.25 and approaches zero as |z| grows, which can cause [[vanishing-gradient|vanishing gradients]] in deep networks." },
   },
   tanh: {
     label: "Tanh", f: Math.tanh, y: [-1.25, 1.25],
-    formula: "\\(\\displaystyle \\tanh(x) = \\frac{e^{x} - e^{-x}}{e^{x} + e^{-x}}\\)",
+    formula: "\\(\\displaystyle \\tanh(z) = \\frac{e^{z} - e^{-z}}{e^{z} + e^{-z}}\\)",
     desc: { tr: "Değerleri −1 ile 1 arasına sıkıştırır ve 0 etrafında simetriktir. Sigmoid gibi uç değerlerde doyuma ulaşır.",
       en: "Squeezes values into the range −1 to 1 and is symmetric around 0. Like the sigmoid, it saturates at extreme values." },
   },
@@ -903,7 +903,7 @@ function updateActivation() {
     x: [-4, 4], y: fn.y, fn: fn.f,
     xTicks: [-4, -2, 0, 2, 4].map((v) => ({ v, label: fmtTick(v) })),
     yTicks: linearTicks(fn.y[0], fn.y[1], niceStep(fn.y[1] - fn.y[0], 4), fmtTick),
-    tooltip: (x) => ({ title: `x = ${fmtNum(x, 2)}`, rows: [{ value: fmtNum(fn.f(x), 3), label: `${fn.label}(x)`, color: "var(--series-1)" }] }),
+    tooltip: (x) => ({ title: `z = ${fmtNum(x, 2)}`, rows: [{ value: fmtNum(fn.f(x), 3), label: `${fn.label}(z)`, color: "var(--series-1)" }] }),
   });
   if (!T.image) return;
 
@@ -1189,8 +1189,8 @@ const OPT_TEXT = {
         { tr: "Uygun η'yi bulmak zordur: biraz büyük olunca ıraksar.", en: "The right η is hard to find: a little too large and it diverges." },
       ],
       look: {
-        tr: "<b>Animasyonda:</b> dar vadide mavi yolun θ₂ yönündeki salınımına ve θ₁ yönündeki yavaşlığına bakın. η'yi 1'in üzerine çıkarınca salınım büyür ve yol ıraksar.",
-        en: "<b>In the animation:</b> in the narrow valley, watch the blue path oscillate along θ₂ and crawl along θ₁. Raise η above 1 and the oscillation grows until the path diverges.",
+        tr: "<b>Animasyonda:</b> dar vadide mavi yol önce dik θ₂ yönünde hızla iner, sonra düz θ₁ yönünde sürünür ve 100 adımda öbür ikisinin gerisinde kalır. η'yi 0,5'in üzerine çıkarın: θ₂ yönünde duvardan duvara salınmaya başlar; 1'in üzerinde salınım her adımda büyür ve yol ıraksar. Yani dik yön η'nin üst sınırını koyar, düz yön de o η ile ne kadar yavaş gidileceğini belirler.",
+        en: "<b>In the animation:</b> in the narrow valley the blue path first drops quickly along the steep θ₂ direction, then crawls along the flat θ₁ direction and after 100 steps is behind the other two. Raise η above 0.5 and it starts bouncing from wall to wall along θ₂; above 1 the bounce grows at every step and the path diverges. So the steep direction caps η, and the flat direction then sets how slowly that η gets anywhere.",
       },
     },
     {
@@ -1239,8 +1239,8 @@ const OPT_TEXT = {
   ],
   notes: {
     valley: {
-      tr: "θ₂ yönünde θ₁'e göre 20 kat daha dik, uzun ve dar bir vadi. Derin ağların kayıp yüzeyleri de böyle \"kötü koşulludur\": bazı yönlerde çok dik, bazılarında neredeyse düz. SGD dik yönde salınır, düz yönde sürünür; Momentum vadinin tabanında hız kazanır; Adam iki yönü dengeler.",
-      en: "A long, narrow valley, 20 times steeper along θ₂ than along θ₁. The loss surfaces of deep networks are \"ill-conditioned\" like this too: very steep in some directions, almost flat in others. SGD oscillates in the steep direction and crawls in the flat one; Momentum picks up speed along the valley floor; Adam balances the two directions.",
+      tr: "θ₂ yönünde θ₁'e göre 20 kat daha dik, uzun ve dar bir vadi. Derin ağların kayıp yüzeyleri de böyle \"kötü koşulludur\": bazı yönlerde çok dik, bazılarında neredeyse düz. SGD'de tek bir η iki yöne birden uymaz: dik yönde salınmaması için η küçük olmalı, o zaman da düz yönde sürünür. Momentum vadinin tabanında hız kazanır; Adam iki yönü dengeler.",
+      en: "A long, narrow valley, 20 times steeper along θ₂ than along θ₁. The loss surfaces of deep networks are \"ill-conditioned\" like this too: very steep in some directions, almost flat in others. For SGD no single η suits both directions: η has to be small so it does not oscillate in the steep direction, and then it crawls in the flat one. Momentum picks up speed along the valley floor; Adam balances the two directions.",
     },
     saddle: {
       tr: "Ortada bir eyer noktası var: θ₁ yönünde çukur, θ₂ yönünde tepe. Gerçek minimumlar θ₂ = ±3,16'dadır. Çok boyutlu ağlarda eyer noktaları yerel minimumlardan çok daha yaygındır. Sırttan başlayan SGD, gradyan neredeyse sıfır olduğu için eyerde uzun süre bekler; Adam küçük gradyanı büyüterek ilk kaçan olur.",

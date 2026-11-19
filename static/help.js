@@ -95,8 +95,8 @@ const INFO = {
   "stage.validating": {
     title: { tr: "3 · Doğrulama", en: "3 · Validation" },
     body: {
-      tr: "<p>Her epoch sonunda model, eğitimde hiç görmediği <b>12.000 doğrulama görüntüsünde</b> ölçülür. Bu sırada ağırlıklar değişmez ve model [[train-eval|<b>değerlendirme modundadır</b>]] (<code>model.eval()</code>): Dropout kapalıdır.</p><p>Doğrulama sonucu, modelin gerçekten öğrenip öğrenmediğini ya da ezberlediğini ([[overfitting|overfitting]]) gösterir. [[hyperparameter|Hiperparametreleri]] seçerken de bu sonuca bakılır.</p>",
-      en: "<p>At the end of every epoch the model is measured on <b>12,000 validation images</b> it never saw during training. The weights do not change and the model is in [[train-eval|<b>evaluation mode</b>]] (<code>model.eval()</code>): Dropout is off.</p><p>The validation result shows whether the model is really learning or memorizing ([[overfitting|overfitting]]). It is also what we look at when choosing [[hyperparameter|hyperparameters]].</p>",
+      tr: "<p>Her epoch sonunda model, eğitimde hiç görmediği <b>12.000 doğrulama görüntüsünde</b> ölçülür. Bu sırada ağırlıklar değişmez ve model [[train-eval|<b>değerlendirme modundadır</b>]] (<code>model.eval()</code>): Dropout kapalıdır ve BatchNorm, eğitimde biriktirdiği hareketli ortalamaları kullanır.</p><p>Doğrulama sonucu, modelin gerçekten öğrenip öğrenmediğini ya da ezberlediğini ([[overfitting|overfitting]]) gösterir. [[hyperparameter|Hiperparametreleri]] seçerken de bu sonuca bakılır.</p>",
+      en: "<p>At the end of every epoch the model is measured on <b>12,000 validation images</b> it never saw during training. The weights do not change and the model is in [[train-eval|<b>evaluation mode</b>]] (<code>model.eval()</code>): Dropout is off and BatchNorm uses the running averages it collected during training.</p><p>The validation result shows whether the model is really learning or memorizing ([[overfitting|overfitting]]). It is also what we look at when choosing [[hyperparameter|hyperparameters]].</p>",
     },
     link: { tab: "code", section: "c-evaluate", label: { tr: "Kodlama → Değerlendirme", en: "Coding → Evaluation" } },
   },
@@ -150,7 +150,7 @@ const INFO = {
   "chip.loss": {
     title: { tr: "3 · Kaybı hesapla: criterion(out, y)", en: "3 · Compute the loss: criterion(out, y)" },
     body: {
-      tr: "<p><b>Cross-Entropy kaybı</b>, doğru sınıfa verilen [[softmax|olasılığın]] negatif logaritmasıdır:</p><p class=\"info-formula\">\\(\\displaystyle L = -\\log p_{\\text{doğru sınıf}}\\)</p><p>Model doğru rakamdan eminse kayıp 0'a yakındır; yanlış bir rakamdan eminse büyüktür. Batch'teki 256 görüntünün ortalaması alınır.</p>",
+      tr: "<p><b>Çapraz entropi kaybı</b> (cross-entropy), doğru sınıfa verilen [[softmax|olasılığın]] negatif logaritmasıdır:</p><p class=\"info-formula\">\\(\\displaystyle L = -\\log p_{\\text{doğru sınıf}}\\)</p><p>Model doğru rakamdan eminse kayıp 0'a yakındır; yanlış bir rakamdan eminse büyüktür. Batch'teki 256 görüntünün ortalaması alınır.</p>",
       en: "<p>The <b>cross-entropy loss</b> is the negative logarithm of the [[softmax|probability]] given to the correct class:</p><p class=\"info-formula\">\\(\\displaystyle L = -\\log p_{\\text{correct class}}\\)</p><p>If the model is sure of the right digit the loss is close to 0; if it is sure of a wrong one the loss is large. It is averaged over the 256 images of the batch.</p>",
     },
     link: { tab: "theory", section: "t-softmax", label: { tr: "Teori → Softmax ve kayıp", en: "Theory → Softmax and loss" } },
@@ -158,8 +158,8 @@ const INFO = {
   "chip.backward": {
     title: { tr: "4 · Geri yayılım: loss.backward()", en: "4 · Backpropagation: loss.backward()" },
     body: {
-      tr: "<p>[[backprop|Zincir kuralıyla]], kaybın modeldeki <b>582.218 [[parameter|ağırlığın]]</b> her birine göre türevini ([[gradient|<b>gradyanını</b>]]) hesaplar ve ağırlıkların <code>.grad</code> alanına yazar.</p><p>Gradyan, bir ağırlık biraz artarsa kaybın hangi yönde ve ne kadar değişeceğini söyler.</p>",
-      en: "<p>Using the [[backprop|chain rule]], it computes the derivative ([[gradient|<b>gradient</b>]]) of the loss with respect to each of the model's <b>582,218 [[parameter|weights]]</b> and stores it in their <code>.grad</code> field.</p><p>A gradient tells in which direction, and how much, the loss changes when that weight grows a little.</p>",
+      tr: "<p>[[backprop|Zincir kuralıyla]], kaybın modeldeki <b>582.218 [[parameter|parametrenin]]</b> (ağırlıklar, bias'lar ve BatchNorm'un γ, β değerleri) her birine göre türevini ([[gradient|<b>gradyanını</b>]]) hesaplar ve parametrelerin <code>.grad</code> alanına yazar. Bölüm 2'de bir örnek için adım adım izlenen hesabın aynısıdır, yalnızca çok daha büyüktür.</p><p>Gradyan, bir parametre biraz artarsa kaybın hangi yönde ve ne kadar değişeceğini söyler.</p>",
+      en: "<p>Using the [[backprop|chain rule]], it computes the derivative ([[gradient|<b>gradient</b>]]) of the loss with respect to each of the model's <b>582,218 [[parameter|parameters]]</b> (weights, biases and BatchNorm's γ and β) and stores it in their <code>.grad</code> field. It is the same computation chapter 2 followed step by step for one example, only much bigger.</p><p>A gradient tells in which direction, and how much, the loss changes when that parameter grows a little.</p>",
     },
     link: { tab: "theory", section: "t-opt", label: { tr: "Teori → Geri yayılım ve optimizasyon", en: "Theory → Backpropagation and optimization" } },
   },
@@ -174,8 +174,8 @@ const INFO = {
   "tile.loss": {
     title: { tr: "Eğitim kaybı", en: "Training loss" },
     body: {
-      tr: "<p>Son batch'lerin [[loss|kaybının]] <b>[[moving-average|hareketli ortalaması]]</b>. Tek tek batch kayıpları çok dalgalandığı için yumuşatılmış hâli gösterilir.</p><p>Düşmesi, modelin eğitim verisini giderek daha iyi tahmin ettiğini gösterir. Tek başına yeterli değildir: modelin yeni veride de iyi olup olmadığını [[val-set|doğrulama]] sonucu söyler. Başlangıçtaki yaklaşık 2,3 değeri, rastgele tahmin yapan bir modelin kaybıdır (ln 10).</p>",
-      en: "<p>A <b>[[moving-average|moving average]]</b> of the [[loss|loss]] of the most recent batches. Single batch losses fluctuate a lot, so a smoothed value is shown.</p><p>It going down means the model predicts the training data better and better. On its own that is not enough: the [[val-set|validation]] result tells whether it also does well on new data. The starting value of about 2.3 is the loss of a model that guesses at random (ln 10).</p>",
+      tr: "<p>Son batch'lerin [[loss|kaybının]] <b>[[moving-average|hareketli ortalaması]]</b>. Tek tek batch kayıpları çok dalgalandığı için yumuşatılmış hâli gösterilir.</p><p>Düşmesi, modelin eğitim verisini giderek daha iyi tahmin ettiğini gösterir. Tek başına yeterli değildir: modelin yeni veride de iyi olup olmadığını [[val-set|doğrulama]] sonucu söyler. Başlangıçtaki yaklaşık 2,3 değeri, her rakama eşit olasılık (%10) veren bir modelin kaybıdır: \\(-\\log 0{,}1 = \\ln 10 \\approx 2{,}3\\).</p>",
+      en: "<p>A <b>[[moving-average|moving average]]</b> of the [[loss|loss]] of the most recent batches. Single batch losses fluctuate a lot, so a smoothed value is shown.</p><p>It going down means the model predicts the training data better and better. On its own that is not enough: the [[val-set|validation]] result tells whether it also does well on new data. The starting value of about 2.3 is the loss of a model that gives every digit the same probability (10%): \\(-\\log 0.1 = \\ln 10 \\approx 2.3\\).</p>",
     },
   },
   "tile.val": {
@@ -195,8 +195,8 @@ const INFO = {
   "tile.time": {
     title: { tr: "Süre", en: "Time" },
     body: {
-      tr: "<p>Eğitimin başından beri geçen süre ve şimdiye kadarki hıza göre kalan süre tahmini.</p><p>[[gpu|Ekran kartıyla]] bir epoch birkaç saniye sürer; CPU'da aynı eğitim birkaç kat daha uzundur. [[convolution|Evrişim]] gibi işlemler binlerce paralel çarpmadan oluştuğu için GPU'da çok hızlanır.</p>",
-      en: "<p>The time since training started, and an estimate of the remaining time from the speed so far.</p><p>With a [[gpu|graphics card]] an epoch takes a few seconds; on a CPU the same training is several times longer. Operations such as [[convolution|convolution]] consist of thousands of parallel multiplications, which GPUs speed up enormously.</p>",
+      tr: "<p>Eğitimin başından beri geçen süre ve şimdiye kadarki hıza göre kalan süre tahmini.</p><p>[[gpu|Ekran kartıyla]] bir epoch, karta göre birkaç saniye ile yarım dakika arası sürer; CPU'da aynı eğitim birkaç kat daha uzundur. [[convolution|Evrişim]] gibi işlemler binlerce paralel çarpmadan oluştuğu için GPU'da çok hızlanır.</p>",
+      en: "<p>The time since training started, and an estimate of the remaining time from the speed so far.</p><p>With a [[gpu|graphics card]] an epoch takes from a few seconds to half a minute, depending on the card; on a CPU the same training is several times longer. Operations such as [[convolution|convolution]] consist of thousands of parallel multiplications, which GPUs speed up enormously.</p>",
     },
   },
   batchloss: {
@@ -209,23 +209,23 @@ const INFO = {
   losscurve: {
     title: { tr: "Epoch kaybı grafiği", en: "Epoch loss chart" },
     body: {
-      tr: "<p>Her epoch sonundaki ortalama <b>eğitim</b> (mavi) ve <b>doğrulama</b> (turuncu) kaybı.</p><p>İkisi birlikte düşüyorsa model öğreniyordur. Eğitim kaybı düşmeye devam ederken doğrulama kaybı yükselirse model ezberlemeye başlamıştır ([[overfitting|overfitting]]). Burada eğitim kaybının doğrulamadan yüksek olması normaldir: eğitimde [[dropout|Dropout]] açıktır, doğrulamada kapalıdır.</p>",
-      en: "<p>The average <b>training</b> (blue) and <b>validation</b> (orange) loss at the end of each epoch.</p><p>If both go down, the model is learning. If the training loss keeps falling while the validation loss rises, the model has started memorizing ([[overfitting|overfitting]]). Here it is normal for the training loss to be higher than the validation loss: [[dropout|Dropout]] is on during training and off during validation.</p>",
+      tr: "<p>Her epoch sonundaki ortalama <b>eğitim</b> (mavi) ve <b>doğrulama</b> (turuncu) kaybı.</p><p>İkisi birlikte düşüyorsa model öğreniyordur. Eğitim kaybı düşmeye devam ederken doğrulama kaybı yükselirse model ezberlemeye başlamıştır ([[overfitting|overfitting]]). Burada eğitim kaybının doğrulamadan yüksek olması normaldir, iki nedeni var: eğitimde [[dropout|Dropout]] açıktır, doğrulamada kapalıdır; ve eğitim kaybı epoch boyunca, model henüz gelişirken ortalanır, doğrulama ise epoch sonundaki modelle ölçülür.</p>",
+      en: "<p>The average <b>training</b> (blue) and <b>validation</b> (orange) loss at the end of each epoch.</p><p>If both go down, the model is learning. If the training loss keeps falling while the validation loss rises, the model has started memorizing ([[overfitting|overfitting]]). Here it is normal for the training loss to be higher than the validation loss, for two reasons: [[dropout|Dropout]] is on during training and off during validation; and the training loss is averaged over the epoch while the model is still improving, whereas validation uses the model as it is at the end of the epoch.</p>",
     },
     link: { tab: "theory", section: "t-drop", label: { tr: "Teori → Dropout", en: "Theory → Dropout" } },
   },
   accuracy: {
     title: { tr: "Doğruluk grafiği", en: "Accuracy chart" },
     body: {
-      tr: "<p>Doğru sınıflandırılan görüntülerin yüzdesi. [[loss|Kayıptan]] farklı olarak yalnızca en yüksek [[logit|skorun]] doğru olup olmadığına bakar, modelin ne kadar emin olduğunu ölçmez.</p><p>[[mnist|MNIST]]'te daha ilk epoch'ta %97'nin üzerine çıkılır; sonraki epoch'lar kalan zor örnekleri düzeltir.</p>",
-      en: "<p>The percentage of correctly classified images. Unlike the [[loss|loss]], it only checks whether the highest [[logit|score]] is right; it does not measure how confident the model is.</p><p>On [[mnist|MNIST]] it passes 97% after the very first epoch; later epochs fix the remaining hard examples.</p>",
+      tr: "<p>Doğru sınıflandırılan görüntülerin yüzdesi. [[loss|Kayıptan]] farklı olarak yalnızca en yüksek [[logit|skorun]] doğru olup olmadığına bakar, modelin ne kadar emin olduğunu ölçmez.</p><p>[[mnist|MNIST]]'te doğrulama doğruluğu daha ilk epoch'un sonunda %97'yi geçer; sonraki epoch'lar kalan zor örnekleri düzeltir. Eğitim doğruluğu ilk epoch'ta daha düşük görünür, çünkü model henüz rastgeleyken başlayan batch'lerin ortalamasıdır.</p>",
+      en: "<p>The percentage of correctly classified images. Unlike the [[loss|loss]], it only checks whether the highest [[logit|score]] is right; it does not measure how confident the model is.</p><p>On [[mnist|MNIST]] the validation accuracy passes 97% at the end of the very first epoch; later epochs fix the remaining hard examples. The training accuracy looks lower in the first epoch because it averages batches that started while the model was still random.</p>",
     },
   },
   filters: {
     title: { tr: "Conv1 filtreleri", en: "Conv1 filters" },
     body: {
-      tr: "<p>İlk [[convolution|evrişim]] katmanının <b>32 adet 5×5 [[kernel|ağırlık matrisi]]</b>. Mavi negatif, kırmızı pozitif ağırlık demektir.</p><p>Her filtre görüntünün üzerinde kaydırılır ve kendi desenine benzeyen yerlerde güçlü tepki verir; bu tepkiler bir [[feature-map|öznitelik haritası]] oluşturur. Eğitim sırasında her 10 batch'te bir güncellenir; böylece nasıl değiştikleri izlenebilir. Bir filtreye tıklayarak büyütebilirsiniz.</p>",
-      en: "<p>The first [[convolution|convolution]] layer's <b>32 [[kernel|weight matrices]] of 5×5</b>. Blue means a negative weight, red a positive one.</p><p>Each filter slides over the image and responds strongly where the image looks like its pattern; these responses form a [[feature-map|feature map]]. During training the view refreshes every 10 batches, so you can watch them change. Click a filter to enlarge it.</p>",
+      tr: "<p>İlk [[convolution|evrişim]] katmanının <b>32 adet 5×5 [[kernel|ağırlık matrisi]]</b>. Mavi negatif, kırmızı pozitif ağırlık demektir.</p><p>Her filtre görüntünün üzerinde kaydırılır ve kendi desenine benzeyen yerlerde güçlü tepki verir; bu tepkiler bir [[feature-map|öznitelik haritası]] oluşturur. Filtreler her adımda güncellenir; buradaki görünüm eğitim sırasında her 10 batch'te bir yenilenir, böylece nasıl değiştikleri izlenebilir. Bir filtreye tıklayarak büyütebilirsiniz.</p>",
+      en: "<p>The first [[convolution|convolution]] layer's <b>32 [[kernel|weight matrices]] of 5×5</b>. Blue means a negative weight, red a positive one.</p><p>Each filter slides over the image and responds strongly where the image looks like its pattern; these responses form a [[feature-map|feature map]]. The filters are updated at every step; during training this view refreshes every 10 batches, so you can watch them change. Click a filter to enlarge it.</p>",
     },
     link: { tab: "theory", section: "t-conv", label: { tr: "Teori → Evrişim", en: "Theory → Convolution" } },
   },

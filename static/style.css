@@ -446,6 +446,9 @@ canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; display: b
 
 .t-intro { display: grid; gap: 16px; }
 .t-intro-text p { color: var(--text-2); margin-top: 6px; max-width: 920px; line-height: 1.55; }
+.t-answers { margin-top: 10px; max-width: 920px; border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; background: var(--surface-2); }
+.t-answers summary { cursor: pointer; font-weight: 600; color: var(--accent-strong); }
+.t-answers p { margin-top: 6px; }
 .filter-strip { display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 6px; margin-top: 8px; max-width: 760px; }
 .filter-strip canvas { width: 100%; aspect-ratio: 1; border-radius: 4px; cursor: pointer; outline: 2px solid transparent; outline-offset: 2px; }
 .filter-strip canvas:hover { outline-color: var(--axis); }

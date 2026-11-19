@@ -5,7 +5,7 @@
  * Chapter pages use it for their Math and Coding tabs.
  *
  *   createLesson({ tab: "math", main: "#pm-main", toc: "#pm-toc", sections, widgets,
- *                  kicker: { tr: "Bölüm", en: "Section" }, source: { url, name } })
+ *                  kicker: { tr: "Kısım", en: "Section" }, source: { url, name } })
  *
  * Section: { id, title, blocks }. Blocks (every text may be a { tr, en } pair):
  *   { p }                     a paragraph of HTML; \( TeX \) is typeset, [[key|text]] links a term
@@ -145,7 +145,7 @@ function createLesson(config) {
     toc.replaceChildren();
     sections.forEach((section, k) => {
       const title = L(section.title);
-      const kicker = L(config.kicker || { tr: "Bölüm", en: "Section" });
+      const kicker = L(config.kicker || { tr: "Kısım", en: "Section" });
       const article = h("article", { class: "card tut-step m-step", id: section.id },
         h("header", { class: "tut-step-head" },
           h("span", { class: "tut-num", text: String(k + 1) }),
