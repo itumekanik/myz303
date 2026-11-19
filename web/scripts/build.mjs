@@ -11,7 +11,7 @@
  *   import { createBuild } ...        used by scripts/dev.mjs for the watch mode
  */
 import * as esbuild from "esbuild";
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { loadChapters, runtimeList } from "./chapters.mjs";
@@ -34,6 +34,9 @@ const indent = (text, n) =>
     .split("\n")
     .map((line) => (line ? " ".repeat(n) + line : line))
     .join("\n");
+
+/** An optional part of a chapter page (badges.html, before-main.html, after-main.html), or nothing. */
+const optional = (dir, file, n) => (existsSync(join(dir, file)) ? indent(read(join(dir, file)), n) : "");
 
 /** Fills {{name}} placeholders; an unknown placeholder is a build error. */
 function fill(template, values, name) {
@@ -124,6 +127,9 @@ export function writePages({ chapters, metafile, dev, outdir = DIST }) {
         brandSubEn: esc(`Chapter ${c.number} · ${c.sub.en}`),
         tabs,
         panels: indent(read(join(c.dir, "panels.html")), 4),
+        badges: optional(c.dir, "badges.html", 6),
+        beforeMain: optional(c.dir, "before-main.html", 2),
+        afterMain: optional(c.dir, "after-main.html", 2),
         styles,
         scripts: script(assets[c.id]),
       },
@@ -136,12 +142,26 @@ export function writePages({ chapters, metafile, dev, outdir = DIST }) {
   writeFileSync(join(outdir, ".nojekyll"), ""); // GitHub Pages: serve the files as they are
 }
 
+/** Libraries a page loads only when it needs them, with <script> tags (not bundled). */
+const VENDOR = {
+  "tf.min.js": "node_modules/@tensorflow/tfjs/dist/tf.min.js",
+  "tf-backend-webgpu.min.js": "node_modules/@tensorflow/tfjs-backend-webgpu/dist/tf-backend-webgpu.min.js",
+};
+
+/** Copies public/ (the data files of tools/export_assets.py) and the vendor libraries into the site. */
+export function copyStatic(outdir = DIST) {
+  if (existsSync(join(ROOT, "public"))) cpSync(join(ROOT, "public"), outdir, { recursive: true });
+  mkdirSync(join(outdir, "vendor"), { recursive: true });
+  for (const [name, from] of Object.entries(VENDOR)) cpSync(join(ROOT, from), join(outdir, "vendor", name));
+}
+
 export async function build({ dev = false, outdir = DIST } = {}) {
   const chapters = loadChapters(join(SRC, "chapters"));
   rmSync(outdir, { recursive: true, force: true });
   mkdirSync(outdir, { recursive: true });
   const result = await esbuild.build(esbuildOptions({ dev, chapters, outdir }));
   writePages({ chapters, metafile: result.metafile, dev, outdir });
+  copyStatic(outdir);
   return { chapters, result };
 }
 

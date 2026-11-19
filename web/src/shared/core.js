@@ -146,6 +146,8 @@ export function repaintAll() {
 // =====================================================================
 export const tip = $("#tooltip");
 export let hoverHost = null;
+/** Marks the chart under the pointer (other modules cannot assign hoverHost, an imported binding). */
+export const setHoverHost = (host) => { hoverHost = host; };
 
 /** rows: [{ value, label, color? }] — the value leads, the label follows. */
 export function showTip(x, y, title, rows = []) {

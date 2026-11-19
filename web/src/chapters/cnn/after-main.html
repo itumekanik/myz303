@@ -1,0 +1,25 @@
+<!-- Model switch: fixed to the window, so it stays reachable while scrolling (Inference and Theory tabs) -->
+<!-- Just the toggle; what the selected model is shows as its tooltip (app.js, describeModels) -->
+<aside class="model-float" aria-label="Gösterilen model" data-i18n-attr="aria-label=a.float">
+      <div class="seg model-switch" role="group" aria-label="Gösterilen model" data-i18n-attr="aria-label=a.float">
+        <button type="button" data-model="initial" aria-pressed="false" data-i18n="model.initial">Eğitim öncesi</button>
+        <button type="button" data-model="trained" aria-pressed="true" data-i18n="model.trained">Eğitilmiş</button>
+      </div>
+</aside>
+
+<dialog class="zoom" id="zoom" aria-labelledby="zoom-title">
+  <div class="zoom-body">
+  <div class="zoom-head">
+    <div>
+      <h2 id="zoom-title">Büyütülmüş görünüm</h2>
+      <p class="sub" id="zoom-sub"></p>
+    </div>
+    <button type="button" class="btn small icon" id="zoom-close" aria-label="Kapat" data-i18n-attr="aria-label=a.close">×</button>
+  </div>
+  <canvas class="px zoom-canvas" id="zoom-canvas"></canvas>
+  <div class="zoom-foot">
+    <div class="scale-legend" id="zoom-legend"></div>
+    <span class="zoom-readout" id="zoom-readout">Piksellerin üzerine gelin</span>
+  </div>
+  </div>
+</dialog>

@@ -56,7 +56,7 @@ export function goToPlace(link) {
   closeTerm();
   hooks.closeInfo?.();
   if ((link.chapter || "cnn") !== CHAPTER) {   // another chapter's page
-    goToChapterPlace(link);
+    goToChapterPlace({ ...link, chapter: link.chapter || "cnn" });   // a place without a chapter is in the CNN chapter
     return;
   }
   const moves = link.tab !== nav.tab || Boolean(link.section);   // navigate() does nothing otherwise

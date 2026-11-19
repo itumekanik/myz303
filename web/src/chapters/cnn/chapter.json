@@ -2,9 +2,13 @@
   "$schema": "../chapter.schema.json",
   "id": "cnn",
   "order": 3,
-  "status": "planned",
+  "status": "ready",
   "year": "1989",
   "short": "CNN",
   "title": { "tr": "Evrişimli ağ (CNN)", "en": "Convolutional network (CNN)" },
-  "sub": { "tr": "Görüntüden öğrenen ağ: SimpleCNN", "en": "A network that learns from images: SimpleCNN" }
+  "sub": { "tr": "Görüntüden öğrenen ağ: SimpleCNN", "en": "A network that learns from images: SimpleCNN" },
+  "page": {
+    "title": { "tr": "CNN", "en": "CNN" },
+    "tabs": ["train", "infer", "theory", "math", "code"]
+  }
 }

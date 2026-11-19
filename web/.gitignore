@@ -3,3 +3,7 @@ dist/
 test-results/
 playwright-report/
 *.tmp.mjs
+
+# The CNN chapter's data files (tools/export_assets.py) belong in the repository,
+# although the root .gitignore ignores every folder named data/
+!public/data/

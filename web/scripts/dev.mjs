@@ -11,13 +11,14 @@
 import * as esbuild from "esbuild";
 import { mkdirSync, rmSync, watch } from "node:fs";
 import { join } from "node:path";
-import { DIST, SRC, esbuildOptions, writePages } from "./build.mjs";
+import { DIST, SRC, copyStatic, esbuildOptions, writePages } from "./build.mjs";
 import { loadChapters } from "./chapters.mjs";
 
 const PORT = Number(process.env.PORT ?? 5173);
 const chapters = loadChapters(join(SRC, "chapters"));
 rmSync(DIST, { recursive: true, force: true });
 mkdirSync(DIST, { recursive: true });
+copyStatic(DIST);
 
 const pages = {
   name: "pages",

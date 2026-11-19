@@ -6,9 +6,9 @@ name: Web site
 on:
   push:
     branches: [main]
-    paths: ["web/**", "Perceptron.py", "MLP.py", ".github/workflows/web.yml"]
+    paths: ["web/**", "Perceptron.py", "MLP.py", "SimpleCNN.py", ".github/workflows/web.yml"]
   pull_request:
-    paths: ["web/**", "Perceptron.py", "MLP.py", ".github/workflows/web.yml"]
+    paths: ["web/**", "Perceptron.py", "MLP.py", "SimpleCNN.py", ".github/workflows/web.yml"]
   workflow_dispatch:
 
 permissions:

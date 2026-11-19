@@ -22,13 +22,12 @@ const CHAPTERS = [
 ];
 
 test.describe("start page", () => {
-  test("lists the learning path and links the ready chapters", async ({ page, errors }) => {
+  test("lists the learning path and links every chapter", async ({ page, errors }) => {
     await open(page, "index.html");
-    const items = page.locator(".lp-chapter");
-    await expect(items).toHaveCount(3);
-    await expect(page.locator("a.lp-chapter")).toHaveCount(2);
+    await expect(page.locator("a.lp-chapter")).toHaveCount(3);
     await expect(page.locator("a.lp-chapter").first()).toHaveAttribute("href", "perceptron.html");
-    await expect(page.locator(".lp-chapter.soon")).toContainText("yakında");
+    await expect(page.locator("a.lp-chapter").last()).toHaveAttribute("href", "cnn.html");
+    await expect(page.locator(".lp-chapter.soon")).toHaveCount(0);
     await page.locator("a.lp-chapter").first().click();
     await expect(page).toHaveTitle("Perceptron · Bölüm 1");
     void errors;
@@ -78,14 +77,16 @@ for (const c of CHAPTERS) {
       void errors;
     });
 
-    test("glossary opens; places in chapters still to come are not links", async ({ page, errors }) => {
+    test("glossary opens and its links lead to the CNN chapter", async ({ page, errors }) => {
       await open(page, `${c.id}.html`);
       await page.locator("#glossary-btn").click();
       await expect(page.locator("#glossary")).toBeVisible();
       expect(await page.locator("#glossary .g-entry").count()).toBeGreaterThan(50);
       await page.evaluate(() => document.querySelector("#g-dropout")?.scrollIntoView());
-      await expect(page.locator("#g-dropout .g-place.soon").first()).toContainText("yakında");
-      await expect(page.locator("#g-dropout a.g-place")).toHaveCount(0);
+      await expect(page.locator("#g-dropout .g-place.soon")).toHaveCount(0);
+      await page.locator("#g-dropout a.g-place").first().click();
+      await expect(page).toHaveURL(/cnn\.html#/);
+      await expect(page.locator("#t-drop, #m-drop").first()).toBeVisible();
       void errors;
     });
 
@@ -98,7 +99,7 @@ for (const c of CHAPTERS) {
       const menu = page.locator("#chapter-menu");
       await expect(menu).toBeVisible();
       await expect(menu.locator(".chm-item")).toHaveCount(3);
-      await expect(menu.locator(".chm-item.soon")).toHaveCount(1);
+      await expect(menu.locator(".chm-item.soon")).toHaveCount(0);
       const other = CHAPTERS.find((o) => o.id !== c.id)!;
       await menu.locator(`a.chm-item[href="${other.id}.html"]`).click();
       await expect(page).toHaveTitle(new RegExp(`· Chapter ${other.number}$`)); // the language is kept
@@ -144,12 +145,19 @@ test("perceptron → mlp: the next-chapter card opens the MLP's theory", async (
   void errors;
 });
 
-test("mlp: links to the CNN chapter say it is still to come", async ({ page, errors }) => {
+test("mlp → cnn: the next-chapter card opens the CNN theory", async ({ page, errors }) => {
   await open(page, "mlp.html#teori/ml-images");
-  await expect(page.locator("#ml-images .pc-next")).toContainText("yakında");
-  await page.locator("#tab-math").click();
-  const soon = page.locator("#mm-main .m-link-soon");
-  await expect(soon.first()).toContainText("CNN");
-  await expect(page.locator('#mm-main a[data-chapter="cnn"]')).toHaveCount(0);
+  await page.locator("#ml-images a.pc-next").click();
+  await expect(page).toHaveURL(/cnn\.html#teori$/);
+  await expect(page.locator("#tab-theory")).toHaveAttribute("aria-selected", "true");
+  void errors;
+});
+
+test("mlp: a See also link opens the CNN Math tab at that section", async ({ page, errors }) => {
+  await open(page, "mlp.html#matematik");
+  await expect(page.locator("#mm-main .m-link-soon")).toHaveCount(0);
+  await page.locator('#mm-main a[data-chapter="cnn"][data-go="math:m-softmax"]').first().click();
+  await expect(page).toHaveURL(/cnn\.html#matematik\/m-softmax$/);
+  await expect(page.locator("#m-softmax")).toBeVisible();
   void errors;
 });

@@ -21,6 +21,8 @@
     "check": "npm run lint && npm run typecheck && npm run test && npm run build && npm run test:e2e"
   },
   "dependencies": {
+    "@tensorflow/tfjs": "4.22.0",
+    "@tensorflow/tfjs-backend-webgpu": "4.22.0",
     "katex": "0.16.47"
   },
   "devDependencies": {

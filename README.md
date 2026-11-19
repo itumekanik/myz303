@@ -363,7 +363,7 @@ The whole dashboard can be switched between Turkish and English. Formulas are wr
 The trained model is saved to `checkpoints/simple_cnn.pt` and loaded automatically the next time the dashboard starts. The run that produced it (loss curves, epoch table, filters, validation samples and log) is saved next to it in `checkpoints/simple_cnn_run.json`, so the Training tab shows the last run again after a restart. With the default settings, a dashboard run gives exactly the same result as `python SimpleCNN.py`.
 
 ### Without a server: the static site in `web/`
-[web/](web/) is the same learning path as a static site that needs no server and no Python: it is published on GitHub Pages, and a downloaded copy works by double-clicking `index.html`. Every computation runs in the browser. The perceptron and MLP chapters are there now; the CNN chapter (inference and theory with the trained weights, training with TensorFlow.js on the GPU) comes next. Adding a chapter means adding a folder under `web/src/chapters/`. See [web/README.md](web/README.md) for how it is built and tested.
+[web/](web/) is the same learning path as a static site that needs no server and no Python: it is published on GitHub Pages, and a downloaded copy works by double-clicking `index.html`. Every computation runs in the browser: all three chapters, including the CNN, whose Inference and Theory tabs use the model trained with PyTorch here and whose Training tab trains SimpleCNN again on the reader's GPU with TensorFlow.js. Adding a chapter means adding a folder under `web/src/chapters/`. See [web/README.md](web/README.md) for how it is built and tested.
 
 ## References
 [The Back Propagation Method for CNN](https://ieeexplore.ieee.org/abstract/document/409626)
