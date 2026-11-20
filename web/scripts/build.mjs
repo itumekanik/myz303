@@ -15,6 +15,7 @@ import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } fr
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { loadChapters, runtimeList } from "./chapters.mjs";
+import { readRelease } from "./release.mjs";
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 export const SRC = join(ROOT, "src");
@@ -81,7 +82,7 @@ export function esbuildOptions({ dev, chapters, outdir = DIST, plugins = [] }) {
     legalComments: "eof",
     metafile: true,
     logLevel: "warning",
-    define: { __CHAPTERS__: JSON.stringify(runtimeList(chapters)) },
+    define: { __CHAPTERS__: JSON.stringify(runtimeList(chapters)), __RELEASE__: JSON.stringify(readRelease(ROOT)) },
     loader: { ".py": "text", ".woff2": "dataurl" },
     plugins: [katexWoff2Only, ...plugins],
   };

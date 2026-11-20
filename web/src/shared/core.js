@@ -13,6 +13,7 @@
 import { TABS, hooks } from "./page.ts";
 import { wireSwitches } from "./switches.ts";
 import { CHAPTERS } from "./chapters.ts";
+import { versionLine } from "./version.ts";
 import { I18N, L, applyStaticTranslations, t } from "./i18n.js";
 
 export const $ = (selector, root = document) => root.querySelector(selector);
@@ -622,7 +623,7 @@ export function renderChapters() {
     list.append(h("li", {}, item));
   });
   menu.setAttribute("aria-label", pathName);
-  menu.replaceChildren(h("div", { class: "chm-head", text: pathName }), list);
+  menu.replaceChildren(h("div", { class: "chm-head", text: pathName }), list, versionLine("chm-version"));
   const here = CHAPTERS.findIndex((c) => c.id === CHAPTER) + 1;
   button.title = `${pathName} · ${L({ tr: "Bölüm", en: "Chapter" })} ${here}/${CHAPTERS.length}`;
 }

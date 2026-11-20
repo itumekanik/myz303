@@ -6,8 +6,8 @@ import { I18N, L, applyStaticTranslations } from "../shared/i18n.js";
 import { wireSwitches } from "../shared/switches.ts";
 import { CHAPTERS, type Text } from "../shared/chapters.ts";
 import { onServer } from "../shared/engine.ts";
+import { REPO, versionLine } from "../shared/version.ts";
 
-const REPO = "https://github.com/itumekanik/myz303";
 /** The downloadable copy of this site (put next to index.html by the deployment). */
 const ZIP = "ai-learning-path.zip";
 
@@ -123,6 +123,7 @@ function render(): void {
       el("ol", { class: "lp-list" }, ...CHAPTERS.map(chapterCard)),
     ),
     onServer ? serverCard() : offlineCard(offline),
+    el("footer", { class: "lp-foot" }, versionLine("lp-version", { full: true })),
   );
   document.documentElement.lang = I18N.lang;
 }

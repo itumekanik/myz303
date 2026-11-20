@@ -61,7 +61,12 @@ dashboard all serve what is built from it.
    start the dashboard (`python dashboard.py` in the repository root): it serves the `dist/` that
    `npm run dev` keeps rebuilding, so reloading the page shows the change.
 3. `npm run check`, then commit.
-4. Push to `main`: [the workflow](../.github/workflows/web.yml) runs the same checks and, if they
+4. To release what changed, add a section to [CHANGELOG.md](../CHANGELOG.md) (`## [1.1.0] -
+   2026-12-01`, what changed for the reader) and set the same version in `package.json`
+   (`npm version 1.1.0 --no-git-tag-version`). The build takes the version and the date from the
+   changelog and fails if the two differ. The pages show them at the bottom of the start page and
+   of the chapter menu, with the commit the site was built from.
+5. Push to `main`: [the workflow](../.github/workflows/web.yml) runs the same checks and, if they
    pass, publishes the site (two or three minutes). If they fail, the published site stays as it
    was.
 

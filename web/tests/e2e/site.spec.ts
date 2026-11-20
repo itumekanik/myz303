@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { expect, open, overflows, test } from "./fixtures";
 
 const CHAPTERS = [
@@ -30,6 +32,22 @@ test.describe("start page", () => {
     await expect(page.locator(".lp-chapter.soon")).toHaveCount(0);
     await page.locator("a.lp-chapter").first().click();
     await expect(page).toHaveTitle("Perceptron · Bölüm 1");
+    void errors;
+  });
+
+  test("shows the version from CHANGELOG.md, also in the chapter menu", async ({ page, errors }) => {
+    const { version } = JSON.parse(readFileSync(join(import.meta.dirname, "../../package.json"), "utf8")) as { version: string };
+    await open(page, "index.html");
+    const line = page.locator(".lp-version");
+    await expect(line).toContainText(`Sürüm ${version} · `);
+    await expect(line.locator("a")).toHaveAttribute("href", /CHANGELOG\.md$/);
+    await page.locator('#lang-switch [data-lang="en"]').click();
+    await expect(line).toContainText(`Version ${version} · `);
+    await expect(line.locator("a")).toHaveText("What's new?");
+    await page.locator('#lang-switch [data-lang="tr"]').click();
+    await open(page, "perceptron.html");
+    await page.locator("#chapter-btn").click();
+    await expect(page.locator(".chm-version")).toContainText(`Sürüm ${version}`);
     void errors;
   });
 
