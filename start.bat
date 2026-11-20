@@ -30,11 +30,32 @@ if errorlevel 1 (
 if errorlevel 1 goto fail
 
 :run
+rem Panel, web\ klasorunden derlenen sayfalari (web\dist) sunar; ilk seferde derlenir
+if exist "web\dist\index.html" goto serve
+echo Sayfalar henuz derlenmemis (web\dist). Derleniyor, ilk seferde bir iki dakika surer...
+where npm >nul 2>nul
+if errorlevel 1 (
+    echo [HATA] Node.js bulunamadi. Ya https://nodejs.org adresinden Node.js 22 kurun,
+    echo ya da https://itumekanik.github.io/myz303/ai-learning-path.zip dosyasini indirip web\dist klasorune acin.
+    goto fail
+)
+pushd web
+call npm ci
+if errorlevel 1 goto buildfail
+call npm run build
+if errorlevel 1 goto buildfail
+popd
+
+:serve
 echo SimpleCNN paneli baslatiliyor... Kapatmak icin bu pencerede Ctrl+C tuslarina basin.
 echo.
 "%VENV_PY%" dashboard.py %*
 if errorlevel 1 goto fail
 exit /b 0
+
+:buildfail
+popd
+echo [HATA] Sayfalar derlenemedi.
 
 :fail
 echo.

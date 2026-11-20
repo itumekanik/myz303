@@ -7,26 +7,29 @@
      SimpleCNN Dashboard
 ============================
 
-A small local web app to watch SimpleCNN train on MNIST in real time and to
-run inference with the trained model afterwards.
+The learning path's site (web/, the same pages as on GitHub Pages), served on
+this computer with one difference: the CNN chapter trains SimpleCNN on MNIST with
+PyTorch here, on the GPU through CUDA, instead of with TensorFlow.js in the browser.
 
-    python dashboard.py              # opens http://127.0.0.1:8000 in the browser
+    python dashboard.py              # opens http://127.0.0.1:8000/cnn.html in the browser
     python dashboard.py --port 8080 --no-browser
 
-Training tab:  stage tracker, live loss/accuracy curves, the conv1 filters as
-               they learn, and predictions on fixed validation images.
-Inference tab: draw a digit (or pick a test image) and see the prediction
-               together with what every layer of the network produces.
-Theory tab:    the CNN building blocks explained, each with a live demo that
-               runs on a real MNIST image and the trained model's weights.
-/perceptron:   chapter 1 of the learning path, the perceptron (runs in the
-               browser; the Coding tab reads Perceptron.py).
-/mlp:          chapter 2, the multilayer network and backpropagation (runs in
-               the browser; the Coding tab reads MLP.py).
+The pages come from web/dist, built by `npm run build` in web/ (or unpack the
+site's ai-learning-path.zip there). Every page this server sends is marked
+<html data-engine="server">, and the CNN page then sends its requests to the
+API below instead of answering them in the browser:
 
+    GET  /api/status            training progress, the loaded model, defaults
+    POST /api/train, /api/stop  start (settings as JSON) or stop a training run
+    POST /api/predict           a drawing, a test image or 28x28 pixels -> every layer
+    GET  /api/test-samples?n=   random MNIST test images
+    GET  /api/theory/params     the conv1 / BatchNorm1 weights for the Theory tab
+
+The browser answers the same paths with the same JSON (web/src/engines/cnn/backend.ts).
 The model, data loading and evaluation code are reused from SimpleCNN.py, and
 the web server uses only the Python standard library. With the default
 settings a dashboard run gives exactly the same result as `python SimpleCNN.py`.
+The trained model is kept in checkpoints/simple_cnn.pt.
 """
 import argparse
 import base64
@@ -43,7 +46,7 @@ from datetime import datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 try:
     import torch
@@ -61,18 +64,19 @@ from torchvision.transforms import ToTensor
 import SimpleCNN as cnn
 
 ROOT = Path(__file__).resolve().parent
-STATIC_DIR = ROOT / "static"
-# The Coding tabs show these files; nothing else under the project is served
-SOURCE_FILES = {"/api/source/SimpleCNN.py": "SimpleCNN.py", "/api/source/Perceptron.py": "Perceptron.py",
-                "/api/source/MLP.py": "MLP.py"}
+# The pages: web/ built into web/dist (npm run build); nothing else under the project is served
+SITE_DIR = ROOT / "web" / "dist"
+SITE_URL = "https://itumekanik.github.io/myz303/"
+# What the build bundles into the pages (the Coding tabs show the Python files)
+SITE_SOURCES = [ROOT / "web" / "src", ROOT / "SimpleCNN.py", ROOT / "MLP.py", ROOT / "Perceptron.py"]
 CHECKPOINT = ROOT / "checkpoints" / "simple_cnn.pt"
 # The finished run that produced the checkpoint (curves, filters, samples, log), so the
 # Training tab can show it again after a restart
 RUN_FILE = CHECKPOINT.with_name("simple_cnn_run.json")
 RUN_FIELDS = ("config", "epoch", "batch", "batches", "step", "dataset_sizes", "batch_losses", "history",
               "test", "filters", "samples", "sample_predictions", "log", "started_at", "finished_at")
-# Bumped when the page needs a newer server API; the page warns when an older server is still running
-SERVER_VERSION = 4
+# Bumped when the API changes (also in web/src/engines/cnn/backend.ts)
+SERVER_VERSION = 5
 
 NUM_SAMPLES = 16      # Validation images whose predictions are shown while training
 FILTER_EVERY = 10     # Refresh the conv1 filter snapshot every N batches
@@ -588,8 +592,31 @@ class TrainingSession:
 
 #--------------------- Server ---------------------#
 CONTENT_TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
-                 ".js": "text/javascript; charset=utf-8", ".svg": "image/svg+xml",
-                 ".woff2": "font/woff2"}   # KaTeX fonts (static/vendor/katex)
+                 ".js": "text/javascript; charset=utf-8", ".json": "application/json; charset=utf-8",
+                 ".map": "application/json; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png",
+                 ".ico": "image/x-icon", ".woff2": "font/woff2", ".wasm": "application/wasm",
+                 ".zip": "application/zip", ".txt": "text/plain; charset=utf-8"}
+# The CNN page asks this server instead of answering in the browser (web/src/shared/engine.ts)
+SERVER_MARK = b'<html data-engine="server"'
+
+
+def site_problem(site: Path) -> str | None:
+    """Why the pages cannot be served (not built), or None."""
+    if (site / "index.html").is_file():
+        return None
+    return (f"The pages are not built yet: {site} has no index.html. Either build them once\n"
+            f"(needs Node.js 22):   cd web  then  npm install  and  npm run build\n"
+            f"or download {SITE_URL}ai-learning-path.zip and unpack it into {site}.")
+
+
+def site_is_stale(site: Path) -> bool:
+    """True if a page source changed after the last build (web/src, the Python files it shows)."""
+    built = (site / "index.html").stat().st_mtime
+    for source in SITE_SOURCES:
+        files = source.rglob("*") if source.is_dir() else [source]
+        if any(f.is_file() and f.stat().st_mtime > built + 1 for f in files):
+            return True
+    return False
 
 
 class DashboardServer(ThreadingHTTPServer):
@@ -598,7 +625,8 @@ class DashboardServer(ThreadingHTTPServer):
     allow_reuse_address = os.name != "nt"
 
 
-def make_handler(session: TrainingSession, engine: InferenceEngine):
+def make_handler(session: TrainingSession, engine: InferenceEngine, site: Path = SITE_DIR):
+    site_root = site.resolve()
     defaults = {"epochs": cnn.num_epochs, "lr": cnn.learning_rate,
                 "batch_size": cnn.batch_size, "seed": cnn.seed}
     device = device_name()
@@ -622,32 +650,35 @@ def make_handler(session: TrainingSession, engine: InferenceEngine):
         def _error(self, message: str, status: HTTPStatus):
             self._json({"error": message}, status)
 
-        def _static(self, relative: str):
-            target = (STATIC_DIR / relative).resolve()
-            if STATIC_DIR not in target.parents or not target.is_file():
+        def _page(self, relative: str):
+            """A file of the built site; pages are marked as served by this server."""
+            target = (site_root / relative).resolve()
+            if site_root not in target.parents or not target.is_file():
                 return self._error("Bulunamadı.", HTTPStatus.NOT_FOUND)
-            content_type = CONTENT_TYPES.get(target.suffix, "application/octet-stream")
-            self._send(target.read_bytes(), content_type)
+            body = target.read_bytes()
+            if target.suffix == ".html":
+                body = body.replace(b"<html", SERVER_MARK, 1)
+            self._send(body, CONTENT_TYPES.get(target.suffix, "application/octet-stream"))
+
+        def _redirect(self, location: str):
+            self.send_response(HTTPStatus.MOVED_PERMANENTLY)
+            self.send_header("Location", location)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
 
         def do_GET(self):
             try:
                 url = urlparse(self.path)
-                if url.path in ("/", "/index.html"):
-                    return self._static("index.html")
-                if url.path in ("/perceptron", "/perceptron/"):      # chapter 1 (runs in the browser)
-                    return self._static("perceptron.html")
-                if url.path in ("/mlp", "/mlp/"):                    # chapter 2 (runs in the browser)
-                    return self._static("mlp.html")
-                if url.path.startswith("/static/"):
-                    return self._static(url.path[len("/static/"):])
+                if not url.path.startswith("/api/"):
+                    if url.path.rstrip("/") in ("/perceptron", "/mlp"):   # the dashboard's old addresses
+                        return self._redirect(url.path.rstrip("/") + ".html")
+                    relative = unquote(url.path).lstrip("/")
+                    return self._page(relative + "index.html" if relative.endswith("/") or not relative else relative)
                 if url.path == "/api/status":
                     status = session.snapshot()
                     status.update(model=engine.info(), defaults=defaults, device=device,
                                   server_version=SERVER_VERSION)
                     return self._json(status)
-                if url.path in SOURCE_FILES:   # read-only, for the Coding tabs
-                    body = (ROOT / SOURCE_FILES[url.path]).read_bytes()
-                    return self._send(body, "text/plain; charset=utf-8")
                 if url.path == "/api/theory/params":
                     which = parse_qs(url.query).get("model", ["trained"])[0]
                     if which not in engine.MODELS:
@@ -727,7 +758,13 @@ def main():
     parser = argparse.ArgumentParser(description="SimpleCNN training & inference dashboard")
     parser.add_argument("--port", type=int, default=8000, help="first port to try (default 8000)")
     parser.add_argument("--no-browser", action="store_true", help="do not open the browser")
+    parser.add_argument("--site", type=Path, default=SITE_DIR,
+                        help=f"the built pages to serve (default {SITE_DIR.relative_to(ROOT).as_posix()})")
     args = parser.parse_args()
+    site = args.site.resolve()
+    problem = site_problem(site)
+    if problem:
+        raise SystemExit(problem)
 
     # Never let a character the console cannot show crash a print (e.g. output redirected to a file)
     for stream in (sys.stdout, sys.stderr):
@@ -743,7 +780,7 @@ def main():
     server = None
     for port in range(args.port, args.port + 20):
         try:
-            server = DashboardServer(("127.0.0.1", port), make_handler(session, engine))
+            server = DashboardServer(("127.0.0.1", port), make_handler(session, engine, site))
             break
         except OSError:
             continue
@@ -751,11 +788,14 @@ def main():
         raise SystemExit(f"No free port between {args.port} and {args.port + 19}.")
 
     url = f"http://127.0.0.1:{server.server_address[1]}"
-    print(f"SimpleCNN dashboard running at {url}  (Ctrl+C to quit)")
-    print(f"Chapter 1, the perceptron:      {url}/perceptron")
-    print(f"Chapter 2, the MLP:             {url}/mlp")
+    if site == SITE_DIR.resolve() and site_is_stale(site):
+        print("Note: web/ changed after the last build; run `npm run build` in web/ to see the changes.")
+    print(f"Learning path running at {url}/  (Ctrl+C to quit)")
+    print(f"Chapter 1, the perceptron:      {url}/perceptron.html")
+    print(f"Chapter 2, the MLP:             {url}/mlp.html")
+    print(f"Chapter 3, the CNN (PyTorch):   {url}/cnn.html")
     if not args.no_browser:
-        threading.Timer(0.8, webbrowser.open, args=(url,)).start()
+        threading.Timer(0.8, webbrowser.open, args=(f"{url}/cnn.html",)).start()
     try:
         server.serve_forever(poll_interval=0.5)
     except KeyboardInterrupt:

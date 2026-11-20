@@ -7,6 +7,9 @@ server and no Python: everything, including training the networks, runs in the b
   [.github/workflows/web.yml](../.github/workflows/web.yml).
 - **Offline:** download `ai-learning-path.zip` from the start page, unpack it and double-click
   `index.html`. The same files work from the disk (`file://`) as from the web.
+- **With PyTorch:** [dashboard.py](../dashboard.py) in the repository root serves the same pages
+  (`dist/`) and answers the CNN chapter's requests itself, so training runs in PyTorch on this
+  computer instead of in the browser (see "The Python dashboard" below).
 
 All three chapters are here: 1 the perceptron, 2 the multilayer network (MLP), 3 the convolutional
 network (CNN, SimpleCNN on MNIST).
@@ -47,6 +50,37 @@ npm run check        # what CI runs: lint, typecheck, unit tests, build, end-to-
 
 The end-to-end tests use the installed Google Chrome locally and Playwright's Chromium on CI
 (`npx playwright install chromium` once, if Chrome is not installed).
+
+### Making a change
+
+`web/` is the only copy of the pages: the site on GitHub Pages, the offline ZIP and the Python
+dashboard all serve what is built from it.
+
+1. Change the files under `src/` (or the Python files the Coding tabs show).
+2. `npm run dev` and look at it in the browser; to see the CNN chapter train with PyTorch, also
+   start the dashboard (`python dashboard.py` in the repository root): it serves the `dist/` that
+   `npm run dev` keeps rebuilding, so reloading the page shows the change.
+3. `npm run check`, then commit.
+4. Push to `main`: [the workflow](../.github/workflows/web.yml) runs the same checks and, if they
+   pass, publishes the site (two or three minutes). If they fail, the published site stays as it
+   was.
+
+### The Python dashboard
+
+`python dashboard.py` (or `start.bat` on Windows) serves `dist/` at http://127.0.0.1:8000/ and
+adds `data-engine="server"` to every page it sends (`<html data-engine="server">`). Pages read
+it through [shared/engine.ts](src/shared/engine.ts):
+
+- the CNN page sends its `/api/*` requests to the server instead of answering them in
+  `engines/cnn/backend.ts`; the server trains with PyTorch and saves the model to
+  `checkpoints/simple_cnn.pt`, and nothing is loaded from `data/` or `vendor/`;
+- text that is true for only one of the two is marked in the HTML (`data-engine="browser"` or
+  `"server"`, also inside the texts of `help.js`, `tutorial.js` and the glossary; a block of the
+  Coding tab takes `engine: "server"`), and the stylesheet hides the one that does not apply.
+
+`dashboard.py` prints a note when `web/src` changed after the last build. The end-to-end tests
+check the server mode without Python (`tests/e2e/server.spec.ts`: Playwright marks the pages and
+answers `/api/status` as the dashboard would).
 
 ### The CNN chapter's data
 
@@ -121,10 +155,10 @@ The build finds the folders, numbers the chapters, generates `<id>.html` from `s
 and gives every page the chapter list (the chapter menu, the start page, glossary links). Adding a
 folder is all it takes to add a chapter.
 
-**Ported code.** The chapter content and the shared UI came from the Python dashboard's `static/`
-folder as JavaScript modules with explicit imports. They are still JavaScript (`allowJs`, not type
-checked); new code is TypeScript in strict mode (erasable syntax only, so Node runs the unit tests
-without a build step). Code that runs early but needs a module loaded later (core.js → the glossary
+**Ported code.** The chapter content and the shared UI came from the Python dashboard's former
+`static/` folder as JavaScript modules with explicit imports. They are still JavaScript
+(`allowJs`, not type checked); new code is TypeScript in strict mode (erasable syntax only, so
+Node runs the unit tests without a build step). Code that runs early but needs a module loaded later (core.js → the glossary
 panel) goes through `shared/page.ts` hooks, so the module graph has no cycles.
 
 ## Licenses

@@ -10,7 +10,8 @@
 
 // =====================================================================
 // The tutorial
-// Blocks: { p }, { list, ordered }, { callout: "tip" | "warn" | "info", title, text },
+// Blocks (any block may carry engine: "browser" | "server", see shared/engine.ts):
+//   { p }, { list, ordered }, { callout: "tip" | "warn" | "info", title, text },
 //         { file: { from, to, fold, notes } }  (cut from SimpleCNN.py),
 //         { code, name, notes, caption }      (a separate example file),
 //         { term: title, lines }, { table: { head, rows } }, { links: [{ chapter, tab, section }] }
@@ -282,9 +283,13 @@ print(torch.cuda.get_device_name(0))  # name of the GPU`,
           en: "Stops cuDNN from re-selecting \"the fastest algorithm\" on every run; if that choice changed, the result could change too.",
         } },
       ] } },
-      { callout: "info", title: { tr: "Etkisi", en: "The effect" }, text: {
+      { callout: "info", engine: "browser", title: { tr: "Etkisi", en: "The effect" }, text: {
         tr: "Seed 42 ile her çalıştırma birebir aynı sonucu verir: test doğruluğu **%99,29**. Bu sayfanın [[train|Eğitim]] sekmesi aynı ayarları ve aynı adımları kullanır, ama tarayıcıda TensorFlow.js ile ve başka rastgele sayılarla çalıştığı için sonuçları bunlara yakındır, birebir aynı değildir.",
         en: "With seed 42 every run gives exactly the same result: a test accuracy of **99.29%**. This page's [[train|Training]] tab uses the same settings and the same steps, but it runs in the browser with TensorFlow.js and other random numbers, so its results come close to these, not digit for digit.",
+      } },
+      { callout: "info", engine: "server", title: { tr: "Etkisi", en: "The effect" }, text: {
+        tr: "Seed 42 ile her çalıştırma birebir aynı sonucu verir: test doğruluğu **%99,29**. Bu sayfanın [[train|Eğitim]] sekmesi de PyTorch'ta aynı sırayı izlediği için aynı sayıları üretir.",
+        en: "With seed 42 every run gives exactly the same result: a test accuracy of **99.29%**. This page's [[train|Training]] tab follows the same order in PyTorch, so it produces the same numbers.",
       } },
     ],
   },
@@ -611,9 +616,13 @@ print(f"{'flatten':10s} -> {tuple(x.shape)}")`,
           en: "The number of correct predictions: `eq` gives `True` where the values are equal, and `sum` counts them.",
         } },
       ] } },
-      { callout: "tip", title: { tr: "Bu beş adımı canlı izleyin", en: "Watch these five steps live" }, text: {
+      { callout: "tip", engine: "browser", title: { tr: "Bu beş adımı canlı izleyin", en: "Watch these five steps live" }, text: {
         tr: "[[train|Eğitim]] sekmesindeki \"Her batch'te çalışan eğitim adımı\" kartı tam olarak bu beş satırı gösterir. Orada eğitim tarayıcıda çalışır ve TensorFlow.js aynı beş adımı tek bir çağrıda (`model.trainOnBatch`) yapar.",
         en: "The \"The training step run on every batch\" card in the [[train|Training]] tab shows exactly these five lines. There training runs in the browser, and TensorFlow.js performs the same five steps in a single call (`model.trainOnBatch`).",
+      } },
+      { callout: "tip", engine: "server", title: { tr: "Bu beş adımı canlı izleyin", en: "Watch these five steps live" }, text: {
+        tr: "[[train|Eğitim]] sekmesindeki \"Her batch'te çalışan eğitim adımı\" kartı tam olarak bu beş satırı gösterir.",
+        en: "The \"The training step run on every batch\" card in the [[train|Training]] tab shows exactly these five lines.",
       } },
       { callout: "warn", title: { tr: "Sık yapılan hata", en: "A common mistake" }, text: {
         tr: "`optimizer.zero_grad()` satırını unutmak hata vermez ama model kötü öğrenir: gradyanlar her adımda birikerek büyür. Programın çökmediği için fark edilmesi zor bir hatadır.",
@@ -761,9 +770,13 @@ print(f"{'flatten':10s} -> {tuple(x.shape)}")`,
   {
     id: "c-predict", title: { tr: "Ek: kaydetmek ve tahmin yapmak", en: "Extra: saving and predicting" },
     blocks: [
-      { p: {
+      { engine: "browser", p: {
         tr: "`SimpleCNN.py` eğitimden sonra modeli saklamaz. Eğitilmiş bir modeli tekrar kullanmak için ağırlıklarını kaydedip başka bir programda yükleyebilirsiniz. Repodaki Python paneli `dashboard.py` tam olarak bunu yapıyor; bu sayfa ise tarayıcıda eğittiğiniz modeli tarayıcınızda saklar.",
         en: "`SimpleCNN.py` does not keep the model after training. To reuse a trained model, you can save its weights and load them in another program. The repository's Python dashboard, `dashboard.py`, does exactly that; this page instead keeps the model you train here in your browser.",
+      } },
+      { engine: "server", p: {
+        tr: "`SimpleCNN.py` eğitimden sonra modeli saklamaz. Eğitilmiş bir modeli tekrar kullanmak için ağırlıklarını kaydedip başka bir programda yükleyebilirsiniz. Bu sayfayı sunan Python paneli `dashboard.py` tam olarak bunu yapıyor: eğittiğiniz modeli `checkpoints/simple_cnn.pt` dosyasına kaydeder.",
+        en: "`SimpleCNN.py` does not keep the model after training. To reuse a trained model, you can save its weights and load them in another program. The Python dashboard serving this page, `dashboard.py`, does exactly that: it saves the model you train to `checkpoints/simple_cnn.pt`.",
       } },
       { code: {
         tr: String.raw`# Eğitimden sonra: yalnızca ağırlıkları (state_dict) kaydet
@@ -962,6 +975,7 @@ export function renderTutorial() {
         h("div", {}, h("span", { class: "tut-kicker", text: kicker }), h("h2", { text: title(step) }))));
     for (const block of step.blocks) {
       const node = renderBlock(block);
+      if (node && block.engine) node.dataset.engine = block.engine;   // true only in the browser or on dashboard.py
       if (node) article.append(node);
     }
     const nav = h("footer", { class: "tut-nav" });

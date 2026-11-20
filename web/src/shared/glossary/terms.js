@@ -489,8 +489,8 @@ export const GLOSSARY = {
       en: "The starting value of the random number generator. \"Random\" numbers on a computer are really a fixed sequence that starts from this value. The same seed gives the same sequence every time, and so the same initial weights, the same data split, the same shuffling order and the same [[dropout|dropout]] masks.",
     },
     model: {
-      tr: "seed = 42; <code>torch.manual_seed(42)</code> CPU'nun ve tüm GPU'ların üreteçlerini sabitler. Tarayıcıdaki eğitim başka bir üreteç kullanır; orada aynı seed sonuçları birbirine çok yakın tutar, ama birebir aynı yapmaz.",
-      en: "seed = 42; <code>torch.manual_seed(42)</code> fixes the generators of the CPU and all GPUs. Training in the browser uses another generator; there the same seed keeps results very close to each other, but not identical.",
+      tr: "seed = 42; <code>torch.manual_seed(42)</code> CPU'nun ve tüm GPU'ların üreteçlerini sabitler.<span data-engine=\"browser\"> Tarayıcıdaki eğitim başka bir üreteç kullanır; orada aynı seed sonuçları birbirine çok yakın tutar, ama birebir aynı yapmaz.</span>",
+      en: "seed = 42; <code>torch.manual_seed(42)</code> fixes the generators of the CPU and all GPUs.<span data-engine=\"browser\"> Training in the browser uses another generator; there the same seed keeps results very close to each other, but not identical.</span>",
     },
     link: { tab: "code", section: "c-seed" },
   },
@@ -908,8 +908,8 @@ export const GLOSSARY = {
       en: "The model's learned [[parameter|weights]] saved to a file. A <code>state_dict</code> is a dictionary mapping layer names to weight tensors; it is written with <code>torch.save</code> and loaded with <code>model.load_state_dict</code>. That way the model does not have to be trained again every time.",
     },
     model: {
-      tr: "<code>SimpleCNN.py</code> modeli kaydetmez; Kodlama sekmesinin ek adımı <code>torch.save</code> ile nasıl kaydedileceğini gösterir. CNN bölümünün sayfası, tarayıcıda eğitilen modeli karşılaştırma için eğitim öncesi ağırlıklarla birlikte bu tarayıcıda (IndexedDB) saklar; dosya yazmaz.",
-      en: "<code>SimpleCNN.py</code> does not save the model; the Coding tab's extra step shows how to save it with <code>torch.save</code>. The CNN chapter's page keeps a model trained in the browser, together with the weights from before training for comparison, in this browser (IndexedDB); it writes no file.",
+      tr: "<code>SimpleCNN.py</code> modeli kaydetmez; Kodlama sekmesinin ek adımı <code>torch.save</code> ile nasıl kaydedileceğini gösterir.<span data-engine=\"browser\"> CNN bölümünün sayfası, tarayıcıda eğitilen modeli karşılaştırma için eğitim öncesi ağırlıklarla birlikte bu tarayıcıda (IndexedDB) saklar; dosya yazmaz.</span><span data-engine=\"server\"> Python paneli (<code>dashboard.py</code>) eğitilen modeli, karşılaştırma için eğitim öncesi ağırlıklarla birlikte <code>checkpoints/simple_cnn.pt</code> dosyasına kaydeder.</span>",
+      en: "<code>SimpleCNN.py</code> does not save the model; the Coding tab's extra step shows how to save it with <code>torch.save</code>.<span data-engine=\"browser\"> The CNN chapter's page keeps a model trained in the browser, together with the weights from before training for comparison, in this browser (IndexedDB); it writes no file.</span><span data-engine=\"server\"> The Python dashboard (<code>dashboard.py</code>) saves the trained model, together with the weights from before training for comparison, to <code>checkpoints/simple_cnn.pt</code>.</span>",
     },
     link: { tab: "code", section: "c-predict" },
   },
@@ -922,8 +922,8 @@ export const GLOSSARY = {
       en: "A GPU is the processor of a graphics card. It can do thousands of simple operations at once, so it runs neural network computations, which are mostly parallel multiplications and additions, many times faster than a CPU. CUDA is the platform that lets PyTorch use NVIDIA cards; the model and the data must be on the same device (<code>.to(device)</code>).",
     },
     model: {
-      tr: "Eğitimin hangi cihazda çalıştığı üst çubukta yazar. <code>SimpleCNN.py</code> ekran kartını CUDA ile kullanır; CNN bölümünün sayfasında ise TensorFlow.js, tarayıcının WebGPU (yoksa WebGL) arayüzüyle kullanır.",
-      en: "The top bar shows which device training runs on. <code>SimpleCNN.py</code> uses the graphics card through CUDA; on the CNN chapter's page TensorFlow.js uses it through the browser's WebGPU (otherwise WebGL).",
+      tr: "Eğitimin hangi cihazda çalıştığı üst çubukta yazar. <code>SimpleCNN.py</code> ekran kartını CUDA ile kullanır<span data-engine=\"browser\">; CNN bölümünün sayfasında ise TensorFlow.js, tarayıcının WebGPU (yoksa WebGL) arayüzüyle kullanır</span><span data-engine=\"server\">; Python paneli (<code>dashboard.py</code>) de öyle</span>.",
+      en: "The top bar shows which device training runs on. <code>SimpleCNN.py</code> uses the graphics card through CUDA<span data-engine=\"browser\">; on the CNN chapter's page TensorFlow.js uses it through the browser's WebGPU (otherwise WebGL)</span><span data-engine=\"server\">, and so does the Python dashboard (<code>dashboard.py</code>)</span>.",
     },
     link: { tab: "code", section: "c-setup-train" },
   },

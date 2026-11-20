@@ -19,7 +19,7 @@ import { TrainingSession, DEFAULTS, parseConfig, deviceName, type RunRecord } fr
 import { clearSaved, loadSaved } from "./store.ts";
 import { loadModel, unpackWeights, type PackedModel } from "./weights.ts";
 
-const SERVER_VERSION = 4;
+const SERVER_VERSION = 5; // dashboard.py's SERVER_VERSION: the same API
 const MODELS = ["trained", "initial"] as const;
 type Which = (typeof MODELS)[number];
 

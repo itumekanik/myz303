@@ -5,20 +5,33 @@
  */
 
 /**
- * The dashboard's server API (/api/status, /api/predict, …), answered in the browser by
- * engines/cnn/backend.ts with the same JSON the Python server (dashboard.py) sends.
+ * The dashboard's server API (/api/status, /api/predict, …): sent to the Python server when
+ * dashboard.py serves the page (training with PyTorch), else answered in the browser by
+ * engines/cnn/backend.ts with the same JSON (training with TensorFlow.js).
  */
 import { localApi } from "../../engines/cnn/backend.ts";
+import { onServer } from "../../shared/engine.ts";
 import { I18N, L, t } from "../../shared/i18n.js";
 import { $, attachGridTooltip, clamp, fmtDuration, fmtInt, fmtNum, fmtPct, fmtProb, fmtTick, h, hideTip, lineChart, linearTicks, locale, logCeil, logFloor, logTicks, lutColor, niceStep, paint, pctText, probabilityChart, selectTab, smooth } from "../../shared/core.js";
 import { TABS } from "../../shared/page.ts";
 
 export async function api(path, body) {
+  if (onServer) return serverApi(path, body);
   try {
     return await localApi(path, body);
   } catch (error) {
     throw new Error(localizeServerMessage(error.message) || error.message, { cause: error });
   }
+}
+
+async function serverApi(path, body) {
+  const options = body === undefined
+    ? { cache: "no-store" }
+    : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
+  const response = await fetch(path, options);
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(localizeServerMessage(data.error) || data.error || `HTTP ${response.status}`);
+  return data;
 }
 
 /** The server answers in Turkish; known messages are shown in the page's language. */
@@ -98,7 +111,7 @@ export function renderStatus(st) {
     training: st.epoch ? `Epoch ${st.epoch}/${epochs} · batch ${st.batch}/${st.batches}` : t("hint.training"),
     validating: last ? t("hint.lastval", { v: fmtPct(last.val_acc) }) : t("hint.validating"),
     testing: st.test ? t("hint.acc", { v: fmtPct(st.test.acc) }) : t("hint.testing"),
-    saving: t("hint.saving"),
+    saving: t(onServer ? "hint.saving.server" : "hint.saving"),
   };
   for (const li of $("#stepper").children) {
     const i = STAGES.indexOf(li.dataset.stage);
@@ -178,15 +191,18 @@ export function renderRunBanner(st) {
     const go = h("button", { type: "button", class: "btn small", text: t("run.try") });
     go.addEventListener("click", () => selectTab("infer"));
     const when = st.restored && new Date(st.restored.trained_at).toLocaleString(locale(), { dateStyle: "medium", timeStyle: "short" });
-    // The model that came with the site was trained with PyTorch; a run in this browser replaces it
-    // until the reader goes back to it
+    // In the browser: the model that came with the site was trained with PyTorch; a run in this
+    // browser replaces it until the reader goes back to it. On dashboard.py: the last run, saved in
+    // checkpoints/, which the next run replaces.
     const fromBrowser = st.restored?.origin === "this browser";
-    const text = !st.restored ? t("run.done", { v: fmtPct(st.test.acc) })
-      : fromBrowser ? t("run.restored.browser", { d: when, v: fmtPct(st.test.acc) })
-        : t("run.restored.pytorch", { d: when, v: fmtPct(st.test.acc), dev: st.model?.meta?.device ?? "GPU" });
+    const v = fmtPct(st.test.acc);
+    const text = onServer ? t(st.restored ? "run.restored" : "run.done.server", { d: when, v })
+      : !st.restored ? t("run.done", { v })
+        : fromBrowser ? t("run.restored.browser", { d: when, v })
+          : t("run.restored.pytorch", { d: when, v, dev: st.model?.meta?.device ?? "GPU" });
     banner.append(h("span", { class: "icon", text: "✓" }), h("span", { text }), go);
     go.style.marginLeft = "auto";
-    if (fromBrowser || !st.restored) {
+    if (!onServer && (fromBrowser || !st.restored)) {
       const back = h("button", { type: "button", class: "btn small", text: t("run.reset") });
       back.addEventListener("click", async () => {
         back.disabled = true;

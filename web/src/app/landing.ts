@@ -5,6 +5,7 @@
 import { I18N, L, applyStaticTranslations } from "../shared/i18n.js";
 import { wireSwitches } from "../shared/switches.ts";
 import { CHAPTERS, type Text } from "../shared/chapters.ts";
+import { onServer } from "../shared/engine.ts";
 
 const REPO = "https://github.com/itumekanik/myz303";
 /** The downloadable copy of this site (put next to index.html by the deployment). */
@@ -49,6 +50,49 @@ function chapterCard(c: (typeof CHAPTERS)[number]): HTMLElement {
   return el("li", {}, c.url ? el("a", { class: "lp-chapter", href: c.url }, ...body) : el("div", { class: "lp-chapter soon" }, ...body));
 }
 
+/** How the site can be used without anything installed (GitHub Pages, or the downloaded copy). */
+function offlineCard(offline: boolean): HTMLElement {
+  return el(
+    "section",
+    { class: "card lp-offline" },
+    html("h2", { tr: "Kurulum gerekmez", en: "Nothing to install" }),
+    html("p", {
+      tr: "Her şey tarayıcınızda çalışır: sunucu, Python ya da internet bağlantısı gerekmez. Hesaplar bu bilgisayarda yapılır, hiçbir veri bir yere gönderilmez.",
+      en: "Everything runs in your browser: no server, no Python and no internet connection needed. All computations happen on this computer; no data is sent anywhere.",
+    }),
+    offline
+      ? html("p", {
+          tr: "Şu an bu sitenin bilgisayarınızdaki kopyasını kullanıyorsunuz.",
+          en: "You are using the copy of this site on your computer.",
+        })
+      : html("p", {
+          tr: `İnternetsiz kullanmak için <a href="${ZIP}" download>sitenin ZIP dosyasını indirin</a>, bir klasöre açın ve <code>index.html</code>'e çift tıklayın.`,
+          en: `To use it offline, <a href="${ZIP}" download>download the site as a ZIP file</a>, unpack it into a folder and double-click <code>index.html</code>.`,
+        }),
+    html("p", {
+      tr: `Kaynak kod, Python sürümleri ve sunuculu panel: <a href="${REPO}" rel="noopener">GitHub</a>.`,
+      en: `Source code, the Python versions and the dashboard with a server: <a href="${REPO}" rel="noopener">GitHub</a>.`,
+    }),
+  );
+}
+
+/** The same pages served by the Python dashboard (dashboard.py), which trains the CNN with PyTorch. */
+function serverCard(): HTMLElement {
+  return el(
+    "section",
+    { class: "card lp-offline" },
+    html("h2", { tr: "Python paneli", en: "The Python dashboard" }),
+    html("p", {
+      tr: "Bu sayfaları bu bilgisayardaki Python paneli (<code>dashboard.py</code>) sunuyor. CNN bölümünde eğitim, tarayıcı yerine burada PyTorch ile çalışır ve model <code>checkpoints/simple_cnn.pt</code> dosyasına kaydedilir; diğer her şey sitedekiyle aynıdır.",
+      en: "These pages are served by the Python dashboard (<code>dashboard.py</code>) on this computer. In the CNN chapter, training runs here with PyTorch instead of in the browser, and the model is saved to <code>checkpoints/simple_cnn.pt</code>; everything else is the same as on the site.",
+    }),
+    html("p", {
+      tr: `Kaynak kod ve çevrimiçi sürüm: <a href="${REPO}" rel="noopener">GitHub</a>.`,
+      en: `Source code and the online version: <a href="${REPO}" rel="noopener">GitHub</a>.`,
+    }),
+  );
+}
+
 function render(): void {
   const main = document.getElementById("landing");
   if (!main) return;
@@ -78,28 +122,7 @@ function render(): void {
       html("h2", { tr: "Öğrenme yolu", en: "Learning path" }),
       el("ol", { class: "lp-list" }, ...CHAPTERS.map(chapterCard)),
     ),
-    el(
-      "section",
-      { class: "card lp-offline" },
-      html("h2", { tr: "Kurulum gerekmez", en: "Nothing to install" }),
-      html("p", {
-        tr: "Her şey tarayıcınızda çalışır: sunucu, Python ya da internet bağlantısı gerekmez. Hesaplar bu bilgisayarda yapılır, hiçbir veri bir yere gönderilmez.",
-        en: "Everything runs in your browser: no server, no Python and no internet connection needed. All computations happen on this computer; no data is sent anywhere.",
-      }),
-      offline
-        ? html("p", {
-            tr: "Şu an bu sitenin bilgisayarınızdaki kopyasını kullanıyorsunuz.",
-            en: "You are using the copy of this site on your computer.",
-          })
-        : html("p", {
-            tr: `İnternetsiz kullanmak için <a href="${ZIP}" download>sitenin ZIP dosyasını indirin</a>, bir klasöre açın ve <code>index.html</code>'e çift tıklayın.`,
-            en: `To use it offline, <a href="${ZIP}" download>download the site as a ZIP file</a>, unpack it into a folder and double-click <code>index.html</code>.`,
-          }),
-      html("p", {
-        tr: `Kaynak kod, Python sürümleri ve sunuculu panel: <a href="${REPO}" rel="noopener">GitHub</a>.`,
-        en: `Source code, the Python versions and the dashboard with a server: <a href="${REPO}" rel="noopener">GitHub</a>.`,
-      }),
-    ),
+    onServer ? serverCard() : offlineCard(offline),
   );
   document.documentElement.lang = I18N.lang;
 }

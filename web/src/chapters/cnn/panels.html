@@ -3,7 +3,7 @@
   <div class="row row-top">
     <form class="card controls" id="train-form" autocomplete="off">
       <h2><span data-i18n="train.settings">Ayarlar</span> <button type="button" class="info-btn" data-info="settings" aria-expanded="false">i</button></h2>
-      <p class="sub" data-i18n="train.defaults">Varsayılanlar <code>SimpleCNN.py</code> ile aynı. Eğitim bu tarayıcıda çalışır; sonuç PyTorch'takine yakındır.</p>
+      <p class="sub" data-i18n="train.defaults">Varsayılanlar <code>SimpleCNN.py</code> ile aynı. <span data-engine="browser">Eğitim bu tarayıcıda çalışır; sonuç PyTorch'takine yakındır.</span><span data-engine="server">Eğitim bu bilgisayarda PyTorch ile çalışır; aynı seed aynı sonucu verir.</span></p>
       <div class="fields">
         <label><span class="label-row"><span data-i18n="train.f.epochs">Epoch sayısı</span> <button type="button" class="info-btn" data-info="epoch" aria-expanded="false">i</button></span><input name="epochs" type="number" min="1" max="50" step="1" value="10" required></label>
         <label><span class="label-row"><span data-i18n="train.f.lr">Öğrenme oranı</span> <button type="button" class="info-btn" data-info="lr" aria-expanded="false">i</button></span><input name="lr" type="number" min="0.00001" max="1" step="any" value="0.001" required></label>
@@ -27,7 +27,7 @@
         <li data-stage="training"><span class="step-dot"><span>2</span></span><span class="step-label"><span data-i18n="stage.training">Eğitim</span> <button type="button" class="info-btn" data-info="stage.training" aria-expanded="false">i</button></span><span class="step-hint" data-hint>Ağırlıklar güncellenir</span></li>
         <li data-stage="validating"><span class="step-dot"><span>3</span></span><span class="step-label"><span data-i18n="stage.validating">Doğrulama</span> <button type="button" class="info-btn" data-info="stage.validating" aria-expanded="false">i</button></span><span class="step-hint" data-hint>Görülmemiş veride ölçüm</span></li>
         <li data-stage="testing"><span class="step-dot"><span>4</span></span><span class="step-label"><span data-i18n="stage.testing">Test</span> <button type="button" class="info-btn" data-info="stage.testing" aria-expanded="false">i</button></span><span class="step-hint" data-hint>Son performans</span></li>
-        <li data-stage="saving"><span class="step-dot"><span>5</span></span><span class="step-label"><span data-i18n="stage.saving">Kayıt</span> <button type="button" class="info-btn" data-info="stage.saving" aria-expanded="false">i</button></span><span class="step-hint" data-hint>Bu tarayıcıda saklanır</span></li>
+        <li data-stage="saving"><span class="step-dot"><span>5</span></span><span class="step-label"><span data-i18n="stage.saving">Kayıt</span> <button type="button" class="info-btn" data-info="stage.saving" aria-expanded="false">i</button></span><span class="step-hint" data-hint></span></li>
       </ol>
       <div class="loop-note" aria-hidden="true"><span data-i18n="train.loopnote">↻ 2 ve 3 her epoch'ta tekrarlanır</span></div>
 

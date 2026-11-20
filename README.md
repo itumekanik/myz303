@@ -327,45 +327,46 @@ The model performances are evaluated mainly by the *Loss*. Loss is the key measu
 
 <img width="905" height="376" alt="cnn4_p" src="https://github.com/user-attachments/assets/4b4830a1-7e89-4705-9c33-2ac8d7b904b6" />
 
-## Interactive Dashboard
-[dashboard.py](dashboard.py) starts a small local web app for watching the training and trying the trained model. It reuses the model and training code from `SimpleCNN.py` and needs no extra packages (the web server uses only the Python standard library).
+## Interactive Learning Path
+**Open it at https://itumekanik.github.io/myz303/** (or download it from there as a ZIP and double-click `index.html`). The same site runs in two ways, from the same source in [web/](web/):
+
+* **In the browser, with no server** (GitHub Pages, or the downloaded copy). Every computation runs in the browser: the CNN chapter's Inference and Theory tabs use the model trained with PyTorch here, and its Training tab trains SimpleCNN again on the reader's GPU with TensorFlow.js.
+* **With PyTorch, on your computer**: [dashboard.py](dashboard.py) serves the same pages, and the CNN chapter then trains with `SimpleCNN.py`'s code in PyTorch (on the GPU through CUDA) instead of in the browser. It needs no extra packages (the web server uses only the Python standard library).
 
 ```bash
-python dashboard.py          # opens http://127.0.0.1:8000 in your browser
+python dashboard.py          # opens http://127.0.0.1:8000/cnn.html in your browser
+start.bat                    # Windows: also sets up .venv with PyTorch and builds the pages the first time
 ```
+
+`dashboard.py` serves the pages built into `web/dist`. Build them once with Node.js 22 (`cd web`, `npm install`, `npm run build`; `start.bat` does this when they are missing), or unpack the site's ZIP into `web/dist`. After changing anything under `web/`, build again; [web/README.md](web/README.md) describes the development workflow and how the site is built and tested.
+
+The CNN chapter (chapter 3):
 
 * **Training tab** - a stage tracker (data loading → training → validation → test → saving), live batch loss, epoch loss and accuracy curves, the conv1 filters as they are updated, and predictions on 16 fixed validation images after every epoch. Every part has an (i) button that explains it.
 * **Inference tab** - draw a digit with the mouse or pick an image from the test set, and see the class probabilities together with the feature maps of every layer (Conv1 → MaxPool → Conv2 → MaxPool → FC1 → FC2).
 * **Theory tab** - the building blocks of the network (convolution, batch normalization, activation functions, pooling, dropout, softmax and cross-entropy, backpropagation and Adam), each explained next to a live demo that runs on a real MNIST image and the trained model's own weights: slide a kernel over the image step by step, compare the distributions before and after BatchNorm, drop units with a chosen rate, adjust the logits and watch the loss, or race SGD, Momentum and Adam on a loss surface.
 * **Math tab** - the mathematics of every building block, from notation and SimpleCNN's shapes to convolution, batch normalization, activations, pooling, dropout, the fully connected layer, softmax with cross-entropy, backpropagation and the optimizers. Each section gives the forward formulas and derives the gradients step by step (revealed one line at a time), with interactive examples: the nine products behind a convolution output, BatchNorm on numbers you choose, gradient routing in max pooling, Dropout's expected value, a softmax gradient check against finite differences and Adam's first steps with and without bias correction.
-* **Coding tab** - a step-by-step tutorial (in Turkish) that writes `SimpleCNN.py` from scratch: setup, imports, hyperparameters, data, the model, `forward`, the training and evaluation loops, saving the model and predicting, plus exercises. Code excerpts are read live from `SimpleCNN.py` with editor-style syntax highlighting, real line numbers and numbered line notes.
+* **Coding tab** - a step-by-step tutorial (in Turkish) that writes `SimpleCNN.py` from scratch: setup, imports, hyperparameters, data, the model, `forward`, the training and evaluation loops, saving the model and predicting, plus exercises. Code excerpts are taken from `SimpleCNN.py` when the pages are built, with editor-style syntax highlighting, real line numbers and numbered line notes.
 * **Glossary** - the Glossary button in the top bar opens a searchable list of about 70 key terms (weight, bias, epoch, gradient, overfitting, receptive field, …), each with a short definition, what it looks like in SimpleCNN, and links to the chapter sections that show it. Terms underlined with dots in the explanations open the same definition in a small card.
 
-### Learning path: from the perceptron to the CNN
-The dashboard is growing into a step-by-step learning platform. Click the page title (top left, with the ▾) to open the learning path: the chapters in historical order, with the current one marked. Every chapter has the same kind of tabs.
+### From the perceptron to the CNN
+The site is a step-by-step learning platform. Click the page title (top left, with the ▾) to open the learning path: the chapters in historical order, with the current one marked. Every chapter has the same kind of tabs.
 
-1. **Perceptron (1958)** - `http://127.0.0.1:8000/perceptron`. Everything runs in the browser.
+1. **Perceptron (1958)** - `perceptron.html`. Everything runs in the browser.
    * **Theory** - the artificial neuron as a clickable diagram that you turn into the AND, OR and NAND gates; the decision boundary as a line you can drag and turn; the perceptron learning rule applied one example at a time with every number shown; an experiment on how the margin sets the number of corrections; and why XOR cannot be learned, with the two-layer network that solves it.
    * **Playground** - place points (or pick AND, OR, XOR, clusters or a ring) and watch the perceptron learn, with the mistakes per epoch and the path of the weights.
    * **Math** - notation, the geometry of the boundary, why each correction helps, the perceptron rule as gradient descent, Novikoff's convergence theorem with its proof, and the proof that XOR is not linearly separable.
    * **Coding** - a walk through [Perceptron.py](Perceptron.py), a perceptron written from scratch with NumPy (`python Perceptron.py` trains it on AND, OR, NAND and XOR), plus the same in PyTorch and exercises.
-2. **Multilayer network (MLP, 1986)** - `http://127.0.0.1:8000/mlp`. Everything runs in the browser, on a small network written in JavaScript.
+2. **Multilayer network (MLP, 1986)** - `mlp.html`. Everything runs in the browser, on a small network written in JavaScript.
    * **Theory** - activation functions and their derivatives (why the step cannot learn); a 2-2-1 network learning XOR, shown both in the input space and in the hidden space where the points become separable; the loss as a function of one weight, with gradient descent stepping down it (cross-entropy against MSE, and a learning rate that is too large); backpropagation one step at a time on a 2-2-1 network, with every value and gradient; how many neurons it takes to fit a curve (universal approximation); and why an MLP is a poor fit for images, which leads to the CNN.
    * **Playground** - train a network with 0 to 3 hidden layers on XOR, a circle, two moons, a spiral or your own points; the diagram shows what every neuron has learned, and clicking a neuron shows it on the big plane.
    * **Math** - layers and the forward pass, the derivatives of the activations and the vanishing gradient, cross-entropy from maximum likelihood and its gradient, the four equations of backpropagation with a numerical gradient check, mini-batches and why the weights start random, and the universal approximation theorem.
    * **Coding** - a walk through [MLP.py](MLP.py), a network with one hidden layer written from scratch with NumPy (`python MLP.py` checks backpropagation against numerical derivatives, then learns XOR and the two moons), plus the same in PyTorch and exercises.
-3. **Convolutional network (CNN)** - the SimpleCNN dashboard described above, at `http://127.0.0.1:8000/`.
+3. **Convolutional network (CNN)** - `cnn.html`, described above.
 
-The pages share their building blocks in `static/`: `core.js` (helpers, charts, navigation, theme and language, the chapter list), `kit.js` (the planes, graphs and controls of the chapter demos), `net.js` (a small neural network with backpropagation, for the demos), `lesson.js` (the Math and Coding tab engine), `codeview.js` (the code viewer), `glossary.js` and `math.js`.
+The whole site can be switched between Turkish and English. Formulas are written in LaTeX and typeset with [KaTeX](https://katex.org) (MIT license), which is bundled into the pages, so the site also works without an internet connection.
 
-The whole dashboard can be switched between Turkish and English. Formulas are written in LaTeX and typeset with [KaTeX](https://katex.org) (MIT license), which is bundled in `static/vendor/katex`, so the dashboard also works without an internet connection.
-
-The trained model is saved to `checkpoints/simple_cnn.pt` and loaded automatically the next time the dashboard starts. The run that produced it (loss curves, epoch table, filters, validation samples and log) is saved next to it in `checkpoints/simple_cnn_run.json`, so the Training tab shows the last run again after a restart. With the default settings, a dashboard run gives exactly the same result as `python SimpleCNN.py`.
-
-### Without a server: the static site in `web/`
-**Open it at https://itumekanik.github.io/myz303/** (or download it from there as a ZIP and open `index.html`).
-
-[web/](web/) is the same learning path as a static site that needs no server and no Python: it is published on GitHub Pages, and a downloaded copy works by double-clicking `index.html`. Every computation runs in the browser: all three chapters, including the CNN, whose Inference and Theory tabs use the model trained with PyTorch here and whose Training tab trains SimpleCNN again on the reader's GPU with TensorFlow.js. Adding a chapter means adding a folder under `web/src/chapters/`. See [web/README.md](web/README.md) for how it is built and tested.
+With `dashboard.py`, the trained model is saved to `checkpoints/simple_cnn.pt` and loaded automatically the next time the dashboard starts. The run that produced it (loss curves, epoch table, filters, validation samples and log) is saved next to it in `checkpoints/simple_cnn_run.json`, so the Training tab shows the last run again after a restart. With the default settings, a dashboard run gives exactly the same result as `python SimpleCNN.py`.
 
 ## References
 [The Back Propagation Method for CNN](https://ieeexplore.ieee.org/abstract/document/409626)
