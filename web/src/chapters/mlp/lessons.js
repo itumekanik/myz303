@@ -63,9 +63,9 @@ const WIDGETS = {
           rows.push(h("tr", {}, h("td", { text: `\\(${name}\\)` }), h("td", { class: "num", text: a.toFixed(8) }), h("td", { class: "num", text: b.toFixed(8) }),
             h("td", { class: "num", text: Math.abs(a - b).toExponential(1) })));
         });
-      out.replaceChildren(h("table", { class: "pc-table" },
+      out.replaceChildren(h("div", { class: "table-wrap" }, h("table", { class: "pc-table" },
         h("thead", {}, h("tr", {}, ...[L({ tr: "Parametre", en: "Parameter" }), L({ tr: "Geri yayılım", en: "Backpropagation" }), L({ tr: "Sayısal", en: "Numerical" }), L({ tr: "Fark", en: "Difference" })].map((t) => h("th", { text: t })))),
-        h("tbody", {}, ...rows)),
+        h("tbody", {}, ...rows))),
       h("p", { class: "m-why", text: L({ tr: "Fark 10⁻¹⁰'dan küçük: geri yayılım doğru. Sayısal türev her parametre için iki ileri hesap ister; geri yayılım hepsini bir geri hesapta bulur.", en: "The difference is below 10⁻¹⁰: backpropagation is right. The numerical derivative takes two forward passes per parameter; backpropagation finds them all in one backward pass." }) }));
     };
     box.append(h("div", { class: "t-controls" }, again), out);

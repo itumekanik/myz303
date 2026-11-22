@@ -1,18 +1,17 @@
 {
   "name": "ai-learning-path",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "The AI learning path (perceptron → MLP → CNN …) as a static web app: no server, runs from GitHub Pages or by opening index.html.",
   "license": "MIT",
   "type": "module",
   "engines": {
-    "node": ">=22.12"
+    "node": ">=22.18"
   },
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "build": "node scripts/build.mjs",
     "preview": "node scripts/serve.mjs dist",
-    "zip": "node scripts/zip.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . && prettier --check \"src/**/*.{ts,css}\" \"scripts/**/*.mjs\" \"tests/**/*.ts\" \"*.{js,ts}\"",
     "format": "prettier --write \"src/**/*.{ts,css}\" \"scripts/**/*.mjs\" \"tests/**/*.ts\" \"*.{js,ts}\"",

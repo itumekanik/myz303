@@ -160,7 +160,7 @@ export function codeEditor(lines, options) {
     if (foldEnd < foldStart) foldStart = -1;
   }
 
-  const body = h("div", { class: "code-body" });
+  const body = h("div", { class: "code-body", tabindex: 0, role: "group", "aria-label": L({ tr: "Kod", en: "Code" }) });   // scrolls sideways with the keyboard too
   const rows = [];
   let foldGroup = null;
   lines.forEach((line, k) => {
@@ -204,17 +204,19 @@ export function codeEditor(lines, options) {
   const copy = h("button", { type: "button", class: "code-copy", text: copyLabel() });
   copy.addEventListener("click", async () => {
     const text = lines.map((l) => l.text).join("\n");
+    let copied = true;
     try {
       await navigator.clipboard.writeText(text);
-    } catch {
+    } catch {   // e.g. a page opened from a file
       const area = h("textarea", {});
       area.value = text;
       document.body.append(area);
       area.select();
-      document.execCommand("copy");
+      copied = document.execCommand("copy");
       area.remove();
+      copy.focus({ preventScroll: true });
     }
-    copy.textContent = L({ tr: "Kopyalandı ✓", en: "Copied ✓" });
+    copy.textContent = copied ? L({ tr: "Kopyalandı ✓", en: "Copied ✓" }) : L({ tr: "Kopyalanamadı", en: "Could not copy" });
     setTimeout(() => { copy.textContent = copyLabel(); }, 1500);
   });
 

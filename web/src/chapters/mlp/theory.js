@@ -347,6 +347,17 @@ function miniNetDiagram(n) {
 const LD = { x: [-2.0, -1.2, -0.4, 0.3, 0.8, 1.5, 2.2], y: [0, 0, 1, 0, 1, 1, 1] };
 const LS = { w: -2.5, eta: 1, loss: "bce", trail: [], timer: 0 };
 const LS_START = -2.5;
+const LS_STEPS = 200;   // the automatic run stops here
+const lowest = {};
+/** The loss at its minimum, from a fine grid of w. */
+function lowestLoss() {
+  if (lowest[LS.loss] == null) {
+    let best = Infinity;
+    for (let w = -10; w <= 10; w += 0.01) best = Math.min(best, lossAt(w));
+    lowest[LS.loss] = best;
+  }
+  return lowest[LS.loss];
+}
 const lossAt = (w, kind = LS.loss) => LD.x.reduce((s, x, i) => s + NET.lossOne(sigma(w * x), LD.y[i], kind), 0) / LD.x.length;
 const gradAt = (w, kind = LS.loss) => LD.x.reduce((s, x, i) => {
   const p = sigma(w * x);
@@ -376,7 +387,10 @@ function buildLossDemo() {
     LS.trail.push(LS.w);
     LS.w = clamp(LS.w - LS.eta * gradAt(LS.w), -50, 50);
   };
-  const done = () => Math.abs(gradAt(LS.w)) < 2e-4 || LS.trail.length >= 200;
+  const flat = () => Math.abs(gradAt(LS.w)) < 2e-4;
+  const done = () => flat() || LS.trail.length >= LS_STEPS;
+  // A saturated σ is flat far from the minimum too, so the slope alone does not prove it
+  const atMinimum = () => flat() && lossAt(LS.w) - lowestLoss() < 0.01;
   function reset() {
     LS.timer = stop(LS.timer);
     LS.w = LS_START;
@@ -424,7 +438,12 @@ function buildLossDemo() {
     const lastJump = steps ? Math.abs(LS.trail.at(-1) - w) : 0;
     let text = L({ tr: `Adım ${steps} · w = ${nf(w)} · L = ${nf(L0, 3)}`, en: `Step ${steps} · w = ${nf(w)} · L = ${nf(L0, 3)}` });
     let kind = "";
-    if (done() && steps) { text += L({ tr: " · minimumda ✓ (eğim ≈ 0)", en: " · at the minimum ✓ (slope ≈ 0)" }); kind = "good"; }
+    if (steps && atMinimum()) { text += L({ tr: " · minimumda ✓ (eğim ≈ 0)", en: " · at the minimum ✓ (slope ≈ 0)" }); kind = "good"; }
+    else if (steps && flat()) {
+      text += L({ tr: " · eğim ≈ 0 ama burası minimum değil: σ doymuş, adımlar artık w'yi oynatamıyor", en: " · slope ≈ 0 but this is not the minimum: σ is saturated and the steps no longer move w" }); kind = "bad";
+    } else if (steps >= LS_STEPS) {
+      text += L({ tr: ` · ${LS_STEPS} adım doldu, minimuma henüz varmadı`, en: ` · ${LS_STEPS} steps used, the minimum is not reached yet` }); kind = "bad";
+    }
     else if (steps && Math.sign(gradAt(LS.trail.at(-1))) !== Math.sign(g) && lastJump > 0.5) {
       text += L({ tr: " · η büyük: adım minimumun üstünden atladı (eğimin işareti değişti)", en: " · η is large: the step jumped over the minimum (the slope changed sign)" }); kind = "bad";
     } else if (!bce && w < -1 && steps > 5) {
@@ -810,7 +829,7 @@ function buildTheory() {
   const I = TEXT.intro;
   const compare = h("div", { class: "pc-bio" }, h("div", { class: "mini-title", text: L(I.compare.title) }),
     h("dl", {}, ...I.compare.rows.flatMap(([a, b]) => [html("dt", {}, a), html("dd", {}, b)])));
-  const fact = h("aside", { class: "tut-callout info" }, h("span", { class: "tut-callout-icon", text: "ℹ️", "aria-hidden": "true" }),
+  const fact = h("div", { role: "note", class: "tut-callout info" }, h("span", { class: "tut-callout-icon", text: "ℹ️", "aria-hidden": "true" }),
     h("div", {}, h("strong", { text: L(I.fact.title) }), html("p", {}, I.fact.text)));
   const introCard = h("div", { class: "card t-intro pc-intro", id: "ml-intro" },
     h("div", { class: "t-intro-text" }, h("h2", { text: L(I.h) }), ...I.p.map((p) => html("p", {}, p))),
@@ -945,6 +964,7 @@ function buildPlay() {
     else PG.data.push({ x: plane.toData(px, py), y: PG.cls });
     PG.preset = "custom";
     presets.set("custom");
+    if (!PG.data.length) pgStop();   // nothing left to train on
     update(true);
   });
   plane.canvas.addEventListener("pointermove", (event) => {
@@ -1226,14 +1246,23 @@ function pgStart() {
   PG.running = true;
   let last = performance.now();
   let acc = 0;
+  let lastDraw = 0;
+  let drawGap = 0;   // ms between redraws; grows when drawing is slow, so the page stays responsive
   const frame = (now) => {
     if (!PG.running) return;
     acc += ((now - last) / 1000) * SPEEDS[PG.speedIndex];
     last = now;
     let steps = Math.min(40, Math.floor(acc));
     acc -= Math.floor(acc);
-    while (steps-- > 0) pgEpoch();
-    PG.update?.(false);
+    const started = performance.now();
+    while (steps-- > 0 && performance.now() - started < 10) pgEpoch();
+    if (now - lastDraw >= drawGap) {
+      const before = performance.now();
+      PG.update?.(false);
+      const cost = performance.now() - before;
+      drawGap = cost > 12 ? 2 * cost : 0;
+      lastDraw = now;
+    }
     PG.raf = requestAnimationFrame(frame);
   };
   PG.raf = requestAnimationFrame(frame);

@@ -51,6 +51,20 @@ test.describe("start page", () => {
     void errors;
   });
 
+  test("a malformed address opens the first tab", async ({ page, errors }) => {
+    await open(page, "mlp.html#%E0%A4%A");
+    await expect(page.locator("#tab-theory")).toHaveAttribute("aria-selected", "true");
+    await expect(page.locator("body")).toHaveAttribute("data-tab", "theory");
+    void errors;
+  });
+
+  test("a chapter opened in English has its glossary button in English", async ({ page, errors }) => {
+    await page.addInitScript(() => localStorage.setItem("lang", "en"));
+    await open(page, "perceptron.html");
+    await expect(page.locator(".glossary-btn-text")).toHaveText("Glossary");
+    void errors;
+  });
+
   test("switches to English and back", async ({ page, errors }) => {
     await open(page, "index.html");
     await page.locator('#lang-switch [data-lang="en"]').click();
@@ -152,6 +166,45 @@ test("mlp: the hidden layer learns XOR in the browser", async ({ page, errors })
   const demo = page.locator("#ml-hidden");
   await demo.getByRole("button", { name: "▶ Eğit" }).click();
   await expect(demo.locator(".pc-msg")).toContainText("Çözüldü", { timeout: 20_000 });
+  void errors;
+});
+
+test("focusing a control of the sticky top bar does not move the page", async ({ page, errors }) => {
+  await open(page, "perceptron.html#matematik");
+  await expect(page.locator("#panel-math .katex").first()).toBeVisible();
+  await page.evaluate(() => window.scrollTo({ top: 900, behavior: "instant" }));
+  await page.locator("#glossary-btn").evaluate((el: HTMLElement) => el.focus());
+  await page.waitForTimeout(200);
+  expect(await page.evaluate(() => Math.round(window.scrollY))).toBe(900);
+  void errors;
+});
+
+test("perceptron: Regenerate keeps the points placed by hand", async ({ page, errors }) => {
+  await open(page, "perceptron.html#deneme");
+  const plane = page.locator("#panel-play canvas.pg-canvas");
+  await plane.click({ position: { x: 40, y: 40 } });
+  const status = page.locator("#panel-play .pc-msg").first();
+  const before = await status.innerText();
+  await page.getByRole("button", { name: "Yeniden üret" }).click();
+  await expect(status).toHaveText(before);
+  void errors;
+});
+
+test("mlp: the loss demo does not call the step limit a minimum", async ({ page, errors }) => {
+  await open(page, "mlp.html");
+  const demo = page.locator("#ml-loss");
+  await demo.getByRole("button", { name: "MSE" }).click();
+  await demo
+    .locator('input[type="range"]')
+    .first()
+    .evaluate((el: HTMLInputElement) => {
+      el.value = "0.1";
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  await demo.getByRole("button", { name: "Bir adım" }).evaluate((el: HTMLButtonElement) => {
+    for (let i = 0; i < 200; i++) el.click();
+  });
+  await expect(demo.locator(".pc-msg").first()).toContainText("minimuma henüz varmadı");
   void errors;
 });
 

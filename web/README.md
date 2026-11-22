@@ -29,7 +29,7 @@ train is kept in this browser until you go back to the one that comes with the s
 
 ## Development
 
-Requires Node.js 22.12 or newer.
+Requires Node.js 22.18 or newer (the unit tests run the TypeScript files directly).
 
 ```bash
 cd web
@@ -127,7 +127,8 @@ src/
                   glossary/, math (KaTeX), switches (theme, language), page (tabs and hooks)
   styles/         app.css = KaTeX + style.css + landing.css
 public/data/      the CNN chapter's data files (tools/export_assets.py)
-scripts/          build.mjs, dev.mjs, serve.mjs, chapters.mjs (chapter discovery)
+scripts/          build.mjs, dev.mjs, serve.mjs, chapters.mjs (chapter discovery),
+                  release.mjs (the version, from CHANGELOG.md)
 tools/            export_assets.py (Python: checkpoint and MNIST → public/data/)
 tests/            unit/ (node:test), e2e/ (Playwright), fixtures/
 ```
@@ -135,8 +136,9 @@ tests/            unit/ (node:test), e2e/ (Playwright), fixtures/
 **Opening from the disk.** Browsers refuse `fetch()`, `<script type="module" src>`, workers from
 files and font files on a page opened from `file://`. So `scripts/build.mjs` (esbuild) bundles every
 page into one classic script (IIFE), bundles the Python sources of the Coding tabs as text, and
-inlines KaTeX's fonts into the stylesheet. File names carry a content hash, so GitHub Pages never
-serves a stale script. Data files are scripts too (`window.__AI_DATA__[name] = …`, binary arrays as
+inlines KaTeX's fonts into the stylesheet. The page scripts and the stylesheet carry a content hash
+in their names, so a new release never runs with an old copy of them from the browser's cache; the
+files in `data/` and `vendor/` keep their names. Data files are scripts too (`window.__AI_DATA__[name] = …`, binary arrays as
 base64, gzip-compressed where it helps) loaded with a `<script>` tag when they are needed, and
 TensorFlow.js is loaded the same way (from `vendor/`) only when a training run starts.
 

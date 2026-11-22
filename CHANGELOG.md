@@ -10,6 +10,46 @@ The site shows the newest version here at the bottom of the start page and of th
 page title, top left). To release one, add a section below with the version and the date, set the
 same version in `web/package.json`, and push to `main`. The build fails if the two differ.
 
+## [1.0.1] - 2026-11-22
+
+A review of the whole project: fixes in every chapter, in training, in accessibility and in setup.
+
+### Fixed
+
+- **CNN training in the browser:** a run no longer waits while its tab is hidden, and memory no
+  longer grows with every batch. If the GPU stops responding, the page says so and the next run
+  continues with WebGL. Stop also works during validation and testing. "Before training" changes
+  only after a run's first epoch, and a run that ends early is labelled as unfinished.
+- **CNN chapter:** going back to the site's model also restores its charts and table. Switching
+  models quickly no longer leaves the wrong weights in the Theory demos. Cross-entropy is right for
+  very large logits. Clearing a drawing no longer shows an error.
+- **Perceptron:** Regenerate keeps points placed by hand, the calculation shows the learning rate
+  the step was made with, turning the boundary stays within the sliders' range, and a run cut off
+  at the epoch limit is marked in the table.
+- **MLP:** the loss demo says "at the minimum" only when it is there, and deleting the last point
+  stops training.
+- **Navigation:** Back after a glossary link returns to the same place, a reload keeps the reading
+  position, a malformed address opens the first tab, and moving along the tabs with the arrow keys
+  no longer fills the history.
+- **Dashboard:** other web sites can no longer start or stop training through a browser on this
+  computer, and malformed requests get a clear error.
+- **Setup:** `start.bat` completes an interrupted installation and installs the smaller CPU build
+  of PyTorch when there is no NVIDIA GPU.
+
+### Changed
+
+- **Accessibility:** text and buttons meet the WCAG AA contrast level in both themes, the keyboard
+  focus is no longer lost or hidden under the top bar, and scrolling follows the system's "reduce
+  motion" setting.
+- The playgrounds stay responsive on slower computers, and animations stop when their tab is left.
+- A chapter opened in English has its Glossary button in English, and the pages fit a 320 px
+  screen in both languages.
+
+### Added
+
+- `requirements.txt` and setup steps for macOS and Linux.
+- Automatic checks of the Python scripts and of the dashboard's start-up.
+
 ## [1.0.0] - 2026-11-20
 
 The first release for students: the whole learning path works from GitHub Pages, from the

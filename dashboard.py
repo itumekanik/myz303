@@ -68,7 +68,8 @@ ROOT = Path(__file__).resolve().parent
 SITE_DIR = ROOT / "web" / "dist"
 SITE_URL = "https://itumekanik.github.io/myz303/"
 # What the build bundles into the pages (the Coding tabs show the Python files)
-SITE_SOURCES = [ROOT / "web" / "src", ROOT / "SimpleCNN.py", ROOT / "MLP.py", ROOT / "Perceptron.py"]
+SITE_SOURCES = [ROOT / "web" / "src", ROOT / "web" / "package.json", ROOT / "CHANGELOG.md",
+                ROOT / "SimpleCNN.py", ROOT / "MLP.py", ROOT / "Perceptron.py"]
 CHECKPOINT = ROOT / "checkpoints" / "simple_cnn.pt"
 # The finished run that produced the checkpoint (curves, filters, samples, log), so the
 # Training tab can show it again after a restart
@@ -252,6 +253,11 @@ class InferenceEngine:
             self.source = source
             self.meta = meta
             self.version += 1
+
+    def relabel(self, source: str):
+        """Renames the current model (a run ended early and left the model of its last epoch)."""
+        with self.lock:
+            self.source = source
 
     def save_checkpoint(self, state_dict: dict, meta: dict, initial_state: dict):
         CHECKPOINT.parent.mkdir(exist_ok=True)
@@ -440,7 +446,6 @@ class TrainingSession:
             model, criterion, optimizer, device = cnn._setup_model_for_training(
                 cnn.num_class, config["lr"])
             initial_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
-            self.engine.set_initial(initial_state, config["seed"])
             self._log(f"Device: {device_name()}")
             self._log("Loading MNIST...")
             train_loader, val_loader, test_loader = cnn.get_mnist_dataloaders(
@@ -475,13 +480,17 @@ class TrainingSession:
                           f"{train_acc:.2f}% | Validation Loss: {val_loss:.4f}, "
                           f"Validation Accuracy: {val_acc:.2f}%")
                 self._predict_samples(model, sample_images, sample_labels, device, epoch)
+                if epoch == 1:   # From the first finished epoch on, "before training" is this run's start
+                    self.engine.set_initial(initial_state, config["seed"])
                 self.engine.load_state(model.state_dict(),
                                        f"Epoch {epoch}/{config['epochs']} sonrası (eğitim sürüyor)")
 
+            self._check_stop()
             self._set(stage="testing")
             test_acc, test_loss = cnn.evaluate_model(model, criterion, test_loader, device)
             self._set(test={"loss": round(test_loss, 5), "acc": round(test_acc, 3)})
             self._log(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc:.2f}%")
+            self._check_stop()   # Stopped during the last evaluation: the saved model stays
 
             self._set(stage="saving")
             meta = {**config, "test_acc": round(test_acc, 3), "test_loss": round(test_loss, 5),
@@ -493,22 +502,32 @@ class TrainingSession:
             self._set(stage="done", state="done", finished_at=time.time())
             self._save_run(meta["trained_at"])
         except StopTraining:
+            self._mark_unfinished(config)
             self._log("Training stopped by the user.")
             self._set(state="stopped", message="Eğitim durduruldu.")
         except Exception as exc:
+            self._mark_unfinished(config)
             traceback.print_exc()
             self._log(f"Error: {type(exc).__name__}: {exc}")
             self._set(state="error", message=f"{type(exc).__name__}: {exc}")
         finally:
             self._set(finished_at=time.time())
 
+    def _check_stop(self):
+        if self.stop_event.is_set():
+            raise StopTraining()
+
+    def _mark_unfinished(self, config: dict):
+        """A run that ended early leaves the model of its last finished epoch."""
+        if self.history:
+            self.engine.relabel(f"Epoch {len(self.history)}/{config['epochs']} sonrası (eğitim tamamlanmadı)")
+
     def _train_epoch(self, model, criterion, optimizer, data_loader, device):
         """Same steps as SimpleCNN.train_epoch, but reports progress after every batch."""
         model.train()
         correct, total, loss_sum = 0, 0, 0.0
         for index, (inputs, labels) in enumerate(data_loader, start=1):
-            if self.stop_event.is_set():
-                raise StopTraining()
+            self._check_stop()
             inputs, labels = inputs.to(device), labels.to(device)
             optimizer.zero_grad()                 # 1. Reset gradients
             outputs = model(inputs)               # 2. Forward pass
@@ -605,8 +624,9 @@ def site_problem(site: Path) -> str | None:
     if (site / "index.html").is_file():
         return None
     return (f"The pages are not built yet: {site} has no index.html. Either build them once\n"
-            f"(needs Node.js 22):   cd web  then  npm install  and  npm run build\n"
-            f"or download {SITE_URL}ai-learning-path.zip and unpack it into {site}.")
+            f"(needs Node.js 22.18 or newer):   cd web  then  npm install  and  npm run build\n"
+            f"or download {SITE_URL}ai-learning-path.zip and unpack its contents directly\n"
+            f"into {site}, so that index.html is in that folder.")
 
 
 def site_is_stale(site: Path) -> bool:
@@ -650,8 +670,23 @@ def make_handler(session: TrainingSession, engine: InferenceEngine, site: Path =
         def _error(self, message: str, status: HTTPStatus):
             self._json({"error": message}, status)
 
+        def _own_host(self) -> bool:
+            """Addressed to this server by name (a page of another site cannot read it by DNS rebinding)."""
+            port = self.server.server_address[1]
+            return (self.headers.get("Host") or "").lower() in (f"127.0.0.1:{port}", f"localhost:{port}")
+
+        def _same_site_post(self) -> bool:
+            """A JSON POST from this server's pages: another site's page cannot send one without a preflight."""
+            content_type = (self.headers.get("Content-Type") or "").split(";")[0].strip().lower()
+            origin = self.headers.get("Origin")
+            return content_type == "application/json" and (
+                origin is None or origin.lower() == f"http://{self.headers['Host'].lower()}")
+
         def _page(self, relative: str):
             """A file of the built site; pages are marked as served by this server."""
+            # On Windows a path like \\host\share would be looked up on the network by resolve()
+            if "\\" in relative or ":" in relative or "\0" in relative:
+                return self._error("Bulunamadı.", HTTPStatus.NOT_FOUND)
             target = (site_root / relative).resolve()
             if site_root not in target.parents or not target.is_file():
                 return self._error("Bulunamadı.", HTTPStatus.NOT_FOUND)
@@ -668,6 +703,8 @@ def make_handler(session: TrainingSession, engine: InferenceEngine, site: Path =
 
         def do_GET(self):
             try:
+                if not self._own_host():
+                    return self._error("Geçersiz istek.", HTTPStatus.FORBIDDEN)
                 url = urlparse(self.path)
                 if not url.path.startswith("/api/"):
                     if url.path.rstrip("/") in ("/perceptron", "/mlp"):   # the dashboard's old addresses
@@ -685,7 +722,10 @@ def make_handler(session: TrainingSession, engine: InferenceEngine, site: Path =
                         return self._error("Geçersiz model.", HTTPStatus.BAD_REQUEST)
                     return self._json(engine.theory_params(which))
                 if url.path == "/api/test-samples":
-                    count = int(parse_qs(url.query).get("n", ["12"])[0])
+                    try:
+                        count = int(parse_qs(url.query).get("n", ["12"])[0])
+                    except ValueError:
+                        return self._error("Geçersiz istek.", HTTPStatus.BAD_REQUEST)
                     count = max(1, min(count, 48))
                     return self._json({"samples": engine.random_test_samples(count)})
                 return self._error("Bulunamadı.", HTTPStatus.NOT_FOUND)
@@ -697,12 +737,21 @@ def make_handler(session: TrainingSession, engine: InferenceEngine, site: Path =
 
         def do_POST(self):
             try:
-                length = int(self.headers.get("Content-Length") or 0)
+                if not self._own_host() or not self._same_site_post():
+                    return self._error("Geçersiz istek.", HTTPStatus.FORBIDDEN)
+                try:
+                    length = int(self.headers.get("Content-Length") or 0)
+                except ValueError:
+                    length = -1
+                if length < 0:
+                    return self._error("Geçersiz istek.", HTTPStatus.BAD_REQUEST)
                 if length > 5_000_000:
                     return self._error("İstek çok büyük.", HTTPStatus.REQUEST_ENTITY_TOO_LARGE)
                 try:
                     body = json.loads(self.rfile.read(length) or b"{}")
-                except json.JSONDecodeError:
+                except ValueError:   # not JSON, or not valid UTF-8
+                    return self._error("Geçersiz JSON.", HTTPStatus.BAD_REQUEST)
+                if not isinstance(body, dict):
                     return self._error("Geçersiz JSON.", HTTPStatus.BAD_REQUEST)
 
                 path = urlparse(self.path).path
@@ -729,12 +778,21 @@ def make_handler(session: TrainingSession, engine: InferenceEngine, site: Path =
                         if image is None:
                             return self._error("Önce bir rakam çizin.", HTTPStatus.BAD_REQUEST)
                     elif "test_index" in body:
-                        image, label = engine.test_image(int(body["test_index"]))
+                        try:
+                            index = int(body["test_index"])
+                        except (TypeError, ValueError):
+                            return self._error("Geçersiz test görüntüsü.", HTTPStatus.BAD_REQUEST)
+                        if not 0 <= index < 10_000:   # the MNIST test set
+                            return self._error("Geçersiz test görüntüsü.", HTTPStatus.BAD_REQUEST)
+                        image, label = engine.test_image(index)
                     elif "pixels" in body:   # an already prepared 28x28 image (0-255), e.g. from the Theory tab
                         pixels = body["pixels"]
                         if not isinstance(pixels, list) or len(pixels) != 784:
                             return self._error("28×28 = 784 piksel bekleniyor.", HTTPStatus.BAD_REQUEST)
-                        image = torch.tensor(pixels, dtype=torch.float32).clamp(0, 255).view(1, 1, 28, 28) / 255
+                        try:
+                            image = torch.tensor(pixels, dtype=torch.float32).clamp(0, 255).view(1, 1, 28, 28) / 255
+                        except (TypeError, ValueError, RuntimeError):
+                            return self._error("28×28 = 784 piksel bekleniyor.", HTTPStatus.BAD_REQUEST)
                     else:
                         return self._error("Görüntü gönderilmedi.", HTTPStatus.BAD_REQUEST)
                     try:

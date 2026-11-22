@@ -331,14 +331,17 @@ The model performances are evaluated mainly by the *Loss*. Loss is the key measu
 **Open it at https://itumekanik.github.io/myz303/** (or download it from there as a ZIP and double-click `index.html`). The same site runs in two ways, from the same source in [web/](web/):
 
 * **In the browser, with no server** (GitHub Pages, or the downloaded copy). Every computation runs in the browser: the CNN chapter's Inference and Theory tabs use the model trained with PyTorch here, and its Training tab trains SimpleCNN again on the reader's GPU with TensorFlow.js.
-* **With PyTorch, on your computer**: [dashboard.py](dashboard.py) serves the same pages, and the CNN chapter then trains with `SimpleCNN.py`'s code in PyTorch (on the GPU through CUDA) instead of in the browser. It needs no extra packages (the web server uses only the Python standard library).
+* **With PyTorch, on your computer**: [dashboard.py](dashboard.py) serves the same pages, and the CNN chapter then trains with `SimpleCNN.py`'s code in PyTorch (on an NVIDIA GPU through CUDA, otherwise on the CPU) instead of in the browser.
+
+On Windows, double-click `start.bat`: the first time it sets up `.venv` with PyTorch (the CUDA build if there is an NVIDIA GPU) and builds the pages, then it opens http://127.0.0.1:8000/cnn.html. On macOS or Linux:
 
 ```bash
-python dashboard.py          # opens http://127.0.0.1:8000/cnn.html in your browser
-start.bat                    # Windows: also sets up .venv with PyTorch and builds the pages the first time
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/python dashboard.py
 ```
 
-`dashboard.py` serves the pages built into `web/dist`. Build them once with Node.js 22 (`cd web`, `npm install`, `npm run build`; `start.bat` does this when they are missing), or unpack the site's ZIP into `web/dist`. After changing anything under `web/`, build again; [web/README.md](web/README.md) describes the development workflow and how the site is built and tested.
+`dashboard.py` serves the pages built into `web/dist`. Build them once with Node.js 22.18 or newer (`cd web`, `npm install`, `npm run build`; `start.bat` does this when they are missing), or unpack the contents of the site's ZIP directly into `web/dist`, so that `web/dist/index.html` exists. After changing anything under `web/`, build again; [web/README.md](web/README.md) describes the development workflow and how the site is built and tested.
 
 The CNN chapter (chapter 3):
 

@@ -3,7 +3,7 @@ export const termChip = (key) => h("button", { type: "button", class: "gl-chip g
 /** Fills a container with one term: name, other-language name, definition, model note, related, links. */
 import { hooks } from "../page.ts";
 import { I18N, L } from "../i18n.js";
-import { $, CHAPTER, chapterOf, goToChapterPlace, h, hideTip, nav, navigate } from "../core.js";
+import { $, CHAPTER, chapterOf, goToChapterPlace, h, hideTip, nav, navigate, phoneWidth, scrollMode } from "../core.js";
 import { GLOSSARY, GLOSSARY_GROUPS, otherLang, placeLabel, relatedTerms, termPlaces, termify } from "./terms.js";
 
 export function renderTerm(key, { glossaryLink }) {
@@ -232,7 +232,7 @@ export function showGlossaryEntry(key, { smooth = true } = {}) {
     article = glossary.list.querySelector(`#g-${CSS.escape(key)}`);
   }
   if (!article) return;
-  article.scrollIntoView({ behavior: smooth ? "smooth" : "instant", block: "start" });
+  article.scrollIntoView({ behavior: scrollMode(smooth), block: "start" });
   article.classList.remove("nav-flash");
   void article.getBoundingClientRect();
   article.classList.add("nav-flash");
@@ -246,7 +246,16 @@ export function setGlossaryVisible(visible) {
   glossary.el.toggleAttribute("inert", !visible);
   document.body.classList.toggle("glossary-open", visible);
   $("#glossary-btn")?.setAttribute("aria-expanded", String(visible));
+  containOnPhone();
 }
+
+/** On a phone the panel covers the page: Tab must not reach the controls hidden behind it. */
+function containOnPhone() {
+  const covered = glossary.open && phoneWidth.matches;
+  // The top bar stays usable: it is above the panel, and its Glossary button closes it
+  for (const el of document.querySelectorAll("body > main")) el.inert = covered;
+}
+phoneWidth.addEventListener("change", containOnPhone);
 
 /** Opens the panel as a history step (marked glossaryStep), so Back closes it. */
 export function openGlossary(key = null) {
@@ -291,8 +300,13 @@ export function glossaryIsOpen() {
 export function syncGlossary(state) {
   const want = Boolean(state?.glossary);
   if (want === glossary.open) return;
+  const hadFocus = glossary.el.contains(document.activeElement);
   setGlossaryVisible(want);
   if (want) glossary.list.scrollTop = state.gscroll || 0;
+  else if (hadFocus) {   // closed by Back: the keyboard returns to what opened the panel
+    const opener = glossary.opener?.isConnected && glossary.opener !== document.body ? glossary.opener : $("#glossary-btn");
+    opener?.focus({ preventScroll: true });
+  }
 }
 
 // Remember where the list is scrolled, so Back / Forward reopen it at the same place
@@ -367,10 +381,13 @@ document.addEventListener("lang-change", () => {
   linkStaticTerms();
   renderGlossary();
   if (termCard.anchor && termCard.key) showTerm(termCard.key);
+  labelGlossaryButton();
+});
+function labelGlossaryButton() {
   $("#glossary-btn .glossary-btn-text").textContent = L({ tr: "Sözlük", en: "Glossary" });
   $("#glossary-btn").title = L({ tr: "Kavramlar sözlüğü", en: "Glossary of terms" });
-});
-$("#glossary-btn").title = L({ tr: "Kavramlar sözlüğü", en: "Glossary of terms" });
+}
+labelGlossaryButton();
 
 // core.js reaches the panel through these hooks (it is loaded before the glossary)
 hooks.glossaryIsOpen = glossaryIsOpen;

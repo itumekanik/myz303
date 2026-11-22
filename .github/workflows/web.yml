@@ -6,23 +6,59 @@ name: Web site
 on:
   push:
     branches: [main]
-    paths: ["web/**", "Perceptron.py", "MLP.py", "SimpleCNN.py", "CHANGELOG.md", ".github/workflows/web.yml"]
+    paths: ["web/**", "Perceptron.py", "MLP.py", "SimpleCNN.py", "dashboard.py", "requirements.txt", "CHANGELOG.md", ".github/workflows/web.yml"]
   pull_request:
-    paths: ["web/**", "Perceptron.py", "MLP.py", "SimpleCNN.py", "CHANGELOG.md", ".github/workflows/web.yml"]
+    paths: ["web/**", "Perceptron.py", "MLP.py", "SimpleCNN.py", "dashboard.py", "requirements.txt", "CHANGELOG.md", ".github/workflows/web.yml"]
   workflow_dispatch:
 
 permissions:
   contents: read
 
+# A newer push replaces the checks of a pull request, but never interrupts a deployment under way
 concurrency:
   group: web-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 defaults:
   run:
     working-directory: web
 
 jobs:
+  python:
+    name: Python scripts and the dashboard
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install the requirements (PyTorch for the CPU)
+        run: pip install -r requirements.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+
+      - name: The from-scratch scripts run
+        run: |
+          python Perceptron.py
+          python MLP.py
+
+      - name: The dashboard starts and speaks the page's API version
+        run: |
+          mkdir -p "$RUNNER_TEMP/site"
+          echo '<!doctype html><html><title>smoke test</title></html>' > "$RUNNER_TEMP/site/index.html"
+          python dashboard.py --site "$RUNNER_TEMP/site" --no-browser --port 8765 &
+          for _ in $(seq 60); do
+            curl -sf http://127.0.0.1:8765/api/status -o "$RUNNER_TEMP/status.json" && break
+            sleep 1
+          done
+          page=$(sed -n 's/.*SERVER_VERSION = \([0-9]*\).*/\1/p' web/src/engines/cnn/backend.ts)
+          server=$(python -c "import json, sys; print(json.load(open(sys.argv[1]))['server_version'])" "$RUNNER_TEMP/status.json")
+          echo "page: $page, server: $server"
+          test -n "$page" && test "$page" = "$server"
+
   check:
     name: Lint, test and build
     runs-on: ubuntu-latest
@@ -67,7 +103,7 @@ jobs:
 
   deploy:
     name: Publish to GitHub Pages
-    needs: check
+    needs: [check, python]
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:

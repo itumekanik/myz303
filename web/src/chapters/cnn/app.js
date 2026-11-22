@@ -46,6 +46,8 @@ export const SERVER_MESSAGES = [
   [/^İstek çok büyük\.$/, "srv.toolarge"],
   [/^Geçersiz JSON\.$/, "srv.json"],
   [/^Bulunamadı\.$/, "srv.notfound"],
+  [/^Geçersiz istek\.$/, "srv.badrequest"],
+  [/^GPU yanıt vermeyi bıraktı\.$/, "srv.gpulost"],
   [/^'(?<name>\w+)' (?<lo>\S+) ile (?<hi>\S+) arasında olmalı\.$/, "srv.range"],
   [/^'(?<name>\w+)' geçerli bir sayı değil\.$/, "srv.nan"],
 ];
@@ -206,7 +208,12 @@ export function renderRunBanner(st) {
       const back = h("button", { type: "button", class: "btn small", text: t("run.reset") });
       back.addEventListener("click", async () => {
         back.disabled = true;
-        await api("/api/reset", {});
+        try {
+          await api("/api/reset", {});
+        } catch (error) {
+          back.disabled = false;
+          back.title = error.message;
+        }
         poll();
       });
       banner.append(back);
@@ -217,7 +224,7 @@ export function renderRunBanner(st) {
     banner.append(h("span", { class: "icon", text: "i" }), h("span", { text: t("run.nohistory") }));
   } else if (st.state === "stopped" || st.state === "error") {
     banner.classList.add(st.state);
-    banner.append(h("span", { class: "icon", text: "!" }), h("span", { text: st.state === "stopped" ? t("run.stopped") : st.message }));
+    banner.append(h("span", { class: "icon", text: "!" }), h("span", { text: st.state === "stopped" ? t("run.stopped") : localizeServerMessage(st.message) }));
     if (st.state === "stopped" && st.history.length) {
       banner.append(h("span", { text: " " + t("run.stoppedmodel", { e: st.history.length }) }));
     }
@@ -445,6 +452,8 @@ export function modelSourceText(model) {
   const source = model.source || "";
   if (source === "Kayıtlı model") return t("src.saved");
   if (source === "Yeni eğitilen model") return t("src.new");
+  const partial = source.match(/^Epoch (\d+)\/(\d+) sonrası \(eğitim tamamlanmadı\)$/);
+  if (partial) return t("src.partial", { e: partial[1], n: partial[2] });
   const epoch = source.match(/^Epoch (\d+)\/(\d+)/);
   return epoch ? t("src.epoch", { e: epoch[1], n: epoch[2] }) : source;
 }
@@ -512,7 +521,7 @@ export const LAYERS = [
 export const layerRows = {};
 export const pad = $("#draw");
 export const padCtx = pad.getContext("2d");
-export const infer = { busy: false, queued: null, last: null, lastSent: 0, inked: false, modelVersion: null, samplesRequested: false, result: null };
+export const infer = { busy: false, queued: null, last: null, lastSent: 0, inked: false, modelVersion: null, samplesRequested: false, result: null, cleared: 0 };
 
 export function buildLayerRows() {
   const host = $("#layers");
@@ -608,13 +617,14 @@ export function resetPrediction(message = t("pred.prompt")) {
 export async function sendPredict(input) {
   infer.busy = true;
   infer.lastSent = performance.now();
+  const cleared = infer.cleared; // a reply to a drawing erased in the meantime is ignored
   try {
     const body = input.kind === "draw" ? { image: pad.toDataURL("image/png") } : { test_index: input.index };
     body.model = modelView.which;
     const result = await api("/api/predict", body);
-    renderPrediction(result, input);
+    if (cleared === infer.cleared) renderPrediction(result, input);
   } catch (error) {
-    resetPrediction(error.message);
+    if (cleared === infer.cleared) resetPrediction(error.message);
   } finally {
     infer.busy = false;
     if (infer.queued) {
@@ -689,6 +699,8 @@ pad.addEventListener("pointercancel", endStroke);
 
 $("#btn-clear").addEventListener("click", () => {
   clearPad();
+  infer.cleared += 1;
+  infer.queued = null;
   infer.last = { kind: "draw" };
   for (const node of $("#test-samples").children) node.classList.remove("selected");
   resetPrediction();

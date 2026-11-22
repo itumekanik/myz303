@@ -924,7 +924,7 @@ export function renderBlock(block) {
   }
   if (block.callout) {
     const icons = { tip: "💡", warn: "⚠️", info: "ℹ️" };
-    return h("aside", { class: `tut-callout ${block.callout}` },
+    return h("div", { role: "note", class: `tut-callout ${block.callout}` },
       h("span", { class: "tut-callout-icon", text: icons[block.callout], "aria-hidden": "true" }),
       h("div", {}, h("strong", { text: L(block.title) }), h("p", {}, rich(block.text))));
   }

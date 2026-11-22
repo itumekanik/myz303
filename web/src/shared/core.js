@@ -333,12 +333,12 @@ export function probabilityChart(host, probabilities, prediction) {
   const m = { l: 24, r: 64, t: 2, b: 2 };
   const H = m.t + m.b + rowH * 10;
   const iw = W - m.l - m.r;
-  const root = svg("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": t("a.probs") });
+  const root = svg("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "list", "aria-label": t("a.probs") });
 
   probabilities.forEach((p, digit) => {
     const y = m.t + digit * rowH;
     const top = digit === prediction;
-    const row = svg("g", { class: "bar-row", tabindex: 0, "aria-label": `${t("digit")} ${digit}: ${fmtPct(p * 100, 1)}` });
+    const row = svg("g", { class: "bar-row", role: "listitem", tabindex: 0, "aria-label": `${t("digit")} ${digit}: ${fmtPct(p * 100, 1)}` });
     row.append(svgText(m.l - 12, y + rowH / 2 + 4, String(digit), "bar-label", "middle"));
     const w = p * iw;
     if (w >= 0.5) {
@@ -365,6 +365,10 @@ export function probabilityChart(host, probabilities, prediction) {
 export const resizeObserver = new ResizeObserver((entries) => {
   for (const entry of entries) {
     const host = entry.target;
+    if (!host.isConnected) {   // a demo rebuilt after a language change: let the old chart go
+      resizeObserver.unobserve(host);
+      continue;
+    }
     if (host._render && host.clientWidth && host.clientWidth !== host._w) host._render();
   }
 });
@@ -378,12 +382,18 @@ document.querySelectorAll(".chart").forEach((chart) => resizeObserver.observe(ch
 // (#teori/t-bn), so a reload or a shared link opens the same spot.
 // =====================================================================
 history.scrollRestoration = "manual";   // restored here, once the tab's content is visible
-export const nav = { tab: null, scroll: {} };  // current tab, last scroll position in each tab
+export const nav = { tab: null, section: null, scroll: {} };  // current tab and section, last scroll position in each tab
 export const firstTab = () => Object.keys(TABS)[0];
 export const glossaryOpenNow = () => Boolean(hooks.glossaryIsOpen?.());
 
 export function parseHash(hash) {
-  const [base, section] = decodeURIComponent(hash || "").split("/");
+  let text = hash || "";
+  try {
+    text = decodeURIComponent(text);
+  } catch {
+    text = "";   // a malformed address opens the first tab
+  }
+  const [base, section] = text.split("/");
   const tab = Object.keys(TABS).find((key) => TABS[key].hash === base) || firstTab();
   return { tab, section: section || null };
 }
@@ -406,15 +416,24 @@ export function showTab(name) {
   document.dispatchEvent(new CustomEvent("tab-shown", { detail: name }));
 }
 
+const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+/** The scroll behavior to use: smooth only if the reader has not asked for less motion. */
+export const scrollMode = (smooth) => (smooth && !reducedMotion.matches ? "smooth" : "instant");
+
 /** Scrolls to a position or a section as soon as it exists (some tabs render lazily). */
-export function scrollWhenReady({ y = null, section = null, smooth = false, flash = false }) {
+export function scrollWhenReady({ y = null, section = null, smooth = false, flash = false, focus = false }) {
   const started = performance.now();
   const attempt = () => {
     const waited = performance.now() - started;
     if (section) {
       const target = document.getElementById(section);
       if (target && target.getClientRects().length) {
-        target.scrollIntoView({ behavior: smooth ? "smooth" : "instant", block: "start" });
+        target.scrollIntoView({ behavior: scrollMode(smooth), block: "start" });
+        if (focus) {   // keyboard users continue from the place they jumped to
+          if (!target.hasAttribute("tabindex")) target.tabIndex = -1;
+          target.classList.add("nav-target");
+          target.focus({ preventScroll: true });
+        }
         if (flash) {   // show where the jump landed
           target.classList.remove("nav-flash");
           void target.getBoundingClientRect();
@@ -436,13 +455,20 @@ export function scrollWhenReady({ y = null, section = null, smooth = false, flas
 }
 
 /** Goes to a tab and, optionally, a section in it, as a new history step. */
-export function navigate(tab, section = null) {
+export function navigate(tab, section = null, { replace = false } = {}) {
   if (!TABS[tab] || (tab === nav.tab && !section)) return;
+  if (tab === nav.tab && section === nav.section) {   // already here: back to its start, no new history step
+    scrollWhenReady({ section, smooth: true });
+    return;
+  }
   history.replaceState({ ...history.state, tab: nav.tab, scroll: window.scrollY }, "");   // where Back returns
-  history.pushState({ tab, section, scroll: null, glossary: glossaryOpenNow() }, "", hashFor(tab, section));   // an open glossary panel stays open
+  const entry = { tab, section, scroll: null, glossary: glossaryOpenNow() };   // an open glossary panel stays open
+  if (replace) history.replaceState(entry, "", hashFor(tab, section));
+  else history.pushState(entry, "", hashFor(tab, section));
   const sameTab = tab === nav.tab;
+  nav.section = section;
   showTab(tab);
-  if (section) scrollWhenReady({ section, smooth: sameTab, flash: !sameTab });
+  if (section) scrollWhenReady({ section, smooth: sameTab, flash: !sameTab, focus: !glossaryOpenNow() });
   else scrollWhenReady({ y: nav.scroll[tab] ?? 0 });   // back where you were reading in that tab
 }
 
@@ -451,7 +477,9 @@ export const selectTab = (name) => navigate(name);
 
 window.addEventListener("popstate", (event) => {
   const state = event.state || { ...parseHash(location.hash), scroll: null };
-  const panelOnly = state.tab === nav.tab && Boolean(state.glossary) !== glossaryOpenNow();
+  const section = state.section ?? null;
+  const panelOnly = state.tab === nav.tab && section === nav.section && Boolean(state.glossary) !== glossaryOpenNow();
+  nav.section = section;
   hooks.syncGlossary?.(state);   // the glossary panel opens or closes with the history entry
   if (panelOnly) return;   // only the panel changed: the page stays where it is
   showTab(state.tab);
@@ -491,6 +519,8 @@ document.addEventListener("click", (event) => {
   event.preventDefault();
   const [tab, section] = link.dataset.go.split(":");
   goToChapterPlace({ chapter: link.dataset.chapter, tab, section: section || null });
+  // The link was in the tab just left: keep the keyboard on the page
+  if (!section && TABS[tab] && !link.getClientRects().length) $(TABS[tab].tab).focus();
 });
 
 export function wireTabs() {
@@ -503,7 +533,7 @@ export function wireTabs() {
       Home: keys[0], End: keys[keys.length - 1] }[event.key];
     if (!next) return;
     event.preventDefault();
-    navigate(next);
+    navigate(next, null, { replace: true });   // moving along the tabs is not a history step each
     $(TABS[next].tab).focus();
   });
 }
@@ -512,9 +542,13 @@ export function wireTabs() {
 document.addEventListener("DOMContentLoaded", () => {
   wireTabs();
   const { tab, section } = parseHash(location.hash);
-  history.replaceState({ tab, section, scroll: null }, "", hashFor(tab, section));
+  // A reload returns to where the reader was; a link or a first visit opens its section
+  const saved = history.state?.tab === tab ? history.state.scroll : null;
+  history.replaceState({ tab, section, scroll: saved ?? null }, "", hashFor(tab, section));
+  nav.section = section;
   showTab(tab);
-  if (section) scrollWhenReady({ section });
+  if (saved != null) scrollWhenReady({ y: saved });
+  else if (section) scrollWhenReady({ section });
 });
 
 
@@ -635,6 +669,7 @@ export function setChapterMenu(open, { focusButton = false } = {}) {
   if (open) {   // just under the top bar, whatever its height at this width
     const bar = $(".topbar").getBoundingClientRect();
     menu.style.top = `${Math.round(bar.bottom - menu.parentElement.getBoundingClientRect().top + 6)}px`;
+    menu.style.maxHeight = `${Math.max(140, Math.round(window.innerHeight - bar.bottom - 12))}px`;
   }
   menu.hidden = !open;
   button.setAttribute("aria-expanded", String(open));

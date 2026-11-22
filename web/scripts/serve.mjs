@@ -24,7 +24,13 @@ const TYPES = {
 export function serve(dir, port = 4173) {
   const root = resolve(dir);
   const server = createServer((req, res) => {
-    const path = decodeURIComponent(new URL(req.url ?? "/", "http://localhost").pathname);
+    let path;
+    try {
+      path = decodeURIComponent(new URL(req.url ?? "/", "http://localhost").pathname);
+    } catch {
+      res.writeHead(400, { "content-type": "text/plain" }).end("Bad request");
+      return;
+    }
     let file = normalize(join(root, path));
     if (file !== root && !file.startsWith(root + sep)) {
       res.writeHead(403).end();

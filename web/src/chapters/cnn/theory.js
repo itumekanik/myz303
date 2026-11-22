@@ -122,7 +122,9 @@ export function cellFromEvent(event, canvas, cols, rows) {
 export function inkFor(lutName, index) {
   const lut = LUTS[lutName];
   const j = clamp(Math.round(index), 0, 255) * 3;
-  return 0.299 * lut[j] + 0.587 * lut[j + 1] + 0.114 * lut[j + 2] > 150 ? "#0b0b0b" : "#ffffff";
+  // WCAG relative luminance: above 0.18, dark text has the higher contrast
+  const linear = (c) => (c / 255 <= 0.04045 ? c / 255 / 12.92 : ((c / 255 + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * linear(lut[j]) + 0.7152 * linear(lut[j + 1]) + 0.0722 * linear(lut[j + 2]) > 0.18 ? "#0b0b0b" : "#ffffff";
 }
 
 export function colorCell(cell, value, scale, lutName, signedValues) {
@@ -1117,7 +1119,7 @@ export function updateSoftmax() {
   probabilityChart($("#t-sm-probs"), probs, best);
 
   const p = probs[sm.label];
-  const loss = -Math.log(Math.max(p, 1e-12));
+  const loss = top + Math.log(total) - sm.logits[sm.label];   // -log p, exact even when p rounds to 0
   $("#t-ce-value").textContent = fmtNum(loss, 3);
   $("#t-ce-live").textContent = ` \\(= -\\log(${texNum(fmtNum(p, 4))}) = ${texNum(fmtNum(loss, 3))}\\)`;
   curvePlot($("#t-ce-plot"), {
@@ -2024,14 +2026,20 @@ export function renderSchematic() {
 // =====================================================================
 // Shared input image & filter, loading, lifecycle
 // =====================================================================
+let paramsRequest = 0;
+
+/** Loads the selected model's weights; false if a newer request took over while this one waited. */
 export async function loadParams() {
+  const request = ++paramsRequest;
   try {
     const params = await api(`/api/theory/params?model=${modelView.which}`);
+    if (request !== paramsRequest) return false;
     T.params = params.ready ? params : null;
     T.modelVersion = params.ready ? params.version : null;
     // Caches (BatchNorm batch, kernel grid) are keyed by this, so switching models refreshes them
     T.version = params.ready ? `${modelView.which}-${params.version}` : null;
   } catch {
+    if (request !== paramsRequest) return false;
     T.params = null;
   }
   $("#t-filters-title").textContent = t(modelView.which === "initial" ? "th.filters.initial" : "th.filters.trained");
@@ -2044,6 +2052,7 @@ export async function loadParams() {
   $("#t-filters").hidden = !T.params;
   for (const demo of document.querySelectorAll("#panel-theory [data-needs-model]")) demo.classList.toggle("no-model", !T.params);
   renderFilterStrip();
+  return true;
 }
 
 export async function loadBatch(selectFirst = true) {
@@ -2066,16 +2075,21 @@ export async function selectTestImage(sample) {
 /** The selected model's output for the current image (scores and every layer, for the schematic). */
 export async function fetchLogits() {
   if (!T.params || !T.image) return;
+  const image = T.image;
+  const which = modelView.which;
+  const current = () => T.image === image && modelView.which === which;
   try {
-    const body = T.image.testIndex != null ? { test_index: T.image.testIndex } : { pixels: Array.from(T.image.pixels) };
-    body.model = modelView.which;
+    const body = image.testIndex != null ? { test_index: image.testIndex } : { pixels: Array.from(image.pixels) };
+    body.model = which;
     const result = await api("/api/predict", body);
-    T.image.logits = result.logits;
-    T.image.prediction = result.prediction;
-    T.image.result = result;   // every layer's output, used by the schematic
+    if (!current()) return;
+    image.logits = result.logits;
+    image.prediction = result.prediction;
+    image.result = result;   // every layer's output, used by the schematic
   } catch {
-    T.image.logits = null;
-    T.image.result = null;
+    if (!current()) return;
+    image.logits = null;
+    image.result = null;
   }
 }
 
@@ -2197,7 +2211,11 @@ export async function startTheory() {
 }
 
 document.addEventListener("tab-shown", (event) => {
-  if (event.detail !== "theory") return;
+  if (event.detail !== "theory") {
+    if (conv.anim) stopConvAnim();
+    if (opt.anim) stopOptAnim();
+    return;
+  }
   if (!T.started) startTheory();
   else renderToolbar();
 });
@@ -2205,8 +2223,10 @@ document.addEventListener("tab-shown", (event) => {
 // A newer model (a finished epoch or a new training run) refreshes the demos
 export async function reloadModel() {
   T.loading = true;
-  await loadParams();
+  if (!(await loadParams())) return;   // a newer switch is under way and finishes the job
+  const which = modelView.which;
   if (T.image) await fetchLogits();
+  if (which !== modelView.which) return;
   T.loading = false;
   bnState.z = null;
   refreshAll();

@@ -7,10 +7,12 @@
   --border: rgba(11, 11, 11, 0.10);
   --text: #0b0b0b;
   --text-2: #52514e;
-  --muted: #898781;
+  --muted: #6b6a65;
   --grid: #e1e0d9;
   --axis: #c3c2b7;
   --accent: #2a78d6;
+  --accent-fill: #2472cf;
+  --accent-fill-hover: #1f64b8;
   --accent-strong: #256abf;
   --accent-soft: #e3eefb;
   --on-accent: #ffffff;
@@ -47,10 +49,12 @@
   --border: rgba(255, 255, 255, 0.10);
   --text: #f0efec;
   --text-2: #c3c2b7;
-  --muted: #898781;
+  --muted: #9b9992;
   --grid: #2c2c2a;
   --axis: #383835;
   --accent: #3987e5;
+  --accent-fill: #2472cf;
+  --accent-fill-hover: #1f64b8;
   --accent-strong: #5598e7;
   --accent-soft: #1b2a3d;
   --on-accent: #ffffff;
@@ -65,7 +69,7 @@
   --good: #0ca30c;
   --good-text: #0ca30c;
   --critical: #d03b3b;
-  --critical-text: #e66767;
+  --critical-text: #ec7a7a;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
   --seq-stops: #211c22, #4a1650, #8f2463, #d0453a, #f58b26, #fbd75e;
   --div-stops: #86b6ef, #2a5f9e, #383835, #a83c3c, #f19b9a;
@@ -80,10 +84,12 @@
     --border: rgba(255, 255, 255, 0.10);
     --text: #f0efec;
     --text-2: #c3c2b7;
-    --muted: #898781;
+    --muted: #9b9992;
     --grid: #2c2c2a;
     --axis: #383835;
     --accent: #3987e5;
+    --accent-fill: #2472cf;
+    --accent-fill-hover: #1f64b8;
     --accent-strong: #5598e7;
     --accent-soft: #1b2a3d;
     --on-accent: #ffffff;
@@ -98,7 +104,7 @@
     --good: #0ca30c;
     --good-text: #0ca30c;
     --critical: #d03b3b;
-    --critical-text: #e66767;
+    --critical-text: #ec7a7a;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
     --seq-stops: #211c22, #4a1650, #8f2463, #d0453a, #f58b26, #fbd75e;
     --div-stops: #86b6ef, #2a5f9e, #383835, #a83c3c, #f19b9a;
@@ -116,6 +122,14 @@
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
+/* Keyboard focus never lands under the sticky bars. Not scroll-padding on html: that makes the page
+   jump when a control inside a sticky bar gets the focus, so those controls are left out. */
+main { --focus-room: 8px; }
+#panel-theory { --focus-room: 84px; }
+main :is(a[href], button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])):not(.theory-bar *, .tut-toc *) {
+  scroll-margin-top: calc(var(--topbar-h, 59px) + var(--focus-room));
+}
+.nav-target:focus { outline: none; }   /* a section the page moved the focus to; it flashes instead */
 body {
   margin: 0;
   background: var(--page);
@@ -189,8 +203,8 @@ main { max-width: 1320px; margin: 0 auto; padding: 20px 24px 48px; }
 }
 .btn:hover:not(:disabled) { border-color: var(--axis); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn.primary { background: var(--accent); border-color: transparent; color: var(--on-accent); }
-.btn.primary:hover:not(:disabled) { background: var(--accent-strong); }
+.btn.primary { background: var(--accent-fill); border-color: transparent; color: var(--on-accent); }
+.btn.primary:hover:not(:disabled) { background: var(--accent-fill-hover); }
 .btn.small { padding: 4px 10px; font-size: 12.5px; }
 .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .controls .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
@@ -232,7 +246,7 @@ main { max-width: 1320px; margin: 0 auto; padding: 20px 24px 48px; }
   background: var(--surface); border: 2px solid var(--grid); color: var(--muted);
   font-weight: 650; font-size: 13px;
 }
-.stepper li.done .step-dot { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.stepper li.done .step-dot { background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-accent); }
 .stepper li.done .step-dot span { display: none; }
 .stepper li.done .step-dot::after { content: "✓"; font-size: 15px; }
 .stepper li.active .step-dot { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
@@ -329,6 +343,8 @@ main { max-width: 1320px; margin: 0 auto; padding: 20px 24px 48px; }
 .bar-value { fill: var(--text-2); font-size: 12px; font-variant-numeric: tabular-nums; }
 .bar-row:hover .bar, .bar-row:focus .bar { filter: brightness(1.08); }
 .bar-row { outline: none; }
+.bar-row:focus-visible .bar { stroke: var(--accent-strong); stroke-width: 2; }
+.bar-row:focus-visible .bar-label { fill: var(--accent-strong); text-decoration: underline; }
 
 /* ---------- Pixel images ---------- */
 canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
@@ -701,14 +717,14 @@ body[data-tab="infer"] main, body[data-tab="theory"] main { padding-bottom: 76px
   width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
   background: var(--surface-2); color: var(--text-2); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums;
 }
-.tut-toc button.active .toc-num { background: var(--accent); color: var(--on-accent); }
+.tut-toc button.active .toc-num { background: var(--accent-fill); color: var(--on-accent); }
 
 .tut-main { display: grid; gap: 16px; min-width: 0; }
 .tut-step { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 22px 26px; scroll-margin-top: calc(var(--topbar-h, 59px) + 16px); }
 .tut-step-head { display: flex; align-items: center; gap: 12px; }
 .tut-num {
   width: 34px; height: 34px; border-radius: 50%; flex: none; display: grid; place-items: center;
-  background: var(--accent); color: var(--on-accent); font-weight: 700; font-size: 15px;
+  background: var(--accent-fill); color: var(--on-accent); font-weight: 700; font-size: 15px;
 }
 .tut-kicker { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .tut-step h2 { font-size: 19px; }
@@ -751,7 +767,7 @@ code.ic {
   background: #1e1e1e; color: #e0e0e0; font-family: var(--mono); font-size: 12.5px; border-top: 2px solid #3794ff;
 }
 .code-tab-icon { font-size: 10px; font-weight: 700; color: #4ec9b0; }
-.code-meta { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #8a8a8a; font-size: 12px; font-family: var(--mono); }
+.code-meta { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #9a9a9a; font-size: 12px; font-family: var(--mono); }
 .code-head > * { flex-shrink: 0; }
 .code-head > .code-meta { flex-shrink: 1; }
 .code-copy {
@@ -763,7 +779,7 @@ code.ic {
 .code.tall .code-body { max-height: 640px; overflow-y: auto; }
 .code-line { display: flex; min-width: max-content; padding-right: 16px; position: relative; }
 .code-line.lit { background: rgba(55, 148, 255, 0.16); box-shadow: inset 3px 0 0 #3794ff; }
-.code-gutter { flex: none; width: 52px; padding-right: 16px; text-align: right; color: #6e7681; user-select: none; }
+.code-gutter { flex: none; width: 52px; padding-right: 16px; text-align: right; color: #8b949e; user-select: none; }
 .code-src { white-space: pre; tab-size: 4; }
 .code-mark {
   flex: none; align-self: center; width: 19px; height: 19px; margin-left: 14px; border-radius: 50%;
@@ -772,7 +788,7 @@ code.ic {
 }
 .code-fold {
   display: flex; width: 100%; padding: 0; border: 0; cursor: pointer; text-align: left;
-  background: rgba(255, 255, 255, 0.04); color: #8a8a8a; font: inherit;
+  background: rgba(255, 255, 255, 0.04); color: #9a9a9a; font: inherit;
 }
 .code-fold:hover { background: rgba(255, 255, 255, 0.08); color: #c8c8c8; }
 .code-fold-text { font-style: italic; }
@@ -864,7 +880,7 @@ h2 > .info-btn { vertical-align: 2px; }
   0%, 35% { box-shadow: 0 0 0 3px var(--accent); }
   100% { box-shadow: 0 0 0 3px transparent; }
 }
-@media (prefers-reduced-motion: reduce) { .nav-flash { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .nav-flash, .pc-msg.flash { animation: none; } }
 
 /* ---------- Glossary: gl-term links, gl-term card, side panel ---------- */
 .gl-term {
@@ -970,7 +986,7 @@ h2 > .info-btn { vertical-align: 2px; }
 }
 .bn-chip b { font-family: "Cambria Math", "STIX Two Math", "Times New Roman", serif; font-size: 15px; font-weight: 500; color: var(--text); white-space: nowrap; }
 .bn-chip small { font-size: 11.5px; color: var(--text-2); }
-.bn-chip.muted { opacity: 0.7; }
+.bn-chip.muted { opacity: 0.85; }
 .bn-arrow { align-self: center; color: var(--muted); }
 .bn-bar {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px;
@@ -988,7 +1004,7 @@ h2 > .info-btn { vertical-align: 2px; }
 .bn-step-text h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; color: var(--text); font-size: 15.5px; line-height: 1.35; }
 .bn-step-num {
   width: 24px; height: 24px; flex: none; display: grid; place-items: center; border-radius: 50%;
-  background: var(--accent); color: var(--on-accent); font-size: 12.5px; font-weight: 700;
+  background: var(--accent-fill); color: var(--on-accent); font-size: 12.5px; font-weight: 700;
 }
 .bn-step-text p { color: var(--text-2); margin: 8px 0; line-height: 1.6; }
 .bn-step-text b { color: var(--text); font-weight: 600; }
@@ -1008,7 +1024,7 @@ h2 > .info-btn { vertical-align: 2px; }
 .bn-axis span { font-size: 11.5px; color: var(--text-2); }
 .bn-axis small { font-size: 10.5px; font-weight: 650; color: var(--accent-strong); }
 .bn-axis.separate { background: var(--surface-2); border: 1px dashed var(--series-2); }
-.bn-axis.separate small { color: var(--series-2); }
+.bn-axis.separate small { color: color-mix(in srgb, var(--series-2) 55%, var(--text)); }
 .bn-axes-sum { font-size: 12.5px; color: var(--text-2); margin-left: 4px; }
 .bn-maps {
   display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4px;
@@ -1148,7 +1164,7 @@ h2 > .info-btn { vertical-align: 2px; }
   background: var(--surface-2); color: var(--text); font-size: 13px; font-variant-numeric: tabular-nums; border: 1px solid transparent;
 }
 .m-cell.win { background: var(--accent-soft); border-color: var(--accent); }
-.m-cell.sel { background: var(--accent); color: var(--on-accent); font-weight: 700; }
+.m-cell.sel { background: var(--accent-fill); color: var(--on-accent); font-weight: 700; }
 .m-grid.pick .m-cell { cursor: pointer; }
 .m-grid.pick .m-cell:hover:not(.sel) { border-color: var(--accent); }
 .m-grid.pick .m-cell:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -1280,7 +1296,7 @@ h2 > .info-btn { vertical-align: 2px; }
   .badges { gap: 6px; }
 }
 @media (max-width: 360px) {
-  .brand-title { display: none; }
+  .brand-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .tabs button { padding: 6px 5px; font-size: 12.5px; }
 }
 @media (prefers-reduced-motion: reduce) { .topbar { transition: none; } }
@@ -1338,7 +1354,7 @@ a.chm-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2p
   flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
   background: var(--surface-2); font-weight: 700; font-size: 12px; position: relative;
 }
-.chm-item.current .chm-num { background: var(--accent); color: var(--on-accent); }
+.chm-item.current .chm-num { background: var(--accent-fill); color: var(--on-accent); }
 .chm-item.soon .chm-num { background: none; border: 1px dashed var(--axis); }
 /* the line that joins the chapters into a path */
 .chm-list li + li .chm-num::before { content: ""; position: absolute; bottom: 100%; left: 50%; width: 1px; height: 18px; background: var(--axis); }

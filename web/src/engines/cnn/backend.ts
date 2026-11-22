@@ -50,21 +50,37 @@ export function setInitial(weights: CnnWeights, seed: number): void {
   engine.initialLoading = Promise.resolve();
 }
 
-const session = new TrainingSession({ loadState, setInitial });
+const relabel = (source: string): void => {
+  engine.trained.source = source;
+};
+
+const session = new TrainingSession({ loadState, setInitial, relabel });
 
 let started: Promise<void> | null = null;
+/** Set while /api/reset replaces the model, so a run cannot start in the middle of it. */
+let resetting: Promise<void> | null = null;
+
 /** Loads the saved model and its run: the browser's own last run if there is one, else the PyTorch run. */
 function start(): Promise<void> {
   started ??= (async () => {
     const saved = await loadSaved().catch(() => null);
-    if (saved) {
+    // A record from an older version, or a damaged one, must not lock the reader out of the page
+    if (
+      saved?.weights?.["fc2.weight"] instanceof Float32Array &&
+      saved.initial?.["fc2.weight"] &&
+      saved.meta &&
+      Array.isArray(saved.run?.log)
+    ) {
       loadState(saved.weights, "Kayıtlı model", saved.meta);
       setInitial(saved.initial, Number(saved.meta.seed ?? DEFAULTS.seed));
       session.restore(saved.run, "this browser");
       return;
     }
     await loadBundled();
-  })();
+  })().catch((error: unknown) => {
+    started = null; // e.g. a data file failed to load: the next request tries again
+    throw error;
+  });
   return started;
 }
 
@@ -210,14 +226,20 @@ export async function localApi(path: string, body?: Record<string, unknown>): Pr
   }
   if (route === "/api/train") {
     const config = parseConfig(body); // throws ApiError with the server's message
+    await resetting?.catch(() => undefined);
     if (!session.start(config)) throw new ApiError("Eğitim zaten sürüyor.");
     return { ok: true };
   }
   if (route === "/api/reset") {
     // Not in dashboard.py: forget this browser's model and go back to the one that comes with the site
     if (session.snapshot().running) throw new ApiError("Eğitim zaten sürüyor.");
-    await clearSaved().catch(() => undefined);
-    await loadBundled();
+    resetting ??= (async () => {
+      await clearSaved().catch(() => undefined);
+      await loadBundled();
+    })().finally(() => {
+      resetting = null;
+    });
+    await resetting;
     return { ok: true };
   }
   if (route === "/api/stop") {

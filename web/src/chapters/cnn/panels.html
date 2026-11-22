@@ -138,7 +138,7 @@
     </div>
     <div class="card">
       <h2><span data-i18n="train.log">Kayıt</span> <button type="button" class="info-btn" data-info="log" aria-expanded="false">i</button></h2>
-      <pre class="log" id="log" aria-live="polite">Eğitim başladığında çıktılar burada görünür.</pre>
+      <pre class="log" id="log" role="log" tabindex="0" aria-label="Eğitim çıktısı" data-i18n-attr="aria-label=a.log">Eğitim başladığında çıktılar burada görünür.</pre>
     </div>
   </div>
 </section>
@@ -233,7 +233,7 @@
     </div>
     <figure class="schematic">
       <div class="schematic-scroll">
-        <svg id="t-schematic" viewBox="0 0 1120 262" role="img"
+        <svg id="t-schematic" viewBox="0 0 1120 262" role="group"
              aria-label="SimpleCNN mimarisi: 1×28×28 giriş, Conv 5×5 (32 filtre) + BatchNorm + ReLU ile 32×24×24, MaxPool ve Dropout ile 32×12×12, Conv 5×5 (64 filtre) + BatchNorm + ReLU ile 64×8×8, MaxPool ve Dropout ile 64×4×4, 1024 değerlik vektör, 512 nöronluk FC1 ve 10 sınıflı Softmax çıkışı. Eğitimde kayıp geri yayılımla tüm ağırlıkları günceller." data-i18n-attr="aria-label=a.schematic"></svg>
       </div>
       <figcaption data-i18n="th.schem.cap">Her yığın bir katmanın çıktısıdır: yüksekliği uzamsal boyutu (28 → 4), derinliği [[channel|kanal]] sayısını gösterir. Öndeki görüntüler seçili rakam için gerçek çıktılardır: ilk evrişim bloğunda yukarıda seçili filtrenin haritası, ikinci blokta en güçlü tepki veren harita gösterilir. Okların üzerindeki işlemlere tıklayarak ilgili bölüme gidin.</figcaption>

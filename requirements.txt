@@ -1,0 +1,8 @@
+# What SimpleCNN.py and dashboard.py need (Perceptron.py and MLP.py need only NumPy).
+# On Windows, start.bat installs these by itself and picks the PyTorch build for your GPU.
+# For another CUDA version or a CPU-only build, see https://pytorch.org/get-started/locally/
+torch
+torchvision
+numpy
+pillow
+matplotlib

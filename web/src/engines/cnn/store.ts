@@ -30,9 +30,12 @@ async function request<T>(mode: IDBTransactionMode, run: (store: IDBObjectStore)
   const db = await open();
   try {
     return await new Promise<T>((resolve, reject) => {
-      const req = run(db.transaction(STORE, mode).objectStore(STORE));
-      req.onsuccess = () => resolve(req.result as T);
-      req.onerror = () => reject(req.error);
+      const tx = db.transaction(STORE, mode);
+      const req = run(tx.objectStore(STORE));
+      // Only a committed transaction is saved: a full disk shows up at commit, after the request's success
+      tx.oncomplete = () => resolve(req.result as T);
+      tx.onabort = () => reject(tx.error ?? new Error("IndexedDB transaction aborted"));
+      tx.onerror = () => reject(tx.error ?? req.error);
     });
   } finally {
     db.close();

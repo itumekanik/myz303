@@ -208,7 +208,7 @@ const neuronChanged = () => { for (const view of neuronViews) view(); };
 
 function neuronDiagram() {
   const box = h("div", { class: "pc-neuron" });
-  const root = svg("svg", { viewBox: "0 0 640 250", role: "img" });
+  const root = svg("svg", { viewBox: "0 0 640 250", role: "group", "aria-label": L({ tr: "Yapay nöron: girişleri değiştirmek için tıklayın", en: "The artificial neuron: click the inputs to change them" }) });
   box.append(root);
   const g = (cls) => svg("g", { class: cls });
   const edges = g("pc-edges");
@@ -397,13 +397,23 @@ function buildBoundaryDemo() {
     return plane.toData(event.clientX - box.left, event.clientY - box.top);
   };
   const shiftTo = (p) => { P.b = clamp(-(P.w[0] * p[0] + P.w[1] * p[1]), -2, 2); };
+  /** Turning keeps ‖w‖, so a component can pass the sliders' ±2; scaling w and b together keeps the same line. */
+  const fitSliders = () => {
+    const scale = Math.max(Math.abs(P.w[0]), Math.abs(P.w[1])) / 2;
+    if (scale > 1) {
+      P.w = P.w.map((v) => v / scale);
+      P.b /= scale;
+    }
+    P.b = clamp(P.b, -2, 2);
+  };
   const turnTo = (p) => {
     const f = plane.handles?.foot;
     if (!f) return;
     const ang = Math.atan2(p[1] - f[1], p[0] - f[0]);
     const n = norm();
     P.w = [n * Math.cos(ang), n * Math.sin(ang)];
-    P.b = clamp(-(P.w[0] * f[0] + P.w[1] * f[1]), -2, 2);
+    P.b = -(P.w[0] * f[0] + P.w[1] * f[1]);
+    fitSliders();
   };
   for (const [el, move] of [[shiftHandle, shiftTo], [turnHandle, turnTo]]) {
     el.addEventListener("pointerdown", (event) => {
@@ -435,7 +445,8 @@ function buildBoundaryDemo() {
     const ang = Math.atan2(P.w[1], P.w[0]) + d * (5 * Math.PI / 180);
     const n = norm();
     P.w = [n * Math.cos(ang), n * Math.sin(ang)];
-    P.b = clamp(-(P.w[0] * f[0] + P.w[1] * f[1]), -2, 2);
+    P.b = -(P.w[0] * f[0] + P.w[1] * f[1]);
+    fitSliders();
     neuronChanged();
   });
 
@@ -484,7 +495,7 @@ function ruleNext() {
   if (RS.done) return;
   const k = RS.i;
   const res = ruleStep(RS.model, INPUTS[k], GATES[RS.gate].y[k], RS.eta);
-  RS.last = { ...res, k, epoch: RS.epoch };
+  RS.last = { ...res, k, epoch: RS.epoch, eta: RS.eta };
   RS.log.push(RS.last);
   if (res.e) RS.mistakes++;
   RS.i++;
@@ -542,6 +553,7 @@ function buildRuleDemo() {
   });
   reset.addEventListener("click", () => { stop(); resetRule(); update(); });
   stop();
+  RS.stop = stop;
 
   function update() {
     seg.set(RS.gate);
@@ -576,7 +588,7 @@ function buildRuleDemo() {
       ];
       if (!e) rows.push(h("div", { class: "pc-ok", text: L({ tr: "Doğru cevap: ağırlıklar değişmez.", en: "Right answer: the weights stay." }) }));
       else {
-        const k = `${tx(RS.eta)}\\cdot(${e})`;
+        const k = `${tx(last.eta)}\\cdot(${e})`;
         rows.push(
           h("div", { text: `\\(w_1 \\leftarrow ${tx(before.w[0])} + ${k}\\cdot ${x[0]} = ${tx(after.w[0])}\\)` }),
           h("div", { text: `\\(w_2 \\leftarrow ${tx(before.w[1])} + ${k}\\cdot ${x[1]} = ${tx(after.w[1])}\\)` }),
@@ -653,7 +665,7 @@ function trainToConvergence(pts, eta = 0.5, maxEpochs = 500) {
     corrections += m;
     if (!m) break;
   }
-  return { model, history, corrections };
+  return { model, history, corrections, converged: history.at(-1) === 0 };
 }
 
 function buildConvergeDemo() {
@@ -680,7 +692,7 @@ function buildConvergeDemo() {
     const res = trainToConvergence(CV.data.pts);
     CV.model = res.model;
     CV.history = res.history;
-    CV.runs.push({ gap: CV.gap, corrections: res.corrections, epochs: res.history.length, bound: CV.data.bound });
+    CV.runs.push({ gap: CV.gap, corrections: res.corrections, epochs: res.history.length, bound: CV.data.bound, converged: res.converged });
     update();
   });
   fresh.addEventListener("click", () => { CV.seed++; CV.data = null; CV.model = null; CV.history = []; update(); });
@@ -700,8 +712,8 @@ function buildConvergeDemo() {
     const head = [L({ tr: "Boşluk", en: "Gap" }), L({ tr: "Düzeltme", en: "Corrections" }), "Epoch", L({ tr: "Teorem sınırı", en: "Theorem bound" })];
     table.replaceChildren(
       h("thead", {}, h("tr", {}, ...head.map((c) => h("th", { text: c })))),
-      h("tbody", {}, ...(CV.runs.length ? CV.runs.map((r) => h("tr", {},
-        h("td", { text: nf(r.gap) }), h("td", { text: fmtNum(r.corrections, 0) }), h("td", { text: fmtNum(r.epochs, 0) }),
+      h("tbody", {}, ...(CV.runs.length ? CV.runs.map((r) => h("tr", { title: r.converged ? null : L({ tr: `${r.epochs} epoch'ta bitmedi: eğitim burada kesildi`, en: `Not finished after ${r.epochs} epochs: training was cut off here` }) },
+        h("td", { text: nf(r.gap) }), h("td", { text: `${fmtNum(r.corrections, 0)}${r.converged ? "" : "+"}` }), h("td", { text: `${fmtNum(r.epochs, 0)}${r.converged ? "" : "+"}` }),
         h("td", { text: `≤ ${fmtNum(r.bound, 0)}` }))).reverse()
         : [h("tr", { class: "empty" }, h("td", { colspan: 4, text: L({ tr: "Eğit'e basın", en: "Press Train" }) }))])));
   }
@@ -774,6 +786,7 @@ function buildXorDemo() {
   });
   reset.addEventListener("click", () => { stop(); resetXor(); update(); });
   stop();
+  XS.stop = () => { if (XS.timer) { stop(); update(); } };
 
   // The two-layer network, drawn once per language
   const drawNet = () => {
@@ -852,7 +865,7 @@ function buildTheory() {
   const intro = TEXT.intro;
   const bio = h("div", { class: "pc-bio" }, h("div", { class: "mini-title", text: L(intro.bio.title) }),
     h("dl", {}, ...intro.bio.rows.flatMap(([a, b]) => [html("dt", {}, a), html("dd", {}, b)])));
-  const fact = h("aside", { class: "tut-callout info" }, h("span", { class: "tut-callout-icon", text: "ℹ️", "aria-hidden": "true" }),
+  const fact = h("div", { role: "note", class: "tut-callout info" }, h("span", { class: "tut-callout-icon", text: "ℹ️", "aria-hidden": "true" }),
     h("div", {}, h("strong", { text: L(intro.fact.title) }), html("p", {}, intro.fact.text)));
   const introCard = h("div", { class: "card t-intro pc-intro", id: "p-intro" },
     h("div", { class: "t-intro-text" }, h("h2", { text: L(intro.h) }), ...intro.p.map((p) => html("p", {}, p))),
@@ -977,7 +990,7 @@ function buildPlay() {
     (v) => { PG.cls = Number(v); }, L({ tr: "Eklenecek nokta", en: "Point to add" }));
   cls.classList.add("pg-cls");
   const reshuffle = h("button", { type: "button", class: "btn small", text: L({ tr: "Yeniden üret", en: "Regenerate" }) });
-  reshuffle.addEventListener("click", () => { PG.seed++; PG.data = makePreset(PG.preset); pgStop(); pgResetRun(); update(); });
+  reshuffle.addEventListener("click", () => { PG.seed++; if (PG.preset !== "custom") PG.data = makePreset(PG.preset); pgStop(); pgResetRun(); update(); });
 
   const stage = h("div", { class: "pc-stage pg-plane" });
   const stageCard = h("div", { class: "card pg-stage" },
@@ -1084,9 +1097,17 @@ function buildPlay() {
     status.className = `pc-msg ${cls_}`;
     mistakesChart(chartM, PG.history);
     const ws = PG.weights;
-    const vals = ws.flatMap((v) => [v.w[0], v.w[1], v.b]);
-    const lo = Math.min(-1, ...vals);
-    const hi = Math.max(1, ...vals);
+    // At most about 400 points on the chart: a long run keeps every correction, the chart need not
+    const stride = Math.ceil(ws.length / 400) || 1;
+    const shown = [];
+    for (let k = 0; k < ws.length; k += stride) shown.push(k);
+    if (ws.length && shown.at(-1) !== ws.length - 1) shown.push(ws.length - 1);
+    let lo = -1;
+    let hi = 1;
+    for (const v of ws) {
+      lo = Math.min(lo, v.w[0], v.w[1], v.b);
+      hi = Math.max(hi, v.w[0], v.w[1], v.b);
+    }
     const yStep = niceStep(hi - lo, 4);
     const xMax = Math.max(ws.length, 5);
     lineChart(chartW, {
@@ -1095,15 +1116,18 @@ function buildPlay() {
       x: { min: 1, max: xMax, ticks: linearTicks(1, xMax, Math.max(1, niceStep(xMax, 6)), (v) => fmtNum(v - 1, 0)) },
       y: { min: Math.floor(lo / yStep) * yStep, max: Math.ceil(hi / yStep) * yStep, ticks: linearTicks(Math.floor(lo / yStep) * yStep, Math.ceil(hi / yStep) * yStep, yStep, (v) => fmtNum(v, 1)) },
       series: [
-        { points: ws.map((v, k) => [k + 1, v.w[0]]), color: "var(--series-1)" },
-        { points: ws.map((v, k) => [k + 1, v.w[1]]), color: "var(--series-2)" },
-        { points: ws.map((v, k) => [k + 1, v.b]), color: "var(--series-3)" },
+        { points: shown.map((k) => [k + 1, ws[k].w[0]]), color: "var(--series-1)" },
+        { points: shown.map((k) => [k + 1, ws[k].w[1]]), color: "var(--series-2)" },
+        { points: shown.map((k) => [k + 1, ws[k].b]), color: "var(--series-3)" },
       ],
-      tooltip: (k) => ({ title: k ? L({ tr: `${k}. düzeltmeden sonra`, en: `After correction ${k}` }) : L({ tr: "Başlangıç", en: "Start" }), rows: [
-        { value: nf(ws[k].w[0]), label: "w₁", color: "var(--series-1)" },
-        { value: nf(ws[k].w[1]), label: "w₂", color: "var(--series-2)" },
-        { value: nf(ws[k].b), label: "b", color: "var(--series-3)" },
-      ] }),
+      tooltip: (i) => {
+        const k = shown[i];
+        return { title: k ? L({ tr: `${k}. düzeltmeden sonra`, en: `After correction ${k}` }) : L({ tr: "Başlangıç", en: "Start" }), rows: [
+          { value: nf(ws[k].w[0]), label: "w₁", color: "var(--series-1)" },
+          { value: nf(ws[k].w[1]), label: "w₂", color: "var(--series-2)" },
+          { value: nf(ws[k].b), label: "b", color: "var(--series-3)" },
+        ] };
+      },
     });
   }
   update();
@@ -1117,6 +1141,7 @@ function pgStart() {
   PG.acc = 0;
   let last = performance.now();
   let lastDraw = 0;
+  let drawGap = 40;   // ms between redraws; grows when drawing is slow, so the page stays responsive
   const frame = (now) => {
     if (!PG.running) return;
     PG.acc += ((now - last) / 1000) * PG.speed;
@@ -1124,9 +1149,15 @@ function pgStart() {
     let steps = Math.floor(PG.acc);
     PG.acc -= steps;
     let alive = true;
-    while (steps-- > 0 && alive) alive = pgStep();
+    const started = performance.now();
+    while (steps-- > 0 && alive && performance.now() - started < 10) alive = pgStep();
     if (!alive) PG.running = false;
-    if (!alive || now - lastDraw > 40) { PG.update?.(); lastDraw = now; }
+    if (!alive || now - lastDraw > drawGap) {
+      const before = performance.now();
+      PG.update?.();
+      drawGap = Math.max(40, 2 * (performance.now() - before));
+      lastDraw = now;
+    }
     if (PG.running) PG.raf = requestAnimationFrame(frame);
   };
   PG.raf = requestAnimationFrame(frame);
@@ -1167,5 +1198,9 @@ document.addEventListener("theme-change", () => {
 });
 document.addEventListener("tab-shown", (event) => {
   if (event.detail !== "play") pgStop();
+  if (event.detail !== "theory") {
+    RS.stop?.();
+    XS.stop?.();
+  }
 });
 })();

@@ -74,6 +74,7 @@ export const STATIC_EN = {};
 // English text for index.html (generated from the data-i18n keys; Turkish stays in the HTML)
 Object.assign(STATIC_EN, {
   "a.sections": "Sections",
+  "a.log": "Training output",
   "a.theme": "Theme",
   "a.device": "Device training runs on",
   "a.epochprog": "Epoch progress",
@@ -258,6 +259,11 @@ Object.assign(STRINGS, {
   "srv.toolarge": { tr: "İstek çok büyük.", en: "The request is too large." },
   "srv.json": { tr: "Geçersiz JSON.", en: "Invalid JSON." },
   "srv.notfound": { tr: "Bulunamadı.", en: "Not found." },
+  "srv.badrequest": { tr: "Geçersiz istek.", en: "Invalid request." },
+  "srv.gpulost": {
+    tr: "GPU yanıt vermeyi bıraktı. Daha küçük bir batch boyutuyla eğitimi yeniden başlatın; bu sayfada eğitim bundan sonra WebGL ile sürer.",
+    en: "The GPU stopped responding. Start training again with a smaller batch size; on this page it now continues with WebGL.",
+  },
   "srv.range": { tr: "'{name}' {lo} ile {hi} arasında olmalı.", en: "'{name}' must be between {lo} and {hi}." },
   "srv.nan": { tr: "'{name}' geçerli bir sayı değil.", en: "'{name}' is not a valid number." },
   "digit": { tr: "Rakam", en: "Digit" },
@@ -338,6 +344,7 @@ Object.assign(STRINGS, {
   "src.saved": { tr: "Kayıtlı model", en: "Saved model" },
   "src.new": { tr: "Yeni eğitilen model", en: "Newly trained model" },
   "src.epoch": { tr: "Epoch {e}/{n} sonrası (eğitim sürüyor)", en: "After epoch {e}/{n} (training in progress)" },
+  "src.partial": { tr: "Epoch {e}/{n} sonrası (eğitim tamamlanmadı)", en: "After epoch {e}/{n} (training not finished)" },
   "layers.placeholder": { tr: "Tahmin yapılınca görünür.", en: "Appears once a prediction is made." },
   "map.n": { tr: "harita {n}", en: "map {n}" },
   "map.peak": { tr: "en yüksek aktivasyon", en: "highest activation" },

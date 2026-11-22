@@ -929,7 +929,7 @@ const WIDGETS = {
             h("td", { text: String(k) }), h("td", { text: fmtNum(v, 2) }), h("td", { text: fmtNum(e[k], 4) }),
             h("td", { text: fmtNum(p[k], 4) }), h("td", { text: k === c ? "1" : "0" }),
             h("td", { text: fmtNum(p[k] - (k === c ? 1 : 0), 6) }), h("td", { text: fmtNum(numeric[k], 6) })))))),
-        h("div", { class: "m-calc", text: display(`L = -\\log p_{${c}} = -\\log ${nm(p[c], 4)} = ${nm(-Math.log(p[c]), 4)}`) }),
+        h("div", { class: "m-calc", text: display(`L = -\\log p_{${c}} = -\\log ${nm(p[c], 4)} = ${nm(loss(z, c), 4)}`) }),
         h("p", { class: "m-hint", text: L({
           tr: `Analitik ve sayısal gradyan arasındaki en büyük fark: ${inline(sci(diff))} (${inline("h = 10^{-5}")} ile sonlu fark).`,
           en: `Largest difference between the analytic and numerical gradient: ${inline(sci(diff))} (finite difference with ${inline("h = 10^{-5}")}).`,
@@ -1069,7 +1069,7 @@ function renderBlock(block, key) {
   if (block.model) return htmlNode("div", { class: "in-model m-model" }, block.model);
   if (block.callout) {
     const icons = { tip: "💡", warn: "⚠️", info: "ℹ️" };
-    return h("aside", { class: `tut-callout ${block.callout}` },
+    return h("div", { role: "note", class: `tut-callout ${block.callout}` },
       h("span", { class: "tut-callout-icon", text: icons[block.callout], "aria-hidden": "true" }),
       h("div", {}, h("strong", { text: L(block.title) }), htmlNode("p", {}, block.text)));
   }

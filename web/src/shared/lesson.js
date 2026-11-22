@@ -25,7 +25,7 @@
  * and codeview.js (codeEditor, terminal).
  */
 import { L } from "./i18n.js";
-import { $, CHAPTER, PLACE_TITLES, chapterOf, h, navigate } from "./core.js";
+import { $, CHAPTER, PLACE_TITLES, chapterOf, h, navigate, scrollMode } from "./core.js";
 import { placeLabel, termify } from "./glossary/terms.js";
 import { codeEditor, terminal } from "./codeview.js";
 
@@ -69,10 +69,17 @@ export function createLesson(config) {
     };
     next.addEventListener("click", () => {
       show(Math.min(steps.length, (L_.derive[key] ?? 1) + 1), true);
-      list.children[L_.derive[key] - 1]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      list.children[L_.derive[key] - 1]?.scrollIntoView({ behavior: scrollMode(true), block: "nearest" });
+      if (next.disabled) reset.focus({ preventScroll: true });   // the focused button just turned off
     });
-    all.addEventListener("click", () => show(steps.length, true));
-    reset.addEventListener("click", () => show(1, false));
+    all.addEventListener("click", () => {
+      show(steps.length, true);
+      if (all.disabled) reset.focus({ preventScroll: true });
+    });
+    reset.addEventListener("click", () => {
+      show(1, false);
+      next.focus({ preventScroll: true });
+    });
     box.append(
       h("div", { class: "m-derive-head" }, h("span", { class: "m-derive-kicker", text: L({ tr: "Türetme", en: "Derivation" }) }),
         h("strong", { text: L(block.title) }), counter),
@@ -99,7 +106,7 @@ export function createLesson(config) {
     if (block.model) return lessonHTML("div", { class: "in-model m-model" }, block.model);
     if (block.callout) {
       const icons = { tip: "💡", warn: "⚠️", info: "ℹ️" };
-      return h("aside", { class: `tut-callout ${block.callout}` },
+      return h("div", { role: "note", class: `tut-callout ${block.callout}` },
         h("span", { class: "tut-callout-icon", text: icons[block.callout], "aria-hidden": "true" }),
         h("div", {}, h("strong", { text: L(block.title) }), lessonHTML("p", {}, block.text)));
     }
