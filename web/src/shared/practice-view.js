@@ -5,7 +5,8 @@
  *   createPractice({ main: "#px-main", toc: "#px-toc", summary: "#px-summary", sections })
  *
  * A wrong answer says why and can be tried again; "Show the answer" finishes the question without
- * counting it as correct. A prediction question is answered once: the real model then runs.
+ * counting it as correct. A prediction question is answered once: the real model then runs. A
+ * "model" question loads its model first, so it runs in the background and its result is saved.
  */
 import { L } from "./i18n.js";
 import { $, CHAPTER, h, locale, scrollMode } from "./core.js";
@@ -14,8 +15,9 @@ import { createLesson, lessonHTML } from "./lesson.js";
 import { createProgress, matches, parseNumber, plainMath } from "./practice.ts";
 
 const say = (tr, en) => L({ tr, en });
-const blankDraft = () => ({ pick: null, value: "", tried: false, notice: null, wrongPick: null });
+const blankDraft = () => ({ pick: null, value: "", tried: false, notice: null, wrongPick: null, busy: false });
 const showNumber = (value) => new Intl.NumberFormat(locale(), { maximumFractionDigits: 6 }).format(value);
+const isPrediction = (q) => q.kind === "predict" || q.kind === "model";
 
 export function createPractice({ main, toc, summary, sections }) {
   const questions = sections.flatMap((s) => s.questions);
@@ -27,6 +29,13 @@ export function createPractice({ main, toc, summary, sections }) {
     if (!runs.has(q.id)) runs.set(q.id, q.run());
     return runs.get(q.id);
   };
+  /** The result to show for a finished question, if it has one. */
+  const runFor = (q, saved) => {
+    if (q.kind === "predict") return runOf(q);
+    if (q.kind === "model" && saved.run) return { answer: saved.run.answer, result: q.describe(saved.run.values) };
+    return null;
+  };
+  const cards = new Map();    // the card on the page for each question (a language change rebuilds them)
   let confirming = false;
   let lesson = null;
 
@@ -44,7 +53,7 @@ export function createPractice({ main, toc, summary, sections }) {
     const note = (html) => lessonHTML("p", {}, html);
     if (saved) {
       const nodes = [];
-      if (saved.status === "correct") nodes.push(verdict(q.kind === "predict" ? say("✓ Tahmininiz doğru.", "✓ Your prediction was right.") : say("✓ Doğru.", "✓ Correct.")));
+      if (saved.status === "correct") nodes.push(verdict(isPrediction(q) ? say("✓ Tahmininiz doğru.", "✓ Your prediction was right.") : say("✓ Doğru.", "✓ Correct.")));
       else if (saved.status === "missed") nodes.push(verdict(say("✕ Tahmininiz tutmadı.", "✕ Your prediction was off.")));
       else {
         const shown = q.kind === "number" ? showNumber(q.answer) : "";
@@ -62,6 +71,8 @@ export function createPractice({ main, toc, summary, sections }) {
       }
       return nodes;
     }
+    if (draft.busy) return [verdict(say("Model çalışıyor…", "The model is running…"))];
+    if (draft.notice === "failed") return [verdict(say("Modelin dosyaları yüklenemedi. Yeniden deneyin.", "The model's files could not be loaded. Try again."))];
     if (draft.notice === "pick") return [verdict(say("Önce bir seçenek işaretleyin.", "Pick an option first."))];
     if (draft.notice === "number") return [verdict(say("Bir sayı yazın, örneğin 0,5.", "Type a number, for example 0.5."))];
     if (draft.notice === "wrong") {
@@ -69,6 +80,21 @@ export function createPractice({ main, toc, summary, sections }) {
       return [verdict(say("✕ Henüz değil.", "✕ Not yet.")), why ? note(why) : null].filter(Boolean);
     }
     return [];
+  }
+
+  /** Saves a finished question and shows its result on the card that is on the page now. */
+  function finish(q, answer, takeFocus = true) {
+    const draft = draftOf(q);
+    progress.set(q.id, answer);
+    draft.notice = null;
+    draft.busy = false;
+    const card = cards.get(q.id);
+    card?.sync();
+    changed();
+    if (!card || !takeFocus) return;
+    // The button that had the focus is gone: the keyboard continues from the result
+    card.feedback.focus({ preventScroll: true });
+    card.feedback.scrollIntoView({ behavior: scrollMode(true), block: "nearest" });
   }
 
   function questionCard(q) {
@@ -98,7 +124,7 @@ export function createPractice({ main, toc, summary, sections }) {
       });
     }
 
-    const check = h("button", { type: "submit", class: "btn small primary", text: q.kind === "predict" ? say("Tahmini sına", "Test my prediction") : say("Kontrol et", "Check") });
+    const check = h("button", { type: "submit", class: "btn small primary", text: isPrediction(q) ? say("Tahmini sına", "Test my prediction") : say("Kontrol et", "Check") });
     const reveal = h("button", { type: "button", class: "btn small", text: say("Cevabı göster", "Show the answer") });
     const again = h("button", { type: "button", class: "btn small", text: say("Yeniden çöz", "Try again") });
     const feedback = h("div", { class: "px-feedback", role: "status", tabindex: "-1" });
@@ -111,11 +137,12 @@ export function createPractice({ main, toc, summary, sections }) {
 
     const sync = () => {
       const saved = progress.get(q.id);
-      const run = saved && q.kind === "predict" ? runOf(q) : null;
-      const rightIndex = q.kind === "choice" ? q.answer : run?.answer;
+      const run = saved ? runFor(q, saved) : null;
+      const rightIndex = q.kind === "choice" ? q.answer : isPrediction(q) ? (run?.answer ?? q.answer) : undefined;
       form.dataset.state = saved?.status ?? (draft.notice === "wrong" ? "wrong" : "");
-      for (const input of inputs) input.disabled = Boolean(saved);
+      for (const input of inputs) input.disabled = Boolean(saved) || draft.busy;
       check.hidden = Boolean(saved);
+      check.disabled = draft.busy;
       reveal.hidden = Boolean(saved) || !draft.tried;
       again.hidden = !saved;
       optionRows.forEach(({ row, mark }, k) => {
@@ -128,23 +155,37 @@ export function createPractice({ main, toc, summary, sections }) {
       feedback.replaceChildren(...feedbackNodes(q, draft, saved, run));
     };
 
-    const finish = (answer) => {
-      progress.set(q.id, answer);
+    cards.set(q.id, { form, feedback, sync });
+
+    /** Runs the model in the background; the reader may scroll, change language or reset meanwhile. */
+    const runModel = () => {
+      const pick = draft.pick;
+      draft.busy = true;
       draft.notice = null;
       sync();
-      changed();
-      // The button that had the focus is gone: the keyboard continues from the result
-      feedback.focus({ preventScroll: true });
-      feedback.scrollIntoView({ behavior: scrollMode(true), block: "nearest" });
+      feedback.focus({ preventScroll: true });   // the button that had the focus has just turned off
+      q.run().then(
+        (run) => {
+          if (drafts.get(q.id) !== draft) return;   // the progress was reset while it ran
+          const takeFocus = Boolean(cards.get(q.id)?.form.contains(document.activeElement));
+          finish(q, { status: pick === run.answer ? "correct" : "missed", pick, run }, takeFocus);
+        },
+        () => {
+          if (drafts.get(q.id) !== draft) return;
+          draft.busy = false;
+          draft.notice = "failed";
+          cards.get(q.id)?.sync();
+        },
+      );
     };
 
     form.addEventListener("submit", (event) => {
       event.preventDefault();
-      if (progress.get(q.id)) return;
+      if (progress.get(q.id) || draft.busy) return;
       if (q.kind === "number") {
         const value = parseNumber(draft.value);
         if (value === null) draft.notice = "number";
-        else if (matches(value, q.answer, q.tolerance)) return finish({ status: "correct", value: draft.value });
+        else if (matches(value, q.answer, q.tolerance)) return finish(q, { status: "correct", value: draft.value });
         else {
           draft.tried = true;
           draft.notice = "wrong";
@@ -155,15 +196,16 @@ export function createPractice({ main, toc, summary, sections }) {
         draft.notice = "pick";
         return sync();
       }
-      if (q.kind === "predict") return finish({ status: draft.pick === runOf(q).answer ? "correct" : "missed", pick: draft.pick });
-      if (draft.pick === q.answer) return finish({ status: "correct", pick: draft.pick });
+      if (q.kind === "model") return runModel();
+      if (q.kind === "predict") return finish(q, { status: draft.pick === runOf(q).answer ? "correct" : "missed", pick: draft.pick });
+      if (draft.pick === q.answer) return finish(q, { status: "correct", pick: draft.pick });
       draft.tried = true;
       draft.notice = "wrong";
       draft.wrongPick = draft.pick;
       return sync();
     });
 
-    reveal.addEventListener("click", () => finish({
+    reveal.addEventListener("click", () => finish(q, {
       status: "revealed",
       ...(draft.pick === null ? {} : { pick: draft.pick }),
       ...(draft.value ? { value: draft.value } : {}),

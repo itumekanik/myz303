@@ -10,6 +10,23 @@ The site shows the newest version here at the bottom of the start page and of th
 page title, top left). To release one, add a section below with the version and the date, set the
 same version in `web/package.json`, and push to `main`. The build fails if the two differ.
 
+## [1.3.0] - 2026-11-22
+
+The CNN chapter gets its Practice tab, so all three chapters now have one.
+
+### Added
+
+- **Practice tab in the CNN chapter:** 20 questions in the order of the Theory sections, on
+  convolution, BatchNorm, activation, pooling, Dropout, softmax and optimization.
+- **Experiments on the trained model:** the student predicts first, then the SimpleCNN that comes
+  with the site really runs: on digits moved by 2 and by 8 pixels, and on a completely black image.
+  The model's files are loaded only when the first experiment runs.
+
+### Fixed
+
+- **Top bar:** it no longer overflows the window with six tabs or with a wider font. If everything
+  does not fit on one row, the controls move to a second row.
+
 ## [1.2.0] - 2026-11-22
 
 The MLP chapter gets its Practice tab. This is also the first release on the site with the Practice

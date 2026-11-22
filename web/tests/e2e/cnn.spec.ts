@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { expect, open, overflows, test } from "./fixtures";
 
 test.describe("chapter 3: cnn", () => {
@@ -63,6 +64,83 @@ test.describe("chapter 3: cnn", () => {
       await page.waitForTimeout(400);
       expect(await overflows(page), tab).toBe(false);
     }
+    void errors;
+  });
+});
+
+test.describe("chapter 3: the Practice tab", () => {
+  const question = (page: Page, id: string) => page.locator(`[data-q="${id}"]`);
+  const predict = async (page: Page, id: string, option: number) => {
+    await question(page, id).locator(".px-opt").nth(option).click();
+    await question(page, id).locator("button[type=submit]").click();
+  };
+
+  test("a question on the real model runs it, and the result survives a reload", async ({ page, errors }) => {
+    await open(page, "cnn.html#alistirma");
+    await expect(page.locator(".px-count")).toContainText("0 / 20");
+    await expect(page.locator("#px-toc button")).toHaveCount(8);
+    const number = question(page, "cv-size");
+    await number.locator("input").fill("16");
+    await number.locator("input").press("Enter");
+    await expect(number).toHaveAttribute("data-state", "correct");
+    await predict(page, "e-black", 1);
+    const black = question(page, "e-black");
+    await expect(black).toHaveAttribute("data-state", "correct", { timeout: 30_000 });
+    await expect(black.locator(".px-run")).toContainText('%97,4 olasılıkla "1"');
+    await page.reload();
+    await expect(question(page, "e-black").locator(".px-run")).toContainText('%97,4 olasılıkla "1"');
+    await expect(page.locator(".px-count")).toContainText("2 / 20");
+    await expect(page.locator(".katex-error")).toHaveCount(0);
+    void errors;
+  });
+
+  test("the shift experiments show what the model really does", async ({ page, errors }) => {
+    test.slow();
+    await open(page, "cnn.html#alistirma/px-model");
+    await predict(page, "e-shift", 2);
+    await expect(question(page, "e-shift")).toHaveAttribute("data-state", "correct", { timeout: 60_000 });
+    await expect(question(page, "e-shift").locator(".px-run")).toContainText("40 rakamın 39 tanesini");
+    await predict(page, "e-far", 0);
+    await expect(question(page, "e-far")).toHaveAttribute("data-state", "missed", { timeout: 60_000 });
+    await expect(question(page, "e-far").locator(".px-run")).toContainText("40 rakamın 13 tanesini");
+    void errors;
+  });
+
+  test("a run in progress survives a language change, and a reset cancels it", async ({ page, errors }) => {
+    test.slow();
+    await open(page, "cnn.html#alistirma/px-model");
+    await predict(page, "e-far", 2);
+    await expect(question(page, "e-far").locator(".px-feedback")).toContainText("Model çalışıyor");
+    await expect(question(page, "e-far").locator("input").first()).toBeDisabled();
+    await page.locator('#lang-switch [data-lang="en"]').click();
+    await expect(question(page, "e-far")).toHaveAttribute("data-state", "correct", { timeout: 60_000 });
+    await expect(question(page, "e-far").locator(".px-run")).toContainText("13 of the 40");
+    await predict(page, "e-shift", 2);
+    await page.getByRole("button", { name: "Reset progress" }).click();
+    await page.getByRole("button", { name: "Yes, reset" }).click();
+    await page.waitForTimeout(4000);
+    await expect(question(page, "e-shift")).toHaveAttribute("data-state", "");
+    await expect(page.locator(".px-count")).toContainText("0 / 20");
+    void errors;
+  });
+
+  test("a model file that fails to load can be tried again", async ({ page, baseURL }) => {
+    test.skip(!baseURL?.startsWith("http"), "requests can be blocked over http only");
+    await page.route("**/data/mnist-test.js", (route) => route.abort());
+    await open(page, "cnn.html#alistirma/px-model");
+    await predict(page, "e-black", 1);
+    await expect(question(page, "e-black").locator(".px-feedback")).toContainText("yüklenemedi", { timeout: 30_000 });
+    await page.unroute("**/data/mnist-test.js");
+    await question(page, "e-black").locator("button[type=submit]").click();
+    await expect(question(page, "e-black")).toHaveAttribute("data-state", "correct", { timeout: 30_000 });
+  });
+
+  test("fits a phone, with all six tabs visible", async ({ page, errors }) => {
+    await page.setViewportSize({ width: 320, height: 700 });
+    await open(page, "cnn.html#alistirma");
+    await expect(page.locator("#px-main .px-q").first()).toBeVisible();
+    expect(await overflows(page)).toBe(false);
+    expect(await page.locator(".tabs").evaluate((el) => el.scrollWidth <= el.clientWidth + 1), "all six tabs are visible").toBe(true);
     void errors;
   });
 });

@@ -119,6 +119,7 @@ Object.assign(STATIC_EN, {
   "m.math.title": "The math of the MLP",
   "m.code.title": "Let's code the MLP",
   "m.practice.title": "MLP practice",
+  "c.practice.title": "CNN practice",
   "theme.light": "Light",
   "theme.dark": "Dark",
   "theme.system": "System theme",

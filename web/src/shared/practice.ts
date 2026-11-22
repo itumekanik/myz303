@@ -46,7 +46,24 @@ export interface PredictQuestion extends QuestionBase {
   tryIt: Place;
 }
 
-export type Question = ChoiceQuestion | NumberQuestion | PredictQuestion;
+/** What a model question keeps of its run: numbers only, so what is read back from storage stays harmless. */
+export interface ModelRun {
+  answer: number;
+  values: number[];
+}
+
+/** A prediction tested on a model that has to be loaded first, so its result is saved with the answer. */
+export interface ModelQuestion extends QuestionBase {
+  kind: "model";
+  options: Text[];
+  answer: number;
+  run: () => Promise<ModelRun>;
+  /** The result of a run, in words. */
+  describe: (values: number[]) => Text;
+  tryIt: Place;
+}
+
+export type Question = ChoiceQuestion | NumberQuestion | PredictQuestion | ModelQuestion;
 
 export interface PracticeSection {
   id: string;
@@ -73,6 +90,7 @@ export function plainMath(text: string): string {
     .replace(/\\eta/g, "η")
     .replace(/\\sigma/g, "σ")
     .replace(/\\delta/g, "δ")
+    .replace(/\\theta/g, "θ")
     .replace(/\\approx/g, "≈")
     .replace(/\{,\}/g, ",")
     .replace(/\\[ ,;]/g, " ")
@@ -87,6 +105,7 @@ export interface Answer {
   status: Status;
   pick?: number;
   value?: string;
+  run?: ModelRun;
 }
 
 type Store = Pick<Storage, "getItem" | "setItem">;
@@ -114,6 +133,20 @@ function readAll(store: Store | null): Saved {
 const validAnswer = (a: unknown): a is Answer =>
   Boolean(a) && typeof a === "object" && ["correct", "revealed", "missed"].includes((a as Answer).status);
 
+const validRun = (r: unknown): r is ModelRun =>
+  Boolean(r) &&
+  typeof r === "object" &&
+  Number.isInteger((r as ModelRun).answer) &&
+  Array.isArray((r as ModelRun).values) &&
+  (r as ModelRun).values.every((v) => Number.isFinite(v));
+
+/** The answer as read from storage, without a damaged run. */
+function cleaned(a: Answer): Answer {
+  if (a.run === undefined || validRun(a.run)) return a;
+  const { run: _damaged, ...rest } = a;
+  return rest;
+}
+
 /** The progress of one chapter, for the questions it has now. */
 export function createProgress(chapter: string, ids: readonly string[], store: Store | null = browserStore()) {
   const stored: unknown = readAll(store)[chapter]?.answers;
@@ -121,7 +154,7 @@ export function createProgress(chapter: string, ids: readonly string[], store: S
   if (stored && typeof stored === "object") {
     for (const id of ids) {
       const a = (stored as Record<string, unknown>)[id];
-      if (validAnswer(a)) answers.set(id, a);
+      if (validAnswer(a)) answers.set(id, cleaned(a));
     }
   }
 

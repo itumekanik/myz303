@@ -1266,7 +1266,7 @@ h2 > .info-btn { vertical-align: 2px; }
    ≥1500 one row with everything · ≤1500 short badges, no subtitle · ≤1180 no model badge
    (the floating model switch shows it) · ≤1040 tabs on a second, full-width row ·
    ≤720 phone: icons only, and the bar slides away while scrolling down */
-.topbar { gap: 12px 24px; }
+.topbar { gap: 12px 24px; flex-wrap: wrap; }   /* with a wide font the badges drop to a new row instead of overflowing */
 .brand-title, .brand-sub { white-space: nowrap; }
 .brand, .tabs { flex: none; }   /* they never squeeze; the badges get shorter instead */
 .badges { flex-wrap: nowrap; align-items: center; }
@@ -1278,6 +1278,10 @@ h2 > .info-btn { vertical-align: 2px; }
 }
 @media (max-width: 1180px) {
   #model-badge { display: none; }
+}
+/* The CNN page has six tabs: its model badge gives way earlier */
+@media (max-width: 1400px) {
+  body[data-chapter="cnn"] #model-badge { display: none; }
 }
 @media (max-width: 1040px) {
   .topbar { flex-wrap: wrap; padding: 10px 16px; gap: 10px 12px; }
@@ -1628,11 +1632,9 @@ a.pc-next.link:focus-visible { outline: 2px solid var(--accent); outline-offset:
   .px-actions .btn { min-height: 38px; }
 }
 @media (prefers-reduced-motion: reduce) { .px-bar span { transition: none; } }
-@media (max-width: 480px) {
-  .tab-long { display: none; }
-  /* Whatever the width of the phone's font, every tab stays in sight: they wrap instead of scrolling away */
-  .tabs { flex-wrap: wrap; overflow-x: visible; }
-}
+@media (max-width: 480px) { .tab-long { display: none; } }
+/* Whatever the width of the font, every tab stays in sight: they wrap instead of scrolling away */
+@media (max-width: 1040px) { .tabs { flex-wrap: wrap; overflow-x: visible; } }
 @media (max-width: 360px) {
   .tabs { gap: 0; }
   .tabs button { padding: 6px 3px; }

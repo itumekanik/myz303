@@ -8,6 +8,7 @@ import "./app.js";
 import "./theory.js";
 import "./tutorial.js";
 import "./mathtab.js";
+import "./practice.js";
 import "../../shared/glossary/panel.js";
 import "./help.js";
 import "../../shared/math.js";

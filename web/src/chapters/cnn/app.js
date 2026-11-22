@@ -769,6 +769,7 @@ Object.assign(TABS, {
   theory: { tab: "#tab-theory", panel: "#panel-theory", hash: "#teori" },
   math: { tab: "#tab-math", panel: "#panel-math", hash: "#matematik" },
   code: { tab: "#tab-code", panel: "#panel-code", hash: "#kodlama" },
+  practice: { tab: "#tab-practice", panel: "#panel-practice", hash: "#alistirma" },
 });
 
 // The CNN page's own reactions to a tab change

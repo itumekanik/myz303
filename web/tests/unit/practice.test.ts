@@ -1,5 +1,13 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
+import { runInNewContext } from "node:vm";
+import { buildPractice, type CnnLab } from "../../src/chapters/cnn/questions.ts";
+import { mnist, type Packed } from "../../src/engines/cnn/data.ts";
+import { forward } from "../../src/engines/cnn/forward.ts";
+import { unpackWeights, type PackedModel } from "../../src/engines/cnn/weights.ts";
 import { PRACTICE as MLP_PRACTICE } from "../../src/chapters/mlp/questions.ts";
 import { PRACTICE } from "../../src/chapters/perceptron/questions.ts";
 import { ruleStep, stepFn, trainFromZero, zOf } from "../../src/chapters/perceptron/model.ts";
@@ -16,9 +24,32 @@ function memoryStore(initial?: string) {
   };
 }
 
+/** A data file, run the way a page runs it. */
+function dataFile<T>(name: string): T {
+  const window: { __AI_DATA__?: Record<string, unknown> } = {};
+  const file = join(dirname(fileURLToPath(import.meta.url)), `../../public/data/${name}.js`);
+  runInNewContext(readFileSync(file, "utf8"), { window });
+  return window.__AI_DATA__![name] as T;
+}
+
+let loadedLab: Promise<CnnLab> | null = null;
+const cnnLab = (): Promise<CnnLab> => {
+  loadedLab ??= (async () => {
+    const data = dataFile<{ images: Packed; labels: Packed }>("mnist-test");
+    return { weights: unpackWeights(dataFile<PackedModel>("cnn-trained")), test: await mnist(data.images, data.labels) };
+  })();
+  return loadedLab;
+};
+
 const BANKS = [
   { name: "perceptron", sections: PRACTICE, count: 15, theory: ["p-neuron", "p-boundary", "p-rule", "p-converge", "p-xor"] },
   { name: "mlp", sections: MLP_PRACTICE, count: 19, theory: ["ml-act", "ml-hidden", "ml-loss", "ml-backprop", "ml-capacity", "ml-images"] },
+  {
+    name: "cnn",
+    sections: buildPractice(cnnLab),
+    count: 20,
+    theory: ["t-conv", "t-bn", "t-act", "t-pool", "t-drop", "t-softmax", "t-opt", undefined],
+  },
 ];
 const questions = BANKS.flatMap((b) => b.sections.flatMap((s) => s.questions));
 const L = (text: { en: string }) => text.en;
@@ -175,6 +206,26 @@ describe("the perceptron model", () => {
   });
 });
 
+describe("the CNN questions and SimpleCNN itself", () => {
+  it("flatten to the 1024 values and count the BatchNorm parameters of the real model", async () => {
+    const { weights } = await cnnLab();
+    assert.equal(forward(weights, new Float32Array(784)).pool2.length, 1024);
+    assert.equal(weights["batch2.weight"].length + weights["batch2.bias"].length, 128);
+  });
+
+  it("a saved model result is kept, a damaged one is dropped", () => {
+    const answers = {
+      good: { status: "correct", pick: 2, run: { answer: 2, values: [39, 46] } },
+      text: { status: "missed", pick: 0, run: { answer: 2, values: ["<img src=x>"] } },
+      none: { status: "missed", pick: 0, run: { answer: "2", values: [1] } },
+    };
+    const p = createProgress("demo", Object.keys(answers), memoryStore(JSON.stringify({ demo: { total: 3, answers } })));
+    assert.deepEqual(p.get("good")?.run, { answer: 2, values: [39, 46] });
+    assert.deepEqual(p.get("text"), { status: "missed", pick: 0 });
+    assert.deepEqual(p.get("none"), { status: "missed", pick: 0 });
+  });
+});
+
 for (const bank of BANKS) {
   describe(`the questions of chapter "${bank.name}"`, () => {
     const own = bank.sections.flatMap((s) => s.questions);
@@ -203,9 +254,16 @@ for (const bank of BANKS) {
     });
 
     for (const q of own) {
-      it(`${q.id}: the stated answer is what the model computes`, () => {
+      it(`${q.id}: the stated answer is what the model computes`, async () => {
         if (q.kind === "number") {
           assert.ok(matches(q.compute(), q.answer, q.tolerance), `computed ${q.compute()}, stated ${q.answer}`);
+        } else if (q.kind === "model") {
+          const run = await q.run();
+          const text = q.describe(run.values);
+          assert.equal(run.answer, q.answer, L(text));
+          assert.ok(q.answer >= 0 && q.answer < q.options.length);
+          assert.ok(text.tr && text.en);
+          assert.ok(run.values.every((v) => Number.isFinite(v)));
         } else if (q.kind === "predict") {
           const run = q.run();
           assert.equal(run.answer, q.answer, L(run.result));
