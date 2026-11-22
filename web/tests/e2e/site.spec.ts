@@ -30,7 +30,12 @@ test.describe("start page", () => {
     await expect(page.locator("a.lp-chapter")).toHaveCount(3);
     await expect(page.locator("a.lp-chapter").first()).toHaveAttribute("href", "perceptron.html");
     await expect(page.locator("a.lp-chapter").last()).toHaveAttribute("href", "cnn.html");
-    await expect(page.locator(".lp-chapter.soon")).toHaveCount(0);
+    const planned = page.locator(".lp-chapter.soon");
+    await expect(planned).toHaveCount(3);
+    await expect(planned.first()).toContainText("RNN");
+    await expect(planned.last()).toContainText("Transformer");
+    for (const k of [0, 1, 2]) await expect(planned.nth(k)).toContainText("yakında");
+    await expect(page.locator("div.lp-chapter a, .lp-chapter.soon[href]")).toHaveCount(0); // not links
     await page.locator("a.lp-chapter").first().click();
     await expect(page).toHaveTitle("Perceptron · Bölüm 1");
     void errors;
@@ -131,8 +136,9 @@ for (const c of CHAPTERS) {
       await page.locator("#chapter-btn").click();
       const menu = page.locator("#chapter-menu");
       await expect(menu).toBeVisible();
-      await expect(menu.locator(".chm-item")).toHaveCount(3);
-      await expect(menu.locator(".chm-item.soon")).toHaveCount(0);
+      await expect(menu.locator(".chm-item")).toHaveCount(6);
+      await expect(menu.locator(".chm-item.soon")).toHaveCount(3);
+      await expect(menu.locator(".chm-item.soon").first()).toContainText("coming soon");
       const other = CHAPTERS.find((o) => o.id !== c.id)!;
       await menu.locator(`a.chm-item[href="${other.id}.html"]`).click();
       await expect(page).toHaveTitle(new RegExp(`· Chapter ${other.number}$`)); // the language is kept

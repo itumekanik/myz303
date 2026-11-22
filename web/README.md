@@ -11,8 +11,9 @@ server and no Python: everything, including training the networks, runs in the b
   (`dist/`) and answers the CNN chapter's requests itself, so training runs in PyTorch on this
   computer instead of in the browser (see "The Python dashboard" below).
 
-All three chapters are here: 1 the perceptron, 2 the multilayer network (MLP), 3 the convolutional
-network (CNN, SimpleCNN on MNIST).
+Three chapters are ready: 1 the perceptron, 2 the multilayer network (MLP), 3 the convolutional
+network (CNN, SimpleCNN on MNIST). Three more are listed as "coming soon": 4 recurrent networks
+(RNN and LSTM), 5 the attention mechanism, 6 the Transformer.
 
 ## For students
 

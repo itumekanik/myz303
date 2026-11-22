@@ -1,0 +1,10 @@
+{
+  "$schema": "../chapter.schema.json",
+  "id": "transformer",
+  "order": 6,
+  "status": "planned",
+  "year": "2017",
+  "short": "Transformer",
+  "title": { "tr": "Transformer", "en": "Transformer" },
+  "sub": { "tr": "Modern dil modellerinin temeli", "en": "The foundation of modern language models" }
+}

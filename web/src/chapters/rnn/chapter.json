@@ -1,0 +1,10 @@
+{
+  "$schema": "../chapter.schema.json",
+  "id": "rnn",
+  "order": 4,
+  "status": "planned",
+  "year": "1997",
+  "short": "RNN",
+  "title": { "tr": "Tekrarlayan ağlar (RNN ve LSTM)", "en": "Recurrent networks (RNN and LSTM)" },
+  "sub": { "tr": "Sıralı veriden öğrenen ağlar", "en": "Networks that learn from sequences" }
+}
