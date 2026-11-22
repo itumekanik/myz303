@@ -6,6 +6,7 @@ import { I18N, L, applyStaticTranslations } from "../shared/i18n.js";
 import { wireSwitches } from "../shared/switches.ts";
 import { CHAPTERS, type Text } from "../shared/chapters.ts";
 import { onServer } from "../shared/engine.ts";
+import { chapterSummary } from "../shared/practice.ts";
 import { REPO, versionLine } from "../shared/version.ts";
 
 /** The downloadable copy of this site (put next to index.html by the deployment). */
@@ -27,6 +28,10 @@ const TABS: Text[] = [
   },
   { tr: "<b>Matematik</b>: formüller ve adım adım türetmeler", en: "<b>Math</b>: the formulas and step-by-step derivations" },
   { tr: "<b>Kodlama</b>: aynı modeli Python'da sıfırdan yazmak", en: "<b>Coding</b>: writing the same model in Python from scratch" },
+  {
+    tr: "<b>Alıştırma</b>: anında geri bildirim veren kısa sorular (şimdilik Perceptron bölümünde)",
+    en: "<b>Practice</b>: short questions with immediate feedback (in the Perceptron chapter for now)",
+  },
 ];
 
 function html(tag: string, text: Text, attrs: Record<string, string> = {}): HTMLElement {
@@ -36,6 +41,9 @@ function html(tag: string, text: Text, attrs: Record<string, string> = {}): HTML
 }
 
 function chapterCard(c: (typeof CHAPTERS)[number]): HTMLElement {
+  const practice = chapterSummary(c.id);
+  const when = c.url ? c.year : `${c.year} · ${L({ tr: "yakında", en: "coming soon" })}`;
+  const meta = practice ? `${when} · ${L({ tr: "Alıştırma", en: "Practice" })} ${practice.done}/${practice.total}` : when;
   const body = [
     el("span", { class: "lp-num" }, String(c.number)),
     el(
@@ -43,7 +51,7 @@ function chapterCard(c: (typeof CHAPTERS)[number]): HTMLElement {
       { class: "lp-text" },
       el("span", { class: "lp-title" }, L(c.title)),
       el("span", { class: "lp-sub" }, L(c.sub)),
-      el("span", { class: "lp-meta" }, c.url ? c.year : `${c.year} · ${L({ tr: "yakında", en: "coming soon" })}`),
+      el("span", { class: "lp-meta" }, meta),
     ),
     c.url ? el("span", { class: "lp-go", "aria-hidden": "true" }, "→") : null,
   ];
@@ -104,8 +112,8 @@ function render(): void {
       { class: "card lp-hero" },
       html("h2", { tr: "Tek bir nörondan derin ağlara", en: "From a single neuron to deep networks" }),
       html("p", {
-        tr: "Bu derste yapay sinir ağlarını tarihsel sırayla, her adımı tarayıcıda deneyerek öğreneceksiniz. Her bölüm bir öncekinin bıraktığı sorundan başlar ve dört sekmeden oluşur:",
-        en: "In this course you learn neural networks in historical order, trying every step in the browser. Each chapter starts from the problem the previous one left open and has four tabs:",
+        tr: "Bu derste yapay sinir ağlarını tarihsel sırayla, her adımı tarayıcıda deneyerek öğreneceksiniz. Her bölüm bir öncekinin bıraktığı sorundan başlar ve şu sekmelerden oluşur:",
+        en: "In this course you learn neural networks in historical order, trying every step in the browser. Each chapter starts from the problem the previous one left open and is made of these tabs:",
       }),
       el("ul", { class: "lp-tabs" }, ...TABS.map((t) => html("li", t))),
       first

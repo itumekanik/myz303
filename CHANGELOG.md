@@ -10,6 +10,24 @@ The site shows the newest version here at the bottom of the start page and of th
 page title, top left). To release one, add a section below with the version and the date, set the
 same version in `web/package.json`, and push to `main`. The build fails if the two differ.
 
+## [1.1.0] - 2026-11-22
+
+Students can now test themselves in the browser, without Python. The Perceptron chapter is the
+first to have it.
+
+### Added
+
+- **Practice tab in the Perceptron chapter:** 15 questions in the order of the Theory sections.
+  Multiple-choice and numeric questions give immediate feedback and say why an answer is wrong. In
+  prediction questions the student decides first, then the real perceptron runs and shows the
+  result.
+- **Progress:** finished questions are kept in this browser and are not sent anywhere. The chapter
+  and the start page show how many are done, and the progress can be reset.
+
+### Changed
+
+- On phones the Playground tab has a shorter Turkish name, so that five tabs fit on one line.
+
 ## [1.0.2] - 2026-11-22
 
 The site checked in Firefox, in WebKit (Safari's engine) and on emulated phones.

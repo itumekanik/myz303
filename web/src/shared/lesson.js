@@ -198,6 +198,7 @@ export function createLesson(config) {
     }, { rootMargin: "-25% 0px -65% 0px" });
     for (const article of main.querySelectorAll(".m-step")) L_.observer.observe(article);
     L_.rendered = true;
+    config.onRender?.();
   }
 
   /** The section nearest the top of the viewport and its offset (null if the tab is hidden). */

@@ -1571,3 +1571,65 @@ a.pc-next.link:focus-visible { outline: 2px solid var(--accent); outline-offset:
 /* math widgets: long formulas scroll inside their box instead of widening the page */
 .m-widget { grid-template-columns: minmax(0, 1fr); }
 .m-widget-out { display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr); min-width: 0; }
+
+/* ---------- Practice tab: questions with immediate feedback ---------- */
+.px-summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 32px; margin-bottom: 16px; padding: 18px 22px; }
+.px-sum-text { flex: 1 1 340px; min-width: 0; }
+.px-sum-text h2 { margin: 0 0 4px; font-size: 18px; }
+.px-sum-text p { margin: 0; color: var(--text-2); font-size: 13.5px; line-height: 1.55; }
+.px-sum-state { flex: 0 1 320px; min-width: min(240px, 100%); display: grid; gap: 7px; }
+.px-count { margin: 0; font-size: 13.5px; color: var(--text-2); }
+.px-count strong { color: var(--text); }
+.px-count:focus { outline: none; }
+.px-bar { height: 8px; overflow: hidden; border-radius: 999px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border); }
+.px-bar span { display: block; height: 100%; border-radius: inherit; background: var(--accent-fill); transition: width 0.2s ease; }
+.px-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 12.5px; color: var(--text-2); }
+.px-tools:empty { display: none; }
+
+.px-q { display: grid; gap: 10px; max-width: 880px; padding: 14px 16px; border: 1px solid var(--border); border-left: 4px solid var(--axis); border-radius: 10px; background: var(--surface); }
+.px-q[data-state="correct"] { border-left-color: var(--good); }
+.px-q[data-state="wrong"], .px-q[data-state="missed"] { border-left-color: var(--critical); }
+.px-q[data-state="revealed"] { border-left-color: var(--accent); }
+.px-q fieldset { min-width: 0; margin: 0; padding: 0; border: 0; display: grid; gap: 10px; }
+.px-q legend { display: block; width: 100%; margin-bottom: 10px; padding: 0; }
+.px-qnum { display: block; margin-bottom: 3px; color: var(--muted); font-size: 12px; font-weight: 600; }
+.px-qtext { display: block; color: var(--text); font-size: 14.5px; line-height: 1.6; }
+.px-options { display: grid; gap: 6px; }
+.px-opt { display: flex; align-items: flex-start; gap: 9px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); color: var(--text); font-size: 14px; line-height: 1.5; cursor: pointer; }
+.px-opt:hover:has(input:enabled) { border-color: var(--axis); }
+.px-opt:has(input:checked) { border-color: var(--accent); }
+.px-opt:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 1px; }
+.px-opt:has(input:disabled) { cursor: default; }
+.px-opt input { flex: none; width: 16px; height: 16px; margin: 3px 0 0; accent-color: var(--accent-fill); }
+.px-opt-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.px-mark { flex: none; font-size: 12.5px; font-weight: 650; }
+.px-q .px-opt.is-right { border-color: var(--good); }
+.px-opt.is-right .px-mark { color: var(--good-text); }
+.px-q .px-opt.is-wrong { border-color: var(--critical); }
+.px-opt.is-wrong .px-mark { color: var(--critical-text); }
+.px-number { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--text); font-size: 14px; }
+.px-input { width: 120px; padding: 6px 9px; border: 1px solid var(--axis); border-radius: 7px; background: var(--surface); color: var(--text); font: inherit; font-variant-numeric: tabular-nums; }
+.px-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.px-input:disabled { background: var(--surface-2); color: var(--text-2); }
+.px-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.px-actions [hidden] { display: none; }
+.px-feedback { display: grid; gap: 6px; color: var(--text-2); font-size: 14px; line-height: 1.6; scroll-margin: calc(var(--topbar-h, 59px) + 12px) 0 12px; }
+.px-feedback:empty { display: none; }
+.px-feedback:focus { outline: none; }
+.px-feedback p { margin: 0; }
+.px-verdict { color: var(--text); font-weight: 650; }
+.px-q[data-state="correct"] .px-verdict { color: var(--good-text); }
+.px-q[data-state="wrong"] .px-verdict, .px-q[data-state="missed"] .px-verdict { color: var(--critical-text); }
+.px-run { padding: 7px 10px; border-radius: 7px; background: var(--surface-2); color: var(--text); }
+.tut-toc button.px-done .toc-num { background: var(--good-text); color: var(--on-accent); }
+@media (pointer: coarse) {
+  .px-opt { padding: 11px 12px; }
+  .px-input { min-height: 40px; font-size: 16px; }   /* iOS zooms into smaller inputs */
+  .px-actions .btn { min-height: 38px; }
+}
+@media (prefers-reduced-motion: reduce) { .px-bar span { transition: none; } }
+@media (max-width: 480px) { .tab-long { display: none; } }   /* five tabs fit on one line */
+@media (max-width: 360px) {
+  .tabs { gap: 0; }
+  .tabs button { padding: 6px 3px; }
+}

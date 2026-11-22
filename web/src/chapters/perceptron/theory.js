@@ -16,12 +16,14 @@ import { TABS } from "../../shared/page.ts";
 import { L } from "../../shared/i18n.js";
 import { $, PLACE_TITLES, clamp, fmtNum, fmtPct, h, hideTip, lineChart, linearTicks, lutColor, niceStep, showTip, svg, svgText } from "../../shared/core.js";
 import { KIT } from "../../shared/kit.js";
+import { ruleStep, stepFn, zOf } from "./model.ts";
 
 Object.assign(TABS, {
   theory: { tab: "#tab-theory", panel: "#panel-theory", hash: "#teori" },
   play: { tab: "#tab-play", panel: "#panel-play", hash: "#deneme" },
   math: { tab: "#tab-math", panel: "#panel-math", hash: "#matematik" },
   code: { tab: "#tab-code", panel: "#panel-code", hash: "#kodlama" },
+  practice: { tab: "#tab-practice", panel: "#panel-practice", hash: "#alistirma" },
 });
 
 (() => {
@@ -31,8 +33,6 @@ const { R, seeded, gauss, nf, tx, txs, txp, html, formula, COLORS, readColors, r
 // =====================================================================
 // The perceptron and its data
 // =====================================================================
-const stepFn = (z) => (z > 0 ? 1 : 0);
-const zOf = (w, b, x) => w[0] * x[0] + w[1] * x[1] + b;
 const INPUTS = [[0, 0], [0, 1], [1, 0], [1, 1]];
 const GATES = {
   and: { name: "AND", y: [0, 0, 0, 1], solution: [[1, 1], -1.5], hint: { tr: "ikisi de 1 mi?", en: "are both 1?" } },
@@ -41,20 +41,6 @@ const GATES = {
   xor: { name: "XOR", y: [0, 1, 1, 0], solution: null, hint: { tr: "yalnızca biri mi 1?", en: "is exactly one 1?" } },
 };
 const gatePoints = (gate) => INPUTS.map((x, i) => ({ x, y: GATES[gate].y[i] }));
-
-/** One step of the perceptron rule on example (x, y). Returns what happened. */
-function ruleStep(model, x, y, eta) {
-  const z = zOf(model.w, model.b, x);
-  const yHat = stepFn(z);
-  const e = y - yHat;
-  const before = { w: [...model.w], b: model.b };
-  if (e) {
-    model.w[0] += eta * e * x[0];
-    model.w[1] += eta * e * x[1];
-    model.b += eta * e;
-  }
-  return { x, y, z, yHat, e, before, after: { w: [...model.w], b: model.b } };
-}
 
 
 // =====================================================================

@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import type { Page } from "@playwright/test";
 import { expect, open, overflows, test } from "./fixtures";
 
 const CHAPTERS = [
@@ -206,6 +207,136 @@ test("mlp: the loss demo does not call the step limit a minimum", async ({ page,
   });
   await expect(demo.locator(".pc-msg").first()).toContainText("minimuma henüz varmadı");
   void errors;
+});
+
+test.describe("perceptron: the Practice tab", () => {
+  const question = (page: Page, id: string) => page.locator(`[data-q="${id}"]`);
+
+  test("a wrong choice says why, a right one counts and survives a reload", async ({ page, errors }) => {
+    await open(page, "perceptron.html#alistirma");
+    const q = question(page, "n-zero");
+    await q.getByRole("button", { name: "Kontrol et" }).click();
+    await expect(q.locator(".px-feedback")).toContainText("Önce bir seçenek");
+    await q.locator(".px-opt").nth(1).click();
+    await q.getByRole("button", { name: "Kontrol et" }).click();
+    await expect(q.locator(".px-feedback")).toContainText("Henüz değil");
+    await expect(q.locator(".px-feedback")).toContainText("eşitlik bu koşula girmez");
+    await expect(q.getByRole("button", { name: "Cevabı göster" })).toBeVisible();
+    await q.locator(".px-opt").nth(0).click();
+    await q.getByRole("button", { name: "Kontrol et" }).click();
+    await expect(q.locator(".px-feedback")).toContainText("Doğru.");
+    await expect(q.locator(".px-feedback")).toBeFocused();
+    await expect(page.locator(".px-count")).toContainText("1 / 15");
+    await page.reload();
+    await expect(question(page, "n-zero")).toHaveAttribute("data-state", "correct");
+    await expect(question(page, "n-zero").locator("input").first()).toBeDisabled();
+    await expect(page.locator(".px-count")).toContainText("1 / 15");
+    void errors;
+  });
+
+  test("a number can be typed with a comma or a dot, and a non-number is not a wrong answer", async ({ page, errors }) => {
+    await open(page, "perceptron.html#alistirma");
+    const q = question(page, "n-z");
+    const input = q.locator("input");
+    await input.fill("abc");
+    await input.press("Enter");
+    await expect(q.locator(".px-feedback")).toContainText("Bir sayı yazın");
+    await expect(q.getByRole("button", { name: "Cevabı göster" })).toBeHidden();
+    await input.fill("0,4");
+    await input.press("Enter");
+    await expect(q.locator(".px-feedback")).toContainText("Henüz değil");
+    await input.fill("0,3");
+    await input.press("Enter");
+    await expect(q).toHaveAttribute("data-state", "correct");
+    await page.locator('#lang-switch [data-lang="en"]').click();
+    await expect(question(page, "n-z").locator(".px-feedback")).toContainText("Correct.");
+    const other = question(page, "r-b").locator("input");
+    await other.fill("-0.15");
+    await other.press("Enter");
+    await expect(question(page, "r-b")).toHaveAttribute("data-state", "correct");
+    await expect(page.locator(".katex-error")).toHaveCount(0);
+    void errors;
+  });
+
+  test("a prediction runs the real model, and shows what happened", async ({ page, errors }) => {
+    await open(page, "perceptron.html#alistirma/px-converge");
+    const q = question(page, "c-flip");
+    await q.locator(".px-opt").nth(0).click();
+    await q.getByRole("button", { name: "Tahmini sına" }).click();
+    await expect(q).toHaveAttribute("data-state", "missed");
+    await expect(q.locator(".px-run")).toContainText("200. epoch");
+    await expect(q.locator(".px-opt.is-right")).toContainText("Hayır");
+    await expect(q.locator(".px-opt.is-wrong")).toContainText("birkaç");
+    await expect(page.locator(".px-count")).toContainText("Doğru: 0");
+    await q.getByRole("button", { name: "Yeniden çöz" }).click();
+    await expect(page.locator(".px-count")).toContainText("0 / 15");
+    await expect(q.locator("input").first()).toBeFocused();
+    void errors;
+  });
+
+  test("showing the answer finishes a question without counting it as correct", async ({ page, errors }) => {
+    await open(page, "perceptron.html#alistirma");
+    const q = question(page, "b-cross");
+    await q.locator("input").fill("5");
+    await q.getByRole("button", { name: "Kontrol et" }).click();
+    await q.getByRole("button", { name: "Cevabı göster" }).click();
+    await expect(q).toHaveAttribute("data-state", "revealed");
+    await expect(q.locator(".px-verdict")).toHaveText("Doğru cevap: 1");
+    await expect(page.locator(".px-count")).toContainText("1 / 15");
+    await expect(page.locator(".px-count")).toContainText("Doğru: 0");
+    void errors;
+  });
+
+  test("resetting asks first, and a finished section is marked", async ({ page, errors }) => {
+    await open(page, "perceptron.html#alistirma");
+    for (const [id, pick] of [
+      ["n-zero", 0],
+      ["n-and", 1],
+    ] as const) {
+      await question(page, id).locator(".px-opt").nth(pick).click();
+      await question(page, id).getByRole("button", { name: "Kontrol et" }).click();
+    }
+    await question(page, "n-z").locator("input").fill("0.3");
+    await question(page, "n-z").getByRole("button", { name: "Kontrol et" }).click();
+    await expect(page.locator('#px-toc [data-step="px-neuron"]')).toHaveClass(/px-done/);
+    await page.getByRole("button", { name: "İlerlemeyi sıfırla" }).click();
+    await page.getByRole("button", { name: "Vazgeç" }).click();
+    await expect(page.locator(".px-count")).toContainText("3 / 15");
+    await page.getByRole("button", { name: "İlerlemeyi sıfırla" }).click();
+    await page.getByRole("button", { name: "Evet, sıfırla" }).click();
+    await expect(page.locator(".px-count")).toContainText("0 / 15");
+    await expect(question(page, "n-zero")).toHaveAttribute("data-state", "");
+    await expect(page.locator('#px-toc [data-step="px-neuron"]')).not.toHaveClass(/px-done/);
+    void errors;
+  });
+
+  test("the start page shows the chapter's progress", async ({ page, errors }) => {
+    await open(page, "perceptron.html#alistirma");
+    await question(page, "n-zero").locator(".px-opt").nth(0).click();
+    await question(page, "n-zero").getByRole("button", { name: "Kontrol et" }).click();
+    await expect(page.locator(".px-count")).toContainText("1 / 15");
+    await open(page, "index.html");
+    await expect(page.locator("a.lp-chapter").first()).toContainText("Alıştırma 1/15");
+    await expect(page.locator("a.lp-chapter").nth(1)).not.toContainText("Alıştırma");
+    void errors;
+  });
+
+  test("fits a phone, with every tab within reach", async ({ page, errors }) => {
+    await page.setViewportSize({ width: 320, height: 700 });
+    await open(page, "perceptron.html#alistirma");
+    const tabsFit = () => page.locator(".tabs").evaluate((el) => el.scrollWidth <= el.clientWidth + 1);
+    await expect(page.locator("#px-main .px-q").first()).toBeVisible();
+    expect(await overflows(page)).toBe(false);
+    expect(await tabsFit(), "all five tabs are visible").toBe(true);
+    await page.locator('#lang-switch [data-lang="en"]').click();
+    await expect(page.locator("#px-main .px-q").first()).toBeVisible();
+    expect(await overflows(page)).toBe(false);
+    expect(await tabsFit(), "all five tabs are visible").toBe(true);
+    await page.locator("#tab-theory").click();
+    await page.locator("#tab-practice").click();
+    await expect(page.locator("#panel-practice")).toBeVisible();
+    void errors;
+  });
 });
 
 test("perceptron → mlp: the next-chapter card opens the MLP's theory", async ({ page, errors }) => {

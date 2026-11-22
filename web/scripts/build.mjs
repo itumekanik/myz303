@@ -21,7 +21,15 @@ export const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 export const SRC = join(ROOT, "src");
 export const DIST = join(ROOT, "dist");
 
-const TAB_LABELS = { train: "Eğitim", infer: "Çıkarım", theory: "Teori", play: "Deneme alanı", math: "Matematik", code: "Kodlama" };
+const TAB_LABELS = {
+  train: "Eğitim",
+  infer: "Çıkarım",
+  theory: "Teori",
+  play: 'Deneme<span class="tab-long"> alanı</span>', // phones show the short name
+  math: "Matematik",
+  code: "Kodlama",
+  practice: "Alıştırma",
+};
 const FAVICON =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232a78d6'/%3E%3Cg stroke='%23fff' stroke-width='2' fill='none'%3E%3Cpath d='M6 10l10 6M6 22l10-6M16 16h9'/%3E%3C/g%3E%3Ccircle cx='16' cy='16' r='4.5' fill='%23fff'/%3E%3C/svg%3E";
 /**

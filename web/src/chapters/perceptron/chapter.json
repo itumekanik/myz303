@@ -9,6 +9,6 @@
   "sub": { "tr": "Tek nöronlu öğrenen makine", "en": "A learning machine with one neuron" },
   "page": {
     "title": { "tr": "Perceptron", "en": "Perceptron" },
-    "tabs": ["theory", "play", "math", "code"]
+    "tabs": ["theory", "play", "math", "code", "practice"]
   }
 }
