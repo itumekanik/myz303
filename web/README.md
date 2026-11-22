@@ -46,10 +46,13 @@ npm run check        # what CI runs: lint, typecheck, unit tests, build, end-to-
 | `npm run typecheck` | TypeScript (`tsc --noEmit`) |
 | `npm test` | unit tests (`node:test`): the MLP engine's gradients, SimpleCNN's forward pass against PyTorch, training settings, chapter discovery |
 | `npm run test:e2e` | Playwright: every page, both served over http and opened from `file://` (and a short training run on TensorFlow.js) |
+| `npm run test:browsers` | the same tests in Firefox and WebKit (http and `file://`) and on an emulated Android phone and iPhone |
 | `npm run preview` | serves `dist/` at http://127.0.0.1:4173/ |
 
 The end-to-end tests use the installed Google Chrome locally and Playwright's Chromium on CI
-(`npx playwright install chromium` once, if Chrome is not installed).
+(`npx playwright install chromium` once, if Chrome is not installed). `npm run test:browsers` needs
+`npx playwright install firefox webkit` once. Playwright's WebKit is close to Safari but is not
+Safari, so a change that matters on Apple devices still deserves a look on a real one.
 
 ### Making a change
 

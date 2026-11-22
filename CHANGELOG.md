@@ -10,6 +10,24 @@ The site shows the newest version here at the bottom of the start page and of th
 page title, top left). To release one, add a section below with the version and the date, set the
 same version in `web/package.json`, and push to `main`. The build fails if the two differ.
 
+## [1.0.2] - 2026-11-22
+
+The site checked in Firefox, in WebKit (Safari's engine) and on emulated phones.
+
+### Fixed
+
+- **CNN training:** a number typed into the training form while the page is still loading is no
+  longer replaced by the default, so a 1-epoch run can no longer turn into 10 epochs.
+- **Firefox:** a formula in the CNN chapter's optimization demo no longer produces invalid markup.
+- **Safari:** resizing the charts and demos no longer raises a page error.
+- **Phones and narrow windows:** moving the keyboard focus to the hidden top bar brings the bar
+  back instead of making the page jump.
+
+### Added
+
+- `npm run test:browsers` runs the end-to-end tests in Firefox, WebKit and on an emulated Android
+  phone and iPhone. The automatic checks run them too, without holding back publishing.
+
 ## [1.0.1] - 2026-11-22
 
 A review of the whole project: fixes in every chapter, in training, in accessibility and in setup.

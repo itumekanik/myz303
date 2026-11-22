@@ -81,6 +81,23 @@ test.describe("served by dashboard.py", () => {
     void errors;
   });
 
+  test("a value typed before the first status arrives is kept", async ({ page, errors }) => {
+    await asDashboard(page);
+    let answer!: () => void;
+    const held = new Promise<void>((resolve) => (answer = resolve));
+    await page.route("**/api/status", async (route) => {
+      await held;
+      await route.fulfill({ json: status() });
+    });
+    await open(page, "cnn.html");
+    await page.fill('input[name="epochs"]', "2");
+    answer();
+    await expect(page.locator("#state-pill")).toContainText("Tamamlandı");
+    await expect(page.locator('input[name="epochs"]')).toHaveValue("2");
+    await expect(page.locator('input[name="batch_size"]')).toHaveValue("256");
+    void errors;
+  });
+
   test("a stopped server is reported with how to restart it", async ({ page }) => {
     await asDashboard(page);
     await page.route("**/api/status", (route) => route.abort());

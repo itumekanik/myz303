@@ -1288,7 +1288,9 @@ h2 > .info-btn { vertical-align: 2px; }
 }
 @media (max-width: 720px) {
   .topbar { padding: 8px 12px; gap: 8px; transition: transform 0.25s ease; }
-  body.topbar-away:not(.glossary-open):not(.chapter-menu-open) .topbar { transform: translateY(-100%); }
+  /* Keyboard focus brings the bar back at once, so the page does not jump to a control hidden above it */
+  body.topbar-away:not(.glossary-open):not(.chapter-menu-open) .topbar:not(:has(:focus-visible)) { transform: translateY(-100%); }
+  .topbar:has(:focus-visible) { transition: none; }
   .logo { width: 30px; height: 30px; }
   .brand-title { font-size: 15px; }
   .h1-tail, .glossary-btn-text, #device-badge { display: none; }

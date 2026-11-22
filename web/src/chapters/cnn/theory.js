@@ -5,7 +5,7 @@
  * test images and the model's logits. Uses the helpers defined in app.js.
  */
 import { api, ensureCanvases, infer, modelView } from "./app.js";
-import { $, LUTS, clamp, setHoverHost, cssVar, fmtInt, fmtNum, fmtPct, fmtTick, h, hideTip, lineChart, linearTicks, lutColor, navigate, niceStep, paint, probabilityChart, showTip, svg, svgText } from "../../shared/core.js";
+import { $, LUTS, clamp, setHoverHost, cssVar, fmtInt, fmtNum, fmtPct, fmtTick, h, hideTip, lineChart, linearTicks, lutColor, navigate, niceStep, paint, probabilityChart, showTip, svg, svgText, watchSize } from "../../shared/core.js";
 import { I18N, L, t } from "../../shared/i18n.js";
 import { texNum } from "../../shared/math.js";
 import { termify } from "../../shared/glossary/terms.js";
@@ -1363,7 +1363,7 @@ export function fillOptText() {
   $("#t-opt-hint").textContent = L({ tr: "Sürükleyerek döndürün · bir noktaya tıklayıp oradan başlatın", en: "Drag to turn · click a point to start there" });
   $("#t-opt-canvas").setAttribute("aria-label", L({ tr: "Kayıp yüzeyinin 3B görünümü ve üç yöntemin yolu; ok tuşlarıyla döndürülür", en: "3D view of the loss surface and the three methods' paths; arrow keys turn it" }));
   $("#t-opt-step-label").textContent = L({ tr: "Adım", en: "Step" });
-  $("#t-opt-loss-title").innerHTML = L({ tr: "Adım başına kayıp farkı \\(L - L_{\\min}\\) (logaritmik eksen)", en: "Loss gap per step, \\(L - L_{\\min}\\) (logarithmic axis)" });
+  $("#t-opt-loss-title").innerHTML = L({ tr: "Adım başına kayıp farkı \\(L - L_{\\mathrm{min}}\\) (logaritmik eksen)", en: "Loss gap per step, \\(L - L_{\\mathrm{min}}\\) (logarithmic axis)" });
 }
 
 /** A segmented control (aria-pressed buttons). */
@@ -1406,7 +1406,7 @@ export function setupOptimization() {
   });
   $("#t-opt-play").addEventListener("click", () => (opt.anim ? stopOptAnim() : playOpt()));
   setupSurfaceInput();
-  new ResizeObserver(() => drawSurface3d()).observe($("#t-opt-stage"));
+  watchSize($("#t-opt-stage"), () => drawSurface3d());
   fillOptText();
   paintSurface();
   recomputeOpt();

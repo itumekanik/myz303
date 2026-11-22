@@ -1,6 +1,6 @@
 {
   "name": "ai-learning-path",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "The AI learning path (perceptron → MLP → CNN …) as a static web app: no server, runs from GitHub Pages or by opening index.html.",
   "license": "MIT",
@@ -16,7 +16,8 @@
     "lint": "eslint . && prettier --check \"src/**/*.{ts,css}\" \"scripts/**/*.mjs\" \"tests/**/*.ts\" \"*.{js,ts}\"",
     "format": "prettier --write \"src/**/*.{ts,css}\" \"scripts/**/*.mjs\" \"tests/**/*.ts\" \"*.{js,ts}\"",
     "test": "node --test --test-reporter=spec \"tests/unit/*.test.ts\"",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --project=http --project=file",
+    "test:browsers": "playwright test --project=\"firefox-*\" --project=\"webkit-*\" --project=android --project=iphone",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build && npm run test:e2e"
   },
   "dependencies": {

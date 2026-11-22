@@ -362,15 +362,44 @@ export function probabilityChart(host, probabilities, prediction) {
   host.replaceChildren(root);
 }
 
+/**
+ * Calls back in the next frame after `target` changes size. A redraw inside a ResizeObserver
+ * callback can change the layout again, which Safari reports as a page error.
+ */
+export function watchSize(target, callback) {
+  let frame = 0;
+  const observer = new ResizeObserver(() => {
+    frame ||= requestAnimationFrame(() => {
+      frame = 0;
+      callback();
+    });
+  });
+  observer.observe(target);
+  return {
+    disconnect() {
+      cancelAnimationFrame(frame);
+      frame = 0;
+      observer.disconnect();
+    },
+  };
+}
+
+const resizedHosts = new Set();
+let resizeFrame = 0;
 export const resizeObserver = new ResizeObserver((entries) => {
-  for (const entry of entries) {
-    const host = entry.target;
-    if (!host.isConnected) {   // a demo rebuilt after a language change: let the old chart go
-      resizeObserver.unobserve(host);
-      continue;
+  for (const entry of entries) resizedHosts.add(entry.target);
+  resizeFrame ||= requestAnimationFrame(() => {
+    resizeFrame = 0;
+    const hosts = [...resizedHosts];
+    resizedHosts.clear();
+    for (const host of hosts) {
+      if (!host.isConnected) {   // a demo rebuilt after a language change: let the old chart go
+        resizeObserver.unobserve(host);
+        continue;
+      }
+      if (host._render && host.clientWidth && host.clientWidth !== host._w) host._render();
     }
-    if (host._render && host.clientWidth && host.clientWidth !== host._w) host._render();
-  }
+  });
 });
 document.querySelectorAll(".chart").forEach((chart) => resizeObserver.observe(chart));
 

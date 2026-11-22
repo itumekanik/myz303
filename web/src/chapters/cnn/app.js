@@ -68,6 +68,8 @@ export const STAGES = ["loading", "training", "validating", "testing", "saving"]
 export const stateLabel = (state) => t(`state.${state}`);   // idle, running, done, stopped, error
 export const stageLabel = (stage) => t(`busy.${stage}`);    // what a running job is doing
 export const form = $("#train-form");
+const editedFields = new Set();
+form.addEventListener("input", (event) => editedFields.add(event.target.name));
 export const seen = {};
 export let lastStatus = null;
 
@@ -90,10 +92,13 @@ export function renderStatus(st) {
   $("#device-badge").title = `${L({ tr: "Eğitimin çalıştığı cihaz", en: "Device training runs on" })}: ${st.device}`;
   renderModelBadge(st.model);
 
-  // Form: opens with the SimpleCNN.py defaults; only a run in progress shows its own settings
+  // Form: opens with the SimpleCNN.py defaults; only a run in progress shows its own settings.
+  // A value the reader typed before this first status arrived stays.
   if (!seen.formFilled) {
     const values = st.running ? st.config : st.defaults;
-    for (const key of ["epochs", "lr", "batch_size", "seed"]) form.elements[key].value = values[key];
+    for (const key of ["epochs", "lr", "batch_size", "seed"]) {
+      if (st.running || !editedFields.has(key)) form.elements[key].value = values[key];
+    }
     seen.formFilled = true;
   }
   for (const input of form.querySelectorAll("input")) input.disabled = st.running;

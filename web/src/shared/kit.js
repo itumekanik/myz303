@@ -12,7 +12,7 @@
  * (termify) and math.js (texNum), all at run time.
  */
 import { L } from "./i18n.js";
-import { CHAPTER, CHAPTERS, TAB_HASHES, cssVar, fmtNum, h, hexToRgb, resizeObserver } from "./core.js";
+import { CHAPTER, CHAPTERS, TAB_HASHES, cssVar, fmtNum, h, hexToRgb, resizeObserver, watchSize } from "./core.js";
 import { texNum } from "./math.js";
 import { termify } from "./glossary/terms.js";
 
@@ -77,9 +77,7 @@ function fitCanvas(canvas, render) {
     canvas.height = Math.round(hgt * dpr);
     render();
   };
-  const observer = new ResizeObserver(resize);
-  observer.observe(canvas);
-  observers.push(observer);
+  observers.push(watchSize(canvas, resize));
   redrawers.add(() => render());
   return view;
 }
@@ -373,9 +371,7 @@ function createPlane(host, { domain = [-0.5, 1.5, -0.5, 1.5], ticks = [0, 1], la
     canvas.height = Math.round(size * dpr);
     render();
   };
-  const observer = new ResizeObserver(resize);
-  observer.observe(canvas);
-  observers.push(observer);
+  observers.push(watchSize(canvas, resize));
   redrawers.add(() => render());
   return plane;
 }

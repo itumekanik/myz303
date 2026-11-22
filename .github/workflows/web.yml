@@ -79,8 +79,14 @@ jobs:
 
       - name: End-to-end tests (served over http and opened from file://)
         run: |
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium firefox webkit
           npm run test:e2e
+
+      # Reported in the log, but a slow or flaky browser on the runner does not hold back publishing
+      - name: The same tests in Firefox, WebKit and on emulated phones
+        continue-on-error: true
+        timeout-minutes: 20
+        run: npm run test:browsers
 
       - name: Upload the test report
         if: failure()
