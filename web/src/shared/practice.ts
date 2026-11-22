@@ -31,6 +31,8 @@ export interface NumberQuestion extends QuestionBase {
   /** What to type, e.g. \(z =\). */
   label: Text;
   answer: number;
+  /** How far a typed value may be from `answer`, for a rounded result (default: exact). */
+  tolerance?: number;
   hint: Text;
   compute: () => number;
 }
@@ -61,7 +63,7 @@ export function parseNumber(text: string): number | null {
   return Number(clean.replace(",", "."));
 }
 
-export const matches = (value: number, answer: number): boolean => Math.abs(value - answer) < 1e-6;
+export const matches = (value: number, answer: number, tolerance = 1e-6): boolean => Math.abs(value - answer) <= tolerance;
 
 /** A label with formulas as plain text, the name of its input for screen readers. */
 export function plainMath(text: string): string {
@@ -69,6 +71,9 @@ export function plainMath(text: string): string {
     .replace(/\\[()]/g, "")
     .replace(/\\hat\s*y/g, "ŷ")
     .replace(/\\eta/g, "η")
+    .replace(/\\sigma/g, "σ")
+    .replace(/\\delta/g, "δ")
+    .replace(/\\approx/g, "≈")
     .replace(/\{,\}/g, ",")
     .replace(/\\[ ,;]/g, " ")
     .replace(/_\{?(\w+)\}?/g, "$1")

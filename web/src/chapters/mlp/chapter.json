@@ -10,6 +10,6 @@
   "page": {
     "title": { "tr": "MLP", "en": "MLP" },
     "brand": { "tr": "Çok katmanlı ağ", "en": "Multilayer network" },
-    "tabs": ["theory", "play", "math", "code"]
+    "tabs": ["theory", "play", "math", "code", "practice"]
   }
 }

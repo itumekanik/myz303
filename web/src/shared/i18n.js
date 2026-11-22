@@ -118,6 +118,7 @@ Object.assign(STATIC_EN, {
   "m.top.sub": "Chapter 2 · Hidden layers and backpropagation",
   "m.math.title": "The math of the MLP",
   "m.code.title": "Let's code the MLP",
+  "m.practice.title": "MLP practice",
   "theme.light": "Light",
   "theme.dark": "Dark",
   "theme.system": "System theme",

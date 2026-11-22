@@ -339,6 +339,58 @@ test.describe("perceptron: the Practice tab", () => {
   });
 });
 
+test.describe("mlp: the Practice tab", () => {
+  const question = (page: Page, id: string) => page.locator(`[data-q="${id}"]`);
+
+  test("takes a rounded number, runs a real prediction and keeps its own progress", async ({ page, errors }) => {
+    await open(page, "mlp.html#alistirma");
+    await expect(page.locator(".px-count")).toContainText("0 / 19");
+    await expect(page.locator("#px-toc button")).toHaveCount(6);
+    const rounded = question(page, "l-bce");
+    await rounded.locator("input").fill("0,8");
+    await rounded.locator("input").press("Enter");
+    await expect(rounded.locator(".px-feedback")).toContainText("Henüz değil");
+    await rounded.locator("input").fill("0,693");
+    await rounded.locator("input").press("Enter");
+    await expect(rounded).toHaveAttribute("data-state", "correct");
+    const predict = question(page, "bp-sym");
+    await predict.locator(".px-opt").nth(1).click();
+    await predict.getByRole("button", { name: "Tahmini sına" }).click();
+    await expect(predict).toHaveAttribute("data-state", "correct");
+    await expect(predict.locator(".px-run")).toContainText("birebir aynı");
+    await expect(page.locator(".px-count")).toContainText("2 / 19");
+    await expect(page.locator(".katex-error")).toHaveCount(0);
+    await open(page, "perceptron.html#alistirma");
+    await expect(page.locator(".px-count")).toContainText("0 / 15");
+    await open(page, "index.html");
+    await expect(page.locator("a.lp-chapter").nth(1)).toContainText("Alıştırma 2/19");
+    await expect(page.locator("a.lp-chapter").first()).not.toContainText("Alıştırma");
+    void errors;
+  });
+
+  test("every prediction runs, in English too", async ({ page, errors }) => {
+    await page.addInitScript(() => localStorage.setItem("lang", "en"));
+    await open(page, "mlp.html#alistirma");
+    for (const id of ["h-xor", "l-mse", "bp-sym", "i-shift"]) {
+      await question(page, id).locator(".px-opt").first().click();
+      await question(page, id).getByRole("button", { name: "Test my prediction" }).click();
+      await expect(question(page, id).locator(".px-run")).toBeVisible();
+    }
+    await expect(page.locator(".px-count")).toContainText("4 / 19");
+    await expect(page.locator(".katex-error")).toHaveCount(0);
+    void errors;
+  });
+
+  test("fits a phone, with every tab visible", async ({ page, errors }) => {
+    await page.setViewportSize({ width: 320, height: 700 });
+    await open(page, "mlp.html#alistirma");
+    await expect(page.locator("#px-main .px-q").first()).toBeVisible();
+    expect(await overflows(page)).toBe(false);
+    expect(await page.locator(".tabs").evaluate((el) => el.scrollWidth <= el.clientWidth + 1), "all five tabs are visible").toBe(true);
+    void errors;
+  });
+});
+
 test("perceptron → mlp: the next-chapter card opens the MLP's theory", async ({ page, errors }) => {
   await open(page, "perceptron.html#teori/p-xor");
   await page.locator("#p-xor a.pc-next").click();

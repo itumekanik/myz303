@@ -29,8 +29,8 @@ const TABS: Text[] = [
   { tr: "<b>Matematik</b>: formüller ve adım adım türetmeler", en: "<b>Math</b>: the formulas and step-by-step derivations" },
   { tr: "<b>Kodlama</b>: aynı modeli Python'da sıfırdan yazmak", en: "<b>Coding</b>: writing the same model in Python from scratch" },
   {
-    tr: "<b>Alıştırma</b>: anında geri bildirim veren kısa sorular (şimdilik Perceptron bölümünde)",
-    en: "<b>Practice</b>: short questions with immediate feedback (in the Perceptron chapter for now)",
+    tr: "<b>Alıştırma</b>: anında geri bildirim veren kısa sorular (Perceptron ve MLP bölümlerinde)",
+    en: "<b>Practice</b>: short questions with immediate feedback (in the Perceptron and MLP chapters)",
   },
 ];
 

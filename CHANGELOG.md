@@ -10,6 +10,22 @@ The site shows the newest version here at the bottom of the start page and of th
 page title, top left). To release one, add a section below with the version and the date, set the
 same version in `web/package.json`, and push to `main`. The build fails if the two differ.
 
+## [1.2.0] - 2026-11-22
+
+The MLP chapter gets its Practice tab. This is also the first release on the site with the Practice
+tab of the Perceptron chapter: 1.1.0 was tagged but never published, because its checks failed.
+
+### Added
+
+- **Practice tab in the MLP chapter:** 19 questions in the order of the Theory sections, on
+  activations, the hidden layer, the loss, backpropagation, capacity and images. In prediction
+  questions the chapter's real network runs in the browser and shows the result.
+
+### Fixed
+
+- **Phones:** with a wider font the last tab no longer falls out of sight; the tabs wrap to a
+  second line when they do not fit.
+
 ## [1.1.0] - 2026-11-22
 
 Students can now test themselves in the browser, without Python. The Perceptron chapter is the

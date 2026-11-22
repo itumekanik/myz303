@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { PRACTICE as MLP_PRACTICE } from "../../src/chapters/mlp/questions.ts";
 import { PRACTICE } from "../../src/chapters/perceptron/questions.ts";
 import { ruleStep, stepFn, trainFromZero, zOf } from "../../src/chapters/perceptron/model.ts";
 import { chapterSummary, createProgress, matches, parseNumber, plainMath } from "../../src/shared/practice.ts";
@@ -15,7 +16,12 @@ function memoryStore(initial?: string) {
   };
 }
 
-const questions = PRACTICE.flatMap((s) => s.questions);
+const BANKS = [
+  { name: "perceptron", sections: PRACTICE, count: 15, theory: ["p-neuron", "p-boundary", "p-rule", "p-converge", "p-xor"] },
+  { name: "mlp", sections: MLP_PRACTICE, count: 19, theory: ["ml-act", "ml-hidden", "ml-loss", "ml-backprop", "ml-capacity", "ml-images"] },
+];
+const questions = BANKS.flatMap((b) => b.sections.flatMap((s) => s.questions));
+const L = (text: { en: string }) => text.en;
 const texts = (value: unknown): string[] => {
   if (typeof value === "function" || value === null || typeof value !== "object") return [];
   if ("tr" in value && "en" in value) return [String(value.tr), String(value.en)];
@@ -41,6 +47,11 @@ describe("a typed number (practice.ts)", () => {
   it("accepts a sum's rounding error, not a near miss", () => {
     assert.ok(matches(0.1 + 0.2, 0.3));
     assert.ok(!matches(0.31, 0.3));
+  });
+  it("accepts a rounded result within the question's tolerance", () => {
+    assert.ok(matches(0.693, 0.69, 0.006));
+    assert.ok(matches(0.69, 0.69, 0.006));
+    assert.ok(!matches(0.7, 0.69, 0.006));
   });
 });
 
@@ -164,46 +175,50 @@ describe("the perceptron model", () => {
   });
 });
 
-describe("the perceptron's questions", () => {
-  it("have unique ids, in the sections of the Theory tab", () => {
-    const ids = questions.map((q) => q.id);
-    assert.equal(new Set(ids).size, ids.length);
-    assert.equal(ids.length, 15);
-    assert.deepEqual(
-      PRACTICE.map((s) => s.read.section),
-      ["p-neuron", "p-boundary", "p-rule", "p-converge", "p-xor"],
-    );
-  });
+for (const bank of BANKS) {
+  describe(`the questions of chapter "${bank.name}"`, () => {
+    const own = bank.sections.flatMap((s) => s.questions);
 
-  it("are written in both languages", () => {
-    for (const text of texts(PRACTICE)) assert.ok(text.trim(), "an empty text");
-    for (const q of questions) {
-      assert.notEqual(q.q.tr, q.q.en, q.id);
-      assert.notEqual(q.explain.tr, q.explain.en, q.id);
-    }
-  });
+    it("have unique ids, in the sections of the Theory tab", () => {
+      const ids = own.map((q) => q.id);
+      assert.equal(new Set(ids).size, ids.length);
+      assert.equal(ids.length, bank.count);
+      assert.deepEqual(
+        bank.sections.map((s) => s.read.section),
+        bank.theory,
+      );
+    });
 
-  it("do not give away the answer by its position", () => {
-    const positions = new Set(questions.filter((q) => q.kind === "choice").map((q) => q.answer));
-    assert.ok(positions.size >= 3, "the right option is in the same few places");
-  });
-
-  for (const q of questions) {
-    it(`${q.id}: the stated answer is what the model computes`, () => {
-      if (q.kind === "number") {
-        assert.ok(matches(q.compute(), q.answer), `computed ${q.compute()}, stated ${q.answer}`);
-      } else if (q.kind === "predict") {
-        const run = q.run();
-        assert.equal(run.answer, q.answer);
-        assert.ok(q.answer >= 0 && q.answer < q.options.length);
-        assert.ok(run.result.tr && run.result.en);
-      } else {
-        assert.ok(q.answer >= 0 && q.answer < q.options.length);
-        if (q.compute) assert.equal(q.compute(), q.answer);
-        q.options.forEach((option, k) => {
-          if (k !== q.answer) assert.ok(option.why, `option ${k} does not say why it is wrong`);
-        });
+    it("are written in both languages", () => {
+      for (const text of texts(bank.sections)) assert.ok(text.trim(), "an empty text");
+      for (const q of own) {
+        assert.notEqual(q.q.tr, q.q.en, q.id);
+        assert.notEqual(q.explain.tr, q.explain.en, q.id);
       }
     });
-  }
-});
+
+    it("do not give away the answer by its position", () => {
+      const positions = new Set(own.filter((q) => q.kind === "choice").map((q) => q.answer));
+      assert.ok(positions.size >= 3, "the right option is in the same few places");
+    });
+
+    for (const q of own) {
+      it(`${q.id}: the stated answer is what the model computes`, () => {
+        if (q.kind === "number") {
+          assert.ok(matches(q.compute(), q.answer, q.tolerance), `computed ${q.compute()}, stated ${q.answer}`);
+        } else if (q.kind === "predict") {
+          const run = q.run();
+          assert.equal(run.answer, q.answer, L(run.result));
+          assert.ok(q.answer >= 0 && q.answer < q.options.length);
+          assert.ok(run.result.tr && run.result.en);
+        } else {
+          assert.ok(q.answer >= 0 && q.answer < q.options.length);
+          if (q.compute) assert.equal(q.compute(), q.answer);
+          q.options.forEach((option, k) => {
+            if (k !== q.answer) assert.ok(option.why, `option ${k} does not say why it is wrong`);
+          });
+        }
+      });
+    }
+  });
+}

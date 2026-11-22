@@ -24,6 +24,7 @@ Object.assign(TABS, {
   play: { tab: "#tab-play", panel: "#panel-play", hash: "#deneme" },
   math: { tab: "#tab-math", panel: "#panel-math", hash: "#matematik" },
   code: { tab: "#tab-code", panel: "#panel-code", hash: "#kodlama" },
+  practice: { tab: "#tab-practice", panel: "#panel-practice", hash: "#alistirma" },
 });
 
 (() => {

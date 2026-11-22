@@ -22,6 +22,11 @@ export function createPractice({ main, toc, summary, sections }) {
   const progress = createProgress(CHAPTER, questions.map((q) => q.id));
   const numberOf = new Map(questions.map((q, k) => [q.id, k + 1]));
   const drafts = new Map();   // picked or typed but not finished: survives a language change
+  const runs = new Map();     // a prediction's model runs once per page: its result never changes
+  const runOf = (q) => {
+    if (!runs.has(q.id)) runs.set(q.id, q.run());
+    return runs.get(q.id);
+  };
   let confirming = false;
   let lesson = null;
 
@@ -106,7 +111,7 @@ export function createPractice({ main, toc, summary, sections }) {
 
     const sync = () => {
       const saved = progress.get(q.id);
-      const run = saved && q.kind === "predict" ? q.run() : null;
+      const run = saved && q.kind === "predict" ? runOf(q) : null;
       const rightIndex = q.kind === "choice" ? q.answer : run?.answer;
       form.dataset.state = saved?.status ?? (draft.notice === "wrong" ? "wrong" : "");
       for (const input of inputs) input.disabled = Boolean(saved);
@@ -139,7 +144,7 @@ export function createPractice({ main, toc, summary, sections }) {
       if (q.kind === "number") {
         const value = parseNumber(draft.value);
         if (value === null) draft.notice = "number";
-        else if (matches(value, q.answer)) return finish({ status: "correct", value: draft.value });
+        else if (matches(value, q.answer, q.tolerance)) return finish({ status: "correct", value: draft.value });
         else {
           draft.tried = true;
           draft.notice = "wrong";
@@ -150,7 +155,7 @@ export function createPractice({ main, toc, summary, sections }) {
         draft.notice = "pick";
         return sync();
       }
-      if (q.kind === "predict") return finish({ status: draft.pick === q.run().answer ? "correct" : "missed", pick: draft.pick });
+      if (q.kind === "predict") return finish({ status: draft.pick === runOf(q).answer ? "correct" : "missed", pick: draft.pick });
       if (draft.pick === q.answer) return finish({ status: "correct", pick: draft.pick });
       draft.tried = true;
       draft.notice = "wrong";

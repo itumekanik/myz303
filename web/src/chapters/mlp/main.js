@@ -5,5 +5,6 @@
 import "../../shared/core.js";
 import "./theory.js";
 import "./lessons.js";
+import "./practice.js";
 import "../../shared/glossary/panel.js";
 import "../../shared/math.js";

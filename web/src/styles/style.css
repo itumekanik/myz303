@@ -1628,7 +1628,11 @@ a.pc-next.link:focus-visible { outline: 2px solid var(--accent); outline-offset:
   .px-actions .btn { min-height: 38px; }
 }
 @media (prefers-reduced-motion: reduce) { .px-bar span { transition: none; } }
-@media (max-width: 480px) { .tab-long { display: none; } }   /* five tabs fit on one line */
+@media (max-width: 480px) {
+  .tab-long { display: none; }
+  /* Whatever the width of the phone's font, every tab stays in sight: they wrap instead of scrolling away */
+  .tabs { flex-wrap: wrap; overflow-x: visible; }
+}
 @media (max-width: 360px) {
   .tabs { gap: 0; }
   .tabs button { padding: 6px 3px; }
