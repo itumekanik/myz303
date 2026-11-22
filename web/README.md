@@ -51,7 +51,8 @@ npm run check        # what CI runs: lint, typecheck, unit tests, build, end-to-
 
 The end-to-end tests use the installed Google Chrome locally and Playwright's Chromium on CI
 (`npx playwright install chromium` once, if Chrome is not installed). `npm run test:browsers` needs
-`npx playwright install firefox webkit` once. Playwright's WebKit is close to Safari but is not
+`npx playwright install firefox webkit` once. On GitHub they run when a version tag is pushed, and
+their result does not affect the published site. Playwright's WebKit is close to Safari but is not
 Safari, so a change that matters on Apple devices still deserves a look on a real one.
 
 ### Making a change
@@ -69,9 +70,9 @@ dashboard all serve what is built from it.
    (`npm version 1.1.0 --no-git-tag-version`). The build takes the version and the date from the
    changelog and fails if the two differ. The pages show them at the bottom of the start page and
    of the chapter menu, with the commit the site was built from.
-5. Push to `main`: [the workflow](../.github/workflows/web.yml) runs the same checks and, if they
-   pass, publishes the site (two or three minutes). If they fail, the published site stays as it
-   was.
+5. Push to `main` of `itumekanik/myz303`: [the workflow](../.github/workflows/web.yml) runs the
+   checks in Chrome and, if they pass, publishes the site (a few minutes). If they fail, the
+   published site stays as it was. The workflow does nothing in any other repository.
 
 ### The Python dashboard
 

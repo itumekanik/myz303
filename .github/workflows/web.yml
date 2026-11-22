@@ -1,11 +1,14 @@
 # The static site in web/: checks every push and pull request, and publishes main to GitHub Pages
-# together with a ZIP that students can download and open without a server.
+# together with a ZIP that students can download and open without a server. A version tag (v1.2.3)
+# runs the slower tests in Firefox, WebKit and on emulated phones; they never hold back publishing.
+# Every job runs only in itumekanik/myz303, the repository that publishes the site.
 # One-time setup on GitHub: Settings → Pages → Build and deployment → Source: "GitHub Actions".
 name: Web site
 
 on:
   push:
     branches: [main]
+    tags: ["v*"]   # path filters do not apply to tags
     paths: ["web/**", "Perceptron.py", "MLP.py", "SimpleCNN.py", "dashboard.py", "requirements.txt", "CHANGELOG.md", ".github/workflows/web.yml"]
   pull_request:
     paths: ["web/**", "Perceptron.py", "MLP.py", "SimpleCNN.py", "dashboard.py", "requirements.txt", "CHANGELOG.md", ".github/workflows/web.yml"]
@@ -26,6 +29,7 @@ defaults:
 jobs:
   python:
     name: Python scripts and the dashboard
+    if: github.repository == 'itumekanik/myz303' && github.ref_type != 'tag'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -61,6 +65,7 @@ jobs:
 
   check:
     name: Lint, test and build
+    if: github.repository == 'itumekanik/myz303' && github.ref_type != 'tag'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -79,14 +84,8 @@ jobs:
 
       - name: End-to-end tests (served over http and opened from file://)
         run: |
-          npx playwright install --with-deps chromium firefox webkit
+          npx playwright install --with-deps chromium
           npm run test:e2e
-
-      # Reported in the log, but a slow or flaky browser on the runner does not hold back publishing
-      - name: The same tests in Firefox, WebKit and on emulated phones
-        continue-on-error: true
-        timeout-minutes: 20
-        run: npm run test:browsers
 
       - name: Upload the test report
         if: failure()
@@ -107,10 +106,40 @@ jobs:
         with:
           path: web/dist
 
+  browsers:
+    name: Firefox, WebKit and emulated phones
+    if: github.repository == 'itumekanik/myz303' && github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: web/.node-version
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: End-to-end tests in the other browsers
+        run: |
+          npx playwright install --with-deps chromium firefox webkit
+          npm run test:browsers
+
+      - name: Upload the test report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-browsers
+          path: web/playwright-report
+          retention-days: 7
+
   deploy:
     name: Publish to GitHub Pages
     needs: [check, python]
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    if: github.repository == 'itumekanik/myz303' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       pages: write
