@@ -20,6 +20,7 @@
  *   { code, name, notes, caption }   a code box (codeview.js)
  *   { file: { from, to, notes } }    lines cut from the source file, by the text of the first and last line
  *   { term: title, lines }           a terminal window
+ *   { run: { file, text, packages, … } }   how to run a Python file: download, Colab, Windows, macOS (runbox.js)
  *
  * Uses i18n.js (L), core.js (h, $, navigate, PLACE_TITLES), glossary.js (termify, placeLabel)
  * and codeview.js (codeEditor, terminal).
@@ -28,6 +29,7 @@ import { L } from "./i18n.js";
 import { $, CHAPTER, PLACE_TITLES, chapterOf, h, navigate, scrollMode } from "./core.js";
 import { placeLabel, termify } from "./glossary/terms.js";
 import { codeEditor, terminal } from "./codeview.js";
+import { runBox } from "./runbox.js";
 
 export const lessonText = (value) => (value == null || typeof value === "string" ? value || "" : L(value));
 
@@ -147,6 +149,7 @@ export function createLesson(config) {
       return codeEditor(lines, { file: name, fromFile: true, notes: block.file.notes, caption: block.file.caption });
     }
     if (block.term) return terminal(L(block.term), block.lines.map((line) => L(line)));
+    if (block.run) return runBox(block.run);
     return null;
   }
 

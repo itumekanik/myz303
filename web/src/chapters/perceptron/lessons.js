@@ -423,8 +423,8 @@ const CODE = [
     title: PLACE_TITLES["pc-plan"],
     blocks: [
       { p: {
-        tr: R`Bu sekmede Teori'de gördüğümüz perceptronu sıfırdan, yaklaşık 90 satırlık bir Python dosyası olarak yazıyoruz: <code>Perceptron.py</code>. Dosya projenin kök klasöründe hazır; adımları okurken kendi editörünüzde de açabilirsiniz. Gösterilen satır numaraları dosyadakilerle aynıdır.`,
-        en: R`In this tab we write the perceptron from the Theory tab from scratch, as a Python file of about 90 lines: <code>Perceptron.py</code>. The file is ready in the project's root folder; you can open it in your own editor while reading. The line numbers shown are the file's.`,
+        tr: R`Bu sekmede Teori'de gördüğümüz perceptronu sıfırdan, yaklaşık 90 satırlık bir Python dosyası olarak yazıyoruz: <code>Perceptron.py</code>. Adımları okurken dosyayı kendi editörünüzde de açabilirsiniz; nasıl edinip çalıştıracağınız bu adımın sonunda. Gösterilen satır numaraları dosyadakilerle aynıdır.`,
+        en: R`In this tab we write the perceptron from the Theory tab from scratch, as a Python file of about 90 lines: <code>Perceptron.py</code>. You can open the file in your own editor while reading; how to get it and run it is at the end of this step. The line numbers shown are the file's.`,
       } },
       { list: [
         { tr: R`<b>Veri:</b> dört mantık kapısının (AND, OR, NAND, XOR) dört örneği.`, en: R`<b>Data:</b> the four examples of four logic gates (AND, OR, NAND, XOR).` },
@@ -432,14 +432,18 @@ const CODE = [
         { tr: R`<b>Perceptron sınıfı:</b> ağırlıkları tutar, tahmin eder (<code>predict</code>) ve öğrenir (<code>fit</code>).`, en: R`<b>The Perceptron class:</b> holds the weights, predicts (<code>predict</code>) and learns (<code>fit</code>).` },
         { tr: R`<b>Ana program:</b> her kapı için yeni bir perceptron eğitir ve sonucu yazdırır.`, en: R`<b>Main program:</b> trains a new perceptron for each gate and prints the result.` },
       ] },
-      { p: {
-        tr: R`Tek gereken kütüphane NumPy; PyTorch ile birlikte <code>.venv</code>'e zaten kuruldu. Dosyayı proje klasöründe şöyle çalıştırırsınız:`,
-        en: R`The only library needed is NumPy; it is already installed in <code>.venv</code> together with PyTorch. Run the file in the project folder like this:`,
-      } },
-      { term: "PowerShell", lines: ["$ .venv\\Scripts\\python.exe Perceptron.py"] },
+      { p: { tr: R`Tek gereken kütüphane NumPy.`, en: R`The only library needed is NumPy.` } },
       { callout: "tip", title: { tr: "Neden PyTorch değil?", en: "Why not PyTorch?" },
         text: { tr: R`Perceptron kuralının gradyanı elle yazılacak kadar basit; otomatik türeve (autograd) gerek yok, tek ihtiyacımız vektörlerle toplama ve çarpma. Her satırın ne yaptığını görmek için düz NumPy en açığı. 7. adımda aynı şeyi PyTorch ile yazıp CNN koduna bağlayacağız.`,
           en: R`The perceptron rule's gradient is simple enough to write by hand; no autograd needed, all we need is adding and multiplying vectors. Plain NumPy shows most clearly what every line does. In step 7 we write the same with PyTorch and connect it to the CNN code.` } },
+      { run: {
+        file: "Perceptron.py", text: PERCEPTRON_PY, packages: "numpy",
+        colab: { tr: "NumPy Colab'da hazır, hiçbir şey kurmanız gerekmez.", en: "NumPy is ready in Colab; there is nothing to install." },
+        extra: {
+          tr: "[[code:pc-torch|7. adımdaki]] PyTorch örneği için PyTorch da gerekir: kurulum komutunu `numpy` yerine `torch` ile bir kez daha çalıştırın. Colab'da PyTorch hazır.",
+          en: "The PyTorch example in [[code:pc-torch|step 7]] needs PyTorch too: run the install command once more with `torch` instead of `numpy`. PyTorch is ready in Colab.",
+        },
+      } },
     ],
   },
   {

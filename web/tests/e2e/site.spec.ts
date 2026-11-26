@@ -463,3 +463,25 @@ test("mlp: a See also link opens the CNN Math tab at that section", async ({ pag
   await expect(page.locator("#m-softmax")).toBeVisible();
   void errors;
 });
+
+test("every Coding tab says how to run its Python file, and the file downloads from the page", async ({ page, errors }) => {
+  for (const [chapter, file, line] of [
+    ["perceptron", "Perceptron.py", "import numpy as np"],
+    ["mlp", "MLP.py", "import numpy as np"],
+    ["cnn", "SimpleCNN.py", "class SimpleCNN"],
+  ] as const) {
+    await open(page, `${chapter}.html#kodlama`);
+    const box = page.locator(".run-box");
+    await expect(box).toHaveCount(1);
+    await expect(box).toContainText("Bu dosyayı nasıl çalıştırırım?");
+    const [download] = await Promise.all([page.waitForEvent("download"), box.locator(".run-download").click()]);
+    expect(download.suggestedFilename()).toBe(file);
+    expect(readFileSync(await download.path(), "utf8")).toContain(line);
+    // Colab, Windows and macOS / Linux are folded until opened; the last one has a shell prompt
+    await expect(box.locator("details[open]")).toHaveCount(0);
+    await box.locator("summary").nth(2).click();
+    await expect(box.locator(".term-prompt").last()).toHaveText("$");
+    await expect(box).toContainText(`.venv/bin/python ${file}`);
+  }
+  void errors;
+});

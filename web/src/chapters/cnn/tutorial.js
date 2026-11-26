@@ -14,7 +14,8 @@
 //   { p }, { list, ordered }, { callout: "tip" | "warn" | "info", title, text },
 //         { file: { from, to, fold, notes } }  (cut from SimpleCNN.py),
 //         { code, name, notes, caption }      (a separate example file),
-//         { term: title, lines }, { table: { head, rows } }, { links: [{ chapter, tab, section }] }
+//         { term: title, lines }, { table: { head, rows } }, { links: [{ chapter, tab, section }] },
+//         { run: { file, text, packages, … } }  (how to run the file, shared/runbox.js)
 // Any text (including `code`, `name`, a note's `at` and a terminal line) may be a { tr, en } pair.
 // =====================================================================
 import SIMPLECNN_PY from "../../../../SimpleCNN.py";   // bundled as text (scripts/build.mjs)
@@ -23,6 +24,7 @@ import { $, h, navigate } from "../../shared/core.js";
 import { codeEditor, rich, terminal } from "../../shared/codeview.js";
 import { L } from "../../shared/i18n.js";
 import { placeLabel } from "../../shared/glossary/terms.js";
+import { runBox } from "../../shared/runbox.js";
 
 export const TRAIN_OUTPUT = [
   "Using device: cuda",
@@ -98,6 +100,25 @@ export const STEPS = [
   {
     id: "c-setup", title: { tr: "Ortamı hazırlamak", en: "Setting up the environment" },
     blocks: [
+      { p: {
+        tr: "Bu adımın komutları projenin kendi kurulumudur: Windows, NVIDIA ekran kartı ve CUDA. Başka bir sistem kullanıyorsanız, Python kurulu değilse ya da hiçbir şey kurmadan denemek istiyorsanız önce şu kutuya bakın:",
+        en: "The commands of this step are the project's own setup: Windows, an NVIDIA graphics card and CUDA. If you use another system, have no Python, or want to try it with nothing to install, see this box first:",
+      } },
+      { run: {
+        file: "SimpleCNN.py", text: SIMPLECNN_PY, packages: "torch torchvision matplotlib",
+        colabStep: {
+          tr: "**Çalışma zamanı → Çalışma zamanı türünü değiştir** menüsünden **T4 GPU**'yu seçin (İngilizce arayüzde *Runtime → Change runtime type*). Eğitim ekran kartıyla birkaç dakika sürer.",
+          en: "Choose **T4 GPU** under **Runtime → Change runtime type**. With the graphics card, training takes a few minutes.",
+        },
+        colab: {
+          tr: "PyTorch, torchvision ve matplotlib Colab'da hazır. MNIST ilk çalıştırmada indirilir.",
+          en: "PyTorch, torchvision and matplotlib are ready in Colab. MNIST is downloaded on the first run.",
+        },
+        install: {
+          tr: "Bu komut PyTorch'un varsayılan sürümünü kurar; Windows'ta bu sürüm yalnızca işlemcide (CPU) çalışır ve eğitim birkaç kat uzun sürer. NVIDIA ekran kartını kullanmak için kurulum komutunu {pytorch} sayfasından alın ya da aşağıdaki CUDA komutlarını kullanın.",
+          en: "This command installs PyTorch's default build; on Windows that build runs on the processor (CPU) only, and training takes several times longer. To use an NVIDIA graphics card, take the install command from {pytorch} or use the CUDA commands below.",
+        },
+      } },
       { p: {
         tr: "Projeyi diğer Python kurulumlarından ayırmak için bir **sanal ortam** (`.venv`) kullanıyoruz. İçine PyTorch'u, ekran kartıyla çalışabilen (CUDA) sürümüyle kuruyoruz:",
         en: "To keep the project separate from other Python installations we use a **virtual environment** (`.venv`). Into it we install PyTorch, in the build that can run on the graphics card (CUDA):",
@@ -944,6 +965,7 @@ export function renderBlock(block) {
     return codeEditor(lines, { file: L(block.name), notes: block.notes, caption: block.caption });
   }
   if (block.term) return terminal(L(block.term), block.lines.map((line) => L(line)));
+  if (block.run) return runBox(block.run);
   if (block.links) {
     // Links to places in other chapters ({ chapter, tab, section }); core.js follows data-go/data-chapter
     return h("div", { class: "m-links" }, h("span", { text: L({ tr: "Ayrıca bakın:", en: "See also:" }) }),

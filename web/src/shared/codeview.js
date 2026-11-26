@@ -200,25 +200,7 @@ export function codeEditor(lines, options) {
     else body.append(row);
   });
 
-  const copyLabel = () => L({ tr: "Kopyala", en: "Copy" });
-  const copy = h("button", { type: "button", class: "code-copy", text: copyLabel() });
-  copy.addEventListener("click", async () => {
-    const text = lines.map((l) => l.text).join("\n");
-    let copied = true;
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {   // e.g. a page opened from a file
-      const area = h("textarea", {});
-      area.value = text;
-      document.body.append(area);
-      area.select();
-      copied = document.execCommand("copy");
-      area.remove();
-      copy.focus({ preventScroll: true });
-    }
-    copy.textContent = copied ? L({ tr: "Kopyalandı ✓", en: "Copied ✓" }) : L({ tr: "Kopyalanamadı", en: "Could not copy" });
-    setTimeout(() => { copy.textContent = copyLabel(); }, 1500);
-  });
+  const copy = copyButton(() => lines.map((l) => l.text).join("\n"), "code-copy");
 
   const numbered = lines.filter((l) => l.n != null);
   const first = numbered.length ? numbered[0].n : 0;
@@ -247,11 +229,40 @@ export function codeEditor(lines, options) {
   return figure;
 }
 
-/** A terminal window. lines: ["$ command", "output", ...]; lines starting with "$ " are commands. */
-export function terminal(title, lines) {
+/**
+ * A button that copies text() to the clipboard and says so for a moment. A page opened from a file
+ * may have no clipboard API: then a selected text area and execCommand do it.
+ */
+export function copyButton(text, cls, label = { tr: "Kopyala", en: "Copy" }) {
+  const button = h("button", { type: "button", class: cls, text: L(label) });
+  button.addEventListener("click", async () => {
+    const value = text();
+    let copied = true;
+    try {
+      await navigator.clipboard.writeText(value);
+    } catch {
+      const area = h("textarea", {});
+      area.value = value;
+      document.body.append(area);
+      area.select();
+      copied = document.execCommand("copy");
+      area.remove();
+      button.focus({ preventScroll: true });
+    }
+    button.textContent = copied ? L({ tr: "Kopyalandı ✓", en: "Copied ✓" }) : L({ tr: "Kopyalanamadı", en: "Could not copy" });
+    setTimeout(() => { button.textContent = L(label); }, 1500);
+  });
+  return button;
+}
+
+/**
+ * A terminal window. lines: ["$ command", "output", ...]; lines starting with "$ " are commands,
+ * shown after the prompt: "PS>" for PowerShell, "$" for a macOS or Linux shell.
+ */
+export function terminal(title, lines, prompt = "PS>") {
   const body = h("div", { class: "term-body" });
   for (const line of lines) {
-    if (line.startsWith("$ ")) body.append(h("div", { class: "term-cmd" }, h("span", { class: "term-prompt", text: "PS>" }), " ", line.slice(2)));
+    if (line.startsWith("$ ")) body.append(h("div", { class: "term-cmd" }, h("span", { class: "term-prompt", text: prompt }), " ", line.slice(2)));
     else body.append(h("div", { class: "term-out", text: line || " " }));
   }
   return h("figure", { class: "term" },

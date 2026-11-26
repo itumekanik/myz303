@@ -747,6 +747,17 @@ code.ic {
 .tut-callout-icon { font-size: 18px; line-height: 1.4; }
 .tut-callout > div > strong { display: block; margin-bottom: 2px; }   /* the title only, not bold words in the text */
 .tut-callout p { margin: 0; color: var(--text-2); font-size: 14px; line-height: 1.6; }
+/* "How do I run this file?" (runbox.js): download, then three folded ways to run it */
+.run-box { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; overflow-wrap: anywhere; max-width: 880px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); min-width: 0; }
+.run-box h3 { margin: 0; font-size: 16px; }
+.run-box > p, .run-note { margin: 0; color: var(--text-2); font-size: 14px; line-height: 1.6; }
+.run-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.run-way { border-top: 1px solid var(--border); padding-top: 8px; min-width: 0; }
+.run-way > summary { cursor: pointer; font-weight: 600; color: var(--accent-strong); padding: 2px 0; }
+.run-way-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin-top: 8px; }
+.run-way .tut-list { margin: 0; padding-left: 22px; }
+.run-way a { color: var(--accent-strong); }
+.run-box code.ic { white-space: normal; }   /* a long command in a sentence may wrap on a phone */
 .tut-table { max-width: 720px; }
 .tut-table td, .tut-table th { text-align: left !important; }
 .tut-nav { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--grid); }

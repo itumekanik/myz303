@@ -395,6 +395,15 @@ const CODE = [
       { callout: "tip", title: { tr: "Neden transpoze?", en: "Why transposed?" },
         text: { tr: R`Matematikte bir örnek bir sütun vektörüdür ve \(\mathbf W\mathbf x\) yazarız. Kodda örnekler <code>X</code>'in satırlarıdır, böylece bütün batch tek çarpımla hesaplanır: <code>X @ W1</code> = \((\mathbf W^{(1)}\mathbf X^\top)^\top\). PyTorch'un <code>nn.Linear</code>'ı da girdileri satır olarak alır.`,
           en: R`In the math an example is a column vector and we write \(\mathbf W\mathbf x\). In the code the examples are the rows of <code>X</code>, so a whole batch is one product: <code>X @ W1</code> = \((\mathbf W^{(1)}\mathbf X^\top)^\top\). PyTorch's <code>nn.Linear</code> also takes its inputs as rows.` } },
+      { p: { tr: R`Tek gereken kütüphane yine NumPy.`, en: R`Again, the only library needed is NumPy.` } },
+      { run: {
+        file: "MLP.py", text: MLP_PY, packages: "numpy",
+        colab: { tr: "NumPy Colab'da hazır, hiçbir şey kurmanız gerekmez.", en: "NumPy is ready in Colab; there is nothing to install." },
+        extra: {
+          tr: "[[code:mc-torch|9. adımdaki]] PyTorch sürümü için PyTorch da gerekir: kurulum komutunu `numpy` yerine `torch` ile bir kez daha çalıştırın. Colab'da PyTorch hazır.",
+          en: "The PyTorch version in [[code:mc-torch|step 9]] needs PyTorch too: run the install command once more with `torch` instead of `numpy`. PyTorch is ready in Colab.",
+        },
+      } },
     ],
   },
   {

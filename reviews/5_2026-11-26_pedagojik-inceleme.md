@@ -58,7 +58,7 @@ gösteriyorlar (XOR'da takılma, H = 1 ile kapasite). Türkçe akıcı, TR/EN e�
 3. Her bölüme 4–6 transfer sorusu ve tipik yanlışlara özel geri bildirim (M10, C10, P6). *(Yapıldı,
    2026-11-26.)*
 4. Kodlama sekmelerine "Python'unuz yoksa" kutusu: dosyayı indirme bağlantısı, kurulum ya da
-   Colab (P2).
+   Colab (P2). *(Yapıldı, 2026-11-26.)*
 5. CNN bölümünün bölünmesi ya da sırasının değişmesi (C2, C3). Büyük bir iş; ders takvimine göre
    karar verilmeli.
 
@@ -67,7 +67,7 @@ gösteriyorlar (XOR'da takılma, H = 1 ile kapasite). Türkçe akıcı, TR/EN e�
 | No | Önem | Yer | Bulgu | Durum |
 | --- | --- | --- | --- | --- |
 | P1 | yüksek | `Perceptron.py`, Kodlama | Yakınsamayan her kapı için "no straight line separates XOR" yazılıyordu. Alıştırmanın önerdiği seed 3'te AND 20 epoch'a sığmıyor (22 epoch gerekiyor), öğrenci AND'in ayrılamadığı sonucunu çıkarabiliyordu | Çözüldü: mesaj her veri için doğru ("…no straight line separates the data, or it needs more epochs"), Kodlama'daki çıktı güncellendi, seed alıştırmasına not eklendi |
-| P2 | yüksek | Kodlama | Python ve `.venv` kurulu varsayılıyor; kurulum ancak 3. bölümde, dosyayı indirme bağlantısı yok, komut yalnızca Windows için | **Açık: eğitmen kararı / büyük iş** |
+| P2 | yüksek | Kodlama | Python ve `.venv` kurulu varsayılıyor; kurulum ancak 3. bölümde, dosyayı indirme bağlantısı yok, komut yalnızca Windows için | Çözüldü (2026-11-26, öneri 4): her Kodlama sekmesinde "Bu dosyayı nasıl çalıştırırım?" kutusu: dosyayı indirme, Colab, Windows, macOS/Linux (ayrıntılar Takip'te) |
 | P3 | orta | Alıştırma `c-eta` | "Kendiniz deneyin" bağlantısı, cevapla çelişen bir demoya götürüyordu (o demo sıfırdan başlamıyor, orada η epoch sayısını değiştiriyor) | Çözüldü: bağlantı, iddianın ispatlandığı Matematik kısmına gidiyor |
 | P4 | orta | Teori, tarih | "Bu döneme ilk yapay zekâ kışı dendi": ilk yapay zekâ kışı 1974–1980 arası ve bütün alanı kapsıyor | Çözüldü |
 | P5 | orta | Teori ↔ MLP Teori | Kayıp ve gradyan inişi 1. bölümde yalnızca Matematik'te; MLP Teori'si bunları 1. bölümden biliniyor sayıyor | **Açık: eğitmen kararı** (p-rule'a 2–3 cümle ve bir soru önerildi) |
@@ -216,3 +216,25 @@ gösteriyorlar (XOR'da takılma, H = 1 ile kapasite). Türkçe akıcı, TR/EN e�
   - P6'nın kayıp ayağı yapılmadı: perceptron bölümünde kayıp Teori'de anlatılmıyor (P5).
   - Bilerek yapılmayanlar: eski soruların zayıf çeldiricileri (M10, C10) tek tek yeniden yazılmadı;
     CNN'de Teori'deki öz-sınamayla örtüşen üç soru yerinde kaldı.
+- 2026-11-26: eğitmen, önerinin 4. maddesini onayladı (P2). Üç bölümün Kodlama sekmesine
+  "Bu dosyayı nasıl çalıştırırım?" kutusu eklendi: Perceptron ve MLP'de ilk adımda, CNN'de
+  "Ortamı hazırlamak" adımının başında.
+  - **Dosya:** "indir" düğmesi bölümün Python dosyasını (Perceptron.py, MLP.py, SimpleCNN.py)
+    sayfaya gömülü metinden indiriyor; GitHub Pages'te de çevrimdışı ZIP'te de çalışıyor.
+    "Tümünü kopyala" dosyayı panoya alıyor.
+  - **Üç yol, her biri açılınca görünür:**
+    - Google Colab, kurulum yok: not defteri aç, yapıştır, Shift + Enter. CNN'de önce T4 GPU
+      seçme adımı var. Kodun Google'ın bilgisayarlarında çalıştığı da yazıyor.
+    - Windows: python.org'dan kurulum ("Add python.exe to PATH"), klasörde terminal açma, üç
+      komut (`py -m venv .venv`, `pip install …`, çalıştırma). Komutlar `Activate.ps1`
+      kullanmıyor; böylece PowerShell'in betik izni sorunu çıkmıyor. CNN'de varsayılan PyTorch'un
+      Windows'ta yalnızca CPU'da çalıştığı ve CUDA sürümünün nereden alınacağı yazıyor.
+    - macOS ya da Linux: `python3 -m venv .venv` ve `.venv/bin/python` ile aynı üç komut.
+  - Perceptron'daki "NumPy `.venv`'e zaten kuruldu" cümlesi kaldırıldı (kurulum o noktada daha
+    anlatılmamıştı). PyTorch örnekleri (`perceptron_torch.py`, `mlp_torch.py`) için ek bir not
+    var.
+  - Yeni bir uçtan uca test, üç bölümde kutunun olduğunu, dosyanın indiğini ve içeriğinin doğru
+    olduğunu, macOS/Linux komutlarının `$` istemiyle gösterildiğini 8 profilde denetliyor.
+  - Doğrulanamayan: Colab'da gerçek bir çalıştırma (Google hesabı gerekiyor) ve macOS/Linux'ta
+    komutların denenmesi. Python dosyaları Colab'ın hazır kütüphaneleriyle uyumlu görünüyor
+    (yalnızca NumPy; SimpleCNN için torch, torchvision ve matplotlib).
