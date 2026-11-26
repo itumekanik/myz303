@@ -53,7 +53,7 @@ const BANKS = [
     name: "cnn",
     sections: buildPractice(cnnLab),
     count: 25,
-    theory: ["t-conv", "t-bn", "t-act", "t-pool", "t-drop", "t-softmax", "t-opt", "m-pool", undefined],
+    theory: ["t-conv", "t-act", "t-pool", "t-softmax", "t-opt", "t-drop", "t-bn", "m-pool", undefined],
   },
 ];
 const questions = BANKS.flatMap((b) => b.sections.flatMap((s) => s.questions));

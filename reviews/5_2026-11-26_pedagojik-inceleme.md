@@ -60,7 +60,7 @@ gösteriyorlar (XOR'da takılma, H = 1 ile kapasite). Türkçe akıcı, TR/EN e�
 4. Kodlama sekmelerine "Python'unuz yoksa" kutusu: dosyayı indirme bağlantısı, kurulum ya da
    Colab (P2). *(Yapıldı, 2026-11-26.)*
 5. CNN bölümünün bölünmesi ya da sırasının değişmesi (C2, C3). Büyük bir iş; ders takvimine göre
-   karar verilmeli.
+   karar verilmeli. *(Yapıldı, 2026-11-26: eğitmen bölmek yerine sırayı değiştirmeyi seçti.)*
 
 ## Bölüm 1 · Perceptron
 
@@ -113,8 +113,8 @@ gösteriyorlar (XOR'da takılma, H = 1 ile kapasite). Türkçe akıcı, TR/EN e�
 | No | Önem | Yer | Bulgu | Durum |
 | --- | --- | --- | --- | --- |
 | C1 | yüksek | `chapter.json` | Bölüm Eğitim sekmesiyle açılıyor; öğrenci CNN'i öğrenmeden hiperparametre formuyla karşılaşıyor. Bölüm 1 ve 2 Teori ile açılıyor | Çözüldü (2026-11-26, eğitmen kararıyla): bölüm Teori ile açılıyor, sekme sırası Teori, Çıkarım, Eğitim, Matematik, Kodlama, Alıştırma |
-| C2 | yüksek | bütün bölüm | Tek oturum için çok büyük (Teori 7 kısım ve 7 demo, Matematik 10 kısım, Kodlama 17 adım, 20 soru); optimizasyon kısmı CNN'e özgü değil | **Açık: büyük iş** (3a "Evrişimli ağ" ve 3b "Derin ağı eğitmek" diye bölmek önerildi) |
-| C3 | yüksek | Teori, Matematik, Alıştırma | BatchNorm hâlâ 2. sırada (2. incelemede B13). Ek kanıt: BatchNorm'suz model aynı seed ile %99,30, BatchNorm'lu %99,29 | **Açık: eğitmen kararı** |
+| C2 | yüksek | bütün bölüm | Tek oturum için çok büyük (Teori 7 kısım ve 7 demo, Matematik 10 kısım, Kodlama 17 adım, 20 soru); optimizasyon kısmı CNN'e özgü değil | Kısmen çözüldü (2026-11-26, öneri 5, eğitmen kararı: bölmek yerine yeni sıra): bölüm artık iki oturuma ayrılabiliyor. Teori'de 1–5. kısımlar en küçük CNN'i eğitimiyle birlikte anlatıyor, 6–7 Dropout ve BatchNorm; Matematik'te 1–8 ve 9–10. Bölümün büyüklüğü aynı kaldı; ayrı bölüm (3a / 3b) **Açık: büyük iş** |
+| C3 | yüksek | Teori, Matematik, Alıştırma | BatchNorm hâlâ 2. sırada (2. incelemede B13). Ek kanıt: BatchNorm'suz model aynı seed ile %99,30, BatchNorm'lu %99,29 | Çözüldü (2026-11-26, öneri 5): BatchNorm Teori'de 7., Matematik'te 10., Alıştırma'da 7. kısım; Teori'de bu kadar sığ bir ağda etkisinin küçük olduğu yazıyor (ayrıntılar Takip'te) |
 | C4 | orta-yüksek | Teori, Alıştırma `sm-equal` | "−log 0,1 ≈ 2,30": lisede log 10 tabanlı; öğrenci 1 bulur. ln olduğu yalnızca Matematik'te yazıyor | Çözüldü: ilk geçtiği yerde ve soruda "log = doğal logaritma (ln)" |
 | C5 | orta | Matematik | K hem sınıf hem katman sayısı; 2. incelemede eklendiği yazılan not dosyada yoktu | Çözüldü: not eklendi |
 | C6 | orta | Çıkarım, Kodlama | "%99" sonucunun anlamı tartışılmıyor: 71 hatanın 20'sinde model %90'dan emin, ters renkli rakamlarda %50, 4 piksel kaymada %82 | **Açık: büyük iş** ("Sonucu okumak" kartı önerildi) |
@@ -238,3 +238,24 @@ gösteriyorlar (XOR'da takılma, H = 1 ile kapasite). Türkçe akıcı, TR/EN e�
   - Doğrulanamayan: Colab'da gerçek bir çalıştırma (Google hesabı gerekiyor) ve macOS/Linux'ta
     komutların denenmesi. Python dosyaları Colab'ın hazır kütüphaneleriyle uyumlu görünüyor
     (yalnızca NumPy; SimpleCNN için torch, torchvision ve matplotlib).
+- 2026-11-26: eğitmen, önerinin 5. maddesi için bölümü bölmek yerine sırayı değiştirmeyi seçti
+  (C3, C2'nin bir kısmı). CNN bölümü artık önce en küçük CNN'i, sonra eğitimi iyileştiren iki
+  katmanı anlatıyor:
+  - **Teori:** 1 Evrişim, 2 Aktivasyon, 3 Havuzlama, 4 Tam bağlı + Softmax + kayıp, 5 Geri yayılım
+    ve optimizasyon, 6 Dropout, 7 BatchNorm (önceden 2. sıradaydı). Giriş, 1–5. kısımların ilk
+    oturum için yeterli olduğunu, şemanın ise katmanları verinin ağdaki sırasıyla gösterdiğini
+    söylüyor. Dropout kısmı bir geçiş paragrafıyla açılıyor: ilk beş kısım bir CNN için yeterli,
+    Dropout MLP bölümündeki aşırı uyumu azaltır, BatchNorm ölçeği düzenler. Özet ve öz-sınama
+    soruları da bu sırayı izliyor. BatchNorm'un "SimpleCNN'de" kutusuna, bu kadar sığ bir ağda
+    etkisinin küçük olduğu ve Kodlama'daki "BatchNorm'suz" alıştırmasına bağlantı eklendi.
+  - **Matematik:** 1 Gösterim, 2 Evrişim, 3 Aktivasyon, 4 Havuzlama, 5 Tam bağlı, 6 Softmax,
+    7 Geri yayılım, 8 Optimizasyon, 9 Dropout, 10 BatchNorm. Numaralı bütün atıflar ("kısım 8",
+    "3. kısım, 6. adım" gibi) yeni numaralara göre düzeltildi. Geri yayılım tablosunun önüne,
+    Dropout ve BatchNorm satırlarının 9 ve 10. kısımda türetildiğini söyleyen bir not; 9. kısmın
+    başına bir geçiş paragrafı eklendi. Sekmenin özeti son kısma (BatchNorm) taşındı.
+  - **Alıştırma:** kısımlar Teori'nin sırasında: Evrişim, Aktivasyon, Havuzlama, Softmax ve kayıp,
+    Optimizasyon, Dropout, BatchNorm, Hepsi bir arada, Eğitilmiş modelle deneyler. Sorular
+    değişmedi.
+  - **Kodlama** dosyanın sırasında kaldı (`SimpleCNN.py` katmanları veri akışı sırasıyla tanımlıyor).
+  - Yeni bir uçtan uca test, üç sekmedeki kısım sırasını ve Teori'deki numaraları denetliyor.
+  - C2'nin açık kalan kısmı: bölüm aynı büyüklükte; ayrı bir 3b bölümü yapılmadı.

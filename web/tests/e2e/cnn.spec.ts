@@ -73,6 +73,43 @@ test.describe("chapter 3: cnn", () => {
     void errors;
   });
 
+  test("Theory, Math and Practice teach the smallest CNN first, then Dropout and BatchNorm", async ({ page, errors }) => {
+    const ids = (selector: string) => page.locator(selector).evaluateAll((els) => els.map((el) => el.id));
+    await open(page, "cnn.html#teori");
+    expect(await ids("#panel-theory article.t-section")).toEqual(["t-conv", "t-act", "t-pool", "t-softmax", "t-opt", "t-drop", "t-bn"]);
+    expect(await page.locator("#panel-theory article.t-section .t-num").allTextContents()).toEqual(["1", "2", "3", "4", "5", "6", "7"]);
+    await expect(page.locator("#t-drop .t-bridge")).toContainText("İlk beş kısım");
+    await page.locator("#tab-math").click();
+    await expect(page.locator("#m-bn")).toBeAttached();
+    expect(await ids("#panel-math article.m-step")).toEqual([
+      "m-notation",
+      "m-conv",
+      "m-act",
+      "m-pool",
+      "m-fc",
+      "m-softmax",
+      "m-backprop",
+      "m-opt",
+      "m-drop",
+      "m-bn",
+    ]);
+    await expect(page.locator("#m-bn")).toContainText("Özet: bu sekmede ne öğrendik?");
+    await page.locator("#tab-practice").click();
+    await expect(page.locator("#px-bn")).toBeAttached();
+    expect(await ids("#panel-practice article.tut-step")).toEqual([
+      "px-conv",
+      "px-act",
+      "px-pool",
+      "px-softmax",
+      "px-opt",
+      "px-drop",
+      "px-bn",
+      "px-transfer",
+      "px-model",
+    ]);
+    void errors;
+  });
+
   test("fits a phone screen", async ({ page, errors }) => {
     await page.setViewportSize({ width: 375, height: 760 });
     await open(page, "cnn.html");

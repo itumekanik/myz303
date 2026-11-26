@@ -497,6 +497,8 @@ canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; display: b
   margin-top: 12px; padding: 10px 12px; border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0;
   background: var(--accent-soft); font-size: 13px; color: var(--text); line-height: 1.5;
 }
+/* Opens the part of a chapter that can wait for a second session (CNN: Dropout and BatchNorm) */
+.t-bridge { padding: 10px 12px; border-radius: 8px; background: var(--surface-2); }
 
 .t-demo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-content: start; min-width: 0; }
 .t-demo .scale-legend { flex-wrap: wrap; white-space: normal; margin-top: 0; }

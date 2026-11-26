@@ -555,8 +555,8 @@ export const BN_TEXT = {
   },
 
   model: {
-    tr: "<b>SimpleCNN'de:</b> Her evrişimden sonra, ReLU'dan önce: <code>BatchNorm2d(32)</code> ve <code>BatchNorm2d(64)</code>. Her biri kanal başına bir γ ve bir β öğrenir (toplam 2 × (32 + 64) = 192 parametre) ve kanal başına bir hareketli ortalama ile bir hareketli varyans saklar.",
-    en: "<b>In SimpleCNN:</b> after every convolution, before ReLU: <code>BatchNorm2d(32)</code> and <code>BatchNorm2d(64)</code>. Each learns one γ and one β per channel (2 × (32 + 64) = 192 parameters in total) and keeps one running mean and one running variance per channel.",
+    tr: "<b>SimpleCNN'de:</b> Her evrişimden sonra, ReLU'dan önce: <code>BatchNorm2d(32)</code> ve <code>BatchNorm2d(64)</code>. Her biri kanal başına bir γ ve bir β öğrenir (toplam 2 × (32 + 64) = 192 parametre) ve kanal başına bir hareketli ortalama ile bir hareketli varyans saklar. Bu kadar sığ bir ağda BatchNorm'un sonuca etkisi küçüktür (<a href=\"#\" data-go=\"code:c-exercises\">Kodlama'daki \"BatchNorm'suz\" alıştırmasında</a> deneyebilirsiniz); asıl faydası onlarca katmanlı ağlarda görülür.",
+    en: "<b>In SimpleCNN:</b> after every convolution, before ReLU: <code>BatchNorm2d(32)</code> and <code>BatchNorm2d(64)</code>. Each learns one γ and one β per channel (2 × (32 + 64) = 192 parameters in total) and keeps one running mean and one running variance per channel. In a network this shallow BatchNorm changes the result little (try the <a href=\"#\" data-go=\"code:c-exercises\">\"No BatchNorm\" exercise in the Coding tab</a>); its real benefit shows in networks with dozens of layers.",
   },
 };
 

@@ -217,129 +217,6 @@ export function buildPractice(lab: () => Promise<CnnLab>): PracticeSection[] {
       ],
     },
     {
-      id: "px-bn",
-      title: { tr: "Batch Normalization", en: "Batch Normalization" },
-      intro: {
-        tr: R`Her kanal önce standartlaştırılır, sonra öğrenilen iki sayıyla ölçeklenip kaydırılır: \(\hat x = (x - \mu_B)/\sigma_B\), \(y = \gamma\,\hat x + \beta\).`,
-        en: R`Each channel is first standardized, then scaled and shifted by two learned numbers: \(\hat x = (x - \mu_B)/\sigma_B\), \(y = \gamma\,\hat x + \beta\).`,
-      },
-      read: { tab: "theory", section: "t-bn" },
-      questions: [
-        {
-          id: "bn-calc",
-          kind: "number",
-          q: {
-            tr: R`\(x = 5\), \(\mu_B = 3\), \(\sigma_B = 2\), \(\gamma = 2\) ve \(\beta = 0{,}5\). BatchNorm'un çıktısı \(y\) kaçtır?`,
-            en: R`\(x = 5\), \(\mu_B = 3\), \(\sigma_B = 2\), \(\gamma = 2\) and \(\beta = 0.5\). What is the BatchNorm output \(y\)?`,
-          },
-          label: { tr: R`\(y =\)`, en: R`\(y =\)` },
-          answer: 2.5,
-          compute: () => 2 * ((5 - 3) / 2) + 0.5,
-          hint: {
-            tr: R`Önce \(\hat x\)'i bulun, sonra \(\gamma\) ile çarpıp \(\beta\) ekleyin.`,
-            en: R`Find \(\hat x\) first, then multiply by \(\gamma\) and add \(\beta\).`,
-          },
-          mistakes: [
-            {
-              value: 2,
-              why: {
-                tr: R`\(\beta\)'yı eklemeyi unutmuşsunuz: \(y = \gamma\,\hat x + \beta\).`,
-                en: R`You did not add \(\beta\): \(y = \gamma\,\hat x + \beta\).`,
-              },
-            },
-            {
-              value: 1.5,
-              why: {
-                tr: R`Ya \(\gamma = 2\) ile çarpmayı unuttunuz ya da \(\sigma\) yerine \(\sigma^2 = 4\)'e böldünüz. Önce \(\hat x = (x - \mu)/\sigma = 1\).`,
-                en: R`Either you did not multiply by \(\gamma = 2\), or you divided by \(\sigma^2 = 4\) instead of \(\sigma\). First \(\hat x = (x - \mu)/\sigma = 1\).`,
-              },
-            },
-          ],
-          explain: {
-            tr: R`\(\hat x = (5 - 3)/2 = 1\) ve \(y = 2\cdot 1 + 0{,}5 = 2{,}5\).`,
-            en: R`\(\hat x = (5 - 3)/2 = 1\) and \(y = 2\cdot 1 + 0.5 = 2.5\).`,
-          },
-        },
-        {
-          id: "bn-params",
-          kind: "number",
-          q: {
-            tr: "64 kanallı bir haritaya uygulanan BatchNorm katmanının kaç öğrenilen parametresi vardır?",
-            en: "How many learned parameters does a BatchNorm layer on a 64-channel map have?",
-          },
-          label: { tr: "parametre sayısı =", en: "number of parameters =" },
-          answer: 128,
-          compute: () => 2 * 64,
-          hint: {
-            tr: R`Her kanalın kendi \(\gamma\) ve \(\beta\) değeri vardır. Ortalama ve varyans öğrenilmez, ölçülür.`,
-            en: R`Each channel has its own \(\gamma\) and \(\beta\). The mean and variance are measured, not learned.`,
-          },
-          mistakes: [
-            {
-              value: 64,
-              why: {
-                tr: R`Her kanalda iki öğrenilen sayı var: ölçek \(\gamma\) ve kayma \(\beta\).`,
-                en: R`Each channel has two learned numbers: the scale \(\gamma\) and the shift \(\beta\).`,
-              },
-            },
-            {
-              value: 256,
-              why: {
-                tr: R`Hareketli ortalama ve varyans da saklanır ama öğrenilmez: gradyanla değil, batch'lerden sayılarak güncellenir. Öğrenilenler yalnızca \(\gamma\) ile \(\beta\).`,
-                en: R`The running mean and variance are stored too, but not learned: they are updated by counting over the batches, not by the gradient. Only \(\gamma\) and \(\beta\) are learned.`,
-              },
-            },
-          ],
-          explain: {
-            tr: R`\(2\cdot 64 = 128\). Hareketli ortalama ve varyans da modelle saklanır, ama gradyanla güncellenmedikleri için parametre sayılmazlar.`,
-            en: R`\(2\cdot 64 = 128\). The running mean and variance are stored with the model too, but they are not updated by gradients, so they do not count as parameters.`,
-          },
-        },
-        {
-          id: "bn-eval",
-          kind: "choice",
-          q: {
-            tr: R`Çıkarımda tek bir görüntü gelince BatchNorm \(\mu\) ve \(\sigma\) değerlerini nereden alır?`,
-            en: R`At inference, when a single image comes in, where does BatchNorm get \(\mu\) and \(\sigma\) from?`,
-          },
-          options: [
-            {
-              text: { tr: "O tek görüntüden hesaplar", en: "It computes them from that one image" },
-              why: {
-                tr: "O zaman tahmin görüntünün kendi ölçeğine bağlı olurdu ve aynı görüntü başka bir batch'te başka sonuç verirdi.",
-                en: "Then the prediction would depend on the image's own scale, and the same image would give another result in another batch.",
-              },
-            },
-            {
-              text: { tr: "Test kümesinin tamamından hesaplar", en: "It computes them from the whole test set" },
-              why: {
-                tr: "Model test verisinden hiçbir şey öğrenmemelidir, tahmin de test kümesinin geri kalanına bağlı olmamalıdır.",
-                en: "A model must learn nothing from the test data, and a prediction must not depend on the rest of the test set.",
-              },
-            },
-            {
-              text: {
-                tr: "Eğitim boyunca biriktirdiği hareketli ortalamalardan alır",
-                en: "From the running averages it collected during training",
-              },
-            },
-            {
-              text: { tr: "Hiç kullanmaz, BatchNorm çıkarımda kapalıdır", en: "It does not use them: BatchNorm is off at inference" },
-              why: {
-                tr: "Çıkarımda kapalı olan Dropout'tur. BatchNorm çalışmaya devam eder, yalnızca istatistiklerinin kaynağı değişir.",
-                en: "Dropout is what is off at inference. BatchNorm keeps working; only the source of its statistics changes.",
-              },
-            },
-          ],
-          answer: 2,
-          explain: {
-            tr: R`Eğitimde her batch kendi \(\mu_B, \sigma_B\) değerini kullanır ve bunların hareketli ortalaması saklanır. Çıkarımda bu sabit değerler kullanıldığı için aynı görüntü hep aynı sonucu verir.`,
-            en: R`In training each batch uses its own \(\mu_B, \sigma_B\), and a running average of them is kept. At inference these fixed values are used, so the same image always gives the same result.`,
-          },
-        },
-      ],
-    },
-    {
       id: "px-act",
       title: { tr: "Aktivasyon", en: "Activation" },
       intro: {
@@ -509,85 +386,6 @@ export function buildPractice(lab: () => Promise<CnnLab>): PracticeSection[] {
           explain: {
             tr: "Havuzlama sabit bir işlemdir: en büyük değeri seçer, öğrenecek bir şeyi yoktur. Buna rağmen hesap yükünü azaltır ve sonraki katmanların algı alanını büyütür.",
             en: "Pooling is a fixed operation: it picks the largest value and has nothing to learn. Even so, it cuts the work and enlarges the receptive field of the next layers.",
-          },
-        },
-      ],
-    },
-    {
-      id: "px-drop",
-      title: { tr: "Dropout", en: "Dropout" },
-      intro: {
-        tr: R`Eğitimde değerlerin \(p\) kadarı sıfırlanır, kalanlar \(1/(1-p)\) ile büyütülür. SimpleCNN'de \(p = 0{,}45\) ve \(p = 0{,}35\) kullanılır.`,
-        en: R`In training a share \(p\) of the values is set to zero and the rest are scaled by \(1/(1-p)\). SimpleCNN uses \(p = 0.45\) and \(p = 0.35\).`,
-      },
-      read: { tab: "theory", section: "t-drop" },
-      questions: [
-        {
-          id: "dr-scale",
-          kind: "number",
-          q: {
-            tr: R`\(p = 0{,}35\) iken değeri \(h = 1{,}3\) olan bir hücre sıfırlanmadı. Dropout'tan sonra değeri kaç olur?`,
-            en: R`With \(p = 0.35\), a cell with the value \(h = 1.3\) was not dropped. What is its value after Dropout?`,
-          },
-          label: { tr: "yeni değer =", en: "new value =" },
-          answer: 2,
-          compute: () => 1.3 / (1 - 0.35),
-          hint: { tr: R`Kalan değerler \(1/(1-p)\) ile çarpılır.`, en: R`Values that remain are multiplied by \(1/(1-p)\).` },
-          mistakes: [
-            {
-              value: 1.3,
-              why: {
-                tr: R`Kalan değerler aynen kalmaz: beklenen değer değişmesin diye \(1/(1 - p)\) ile büyütülür.`,
-                en: R`The values that remain are not left as they are: they are scaled by \(1/(1 - p)\) so that the expected value stays the same.`,
-              },
-            },
-            {
-              value: 0.845,
-              why: {
-                tr: R`\(1 - p\) ile çarpmışsınız. Kalan değerler \(1 - p\)'ye bölünür: \(1{,}3 / 0{,}65\).`,
-                en: R`You multiplied by \(1 - p\). The values that remain are divided by it: \(1.3 / 0.65\).`,
-              },
-            },
-          ],
-          explain: {
-            tr: R`\(1{,}3 / (1 - 0{,}35) = 1{,}3 / 0{,}65 = 2\). Böylece beklenen değer aynı kalır: \(0{,}65\cdot 2 = 1{,}3\).`,
-            en: R`\(1.3 / (1 - 0.35) = 1.3 / 0.65 = 2\). So the expected value stays the same: \(0.65\cdot 2 = 1.3\).`,
-          },
-        },
-        {
-          id: "dr-eval",
-          kind: "choice",
-          q: { tr: "Dropout çıkarımda neden kapalıdır?", en: "Why is Dropout off at inference?" },
-          options: [
-            {
-              text: { tr: "Çıkarımı hızlandırmak için", en: "To make inference faster" },
-              why: {
-                tr: "Dropout'un maliyeti çok küçüktür. Asıl neden sonucun rastgele olmamasıdır.",
-                en: "Dropout costs very little. The real reason is that the result must not be random.",
-              },
-            },
-            {
-              text: {
-                tr: "Tahmin rastgele olmasın ve ağın tamamı kullanılsın diye",
-                en: "So that the prediction is not random and the whole network is used",
-              },
-            },
-            {
-              text: { tr: "Ağırlıklar çıkarımda değişmesin diye", en: "So that the weights do not change at inference" },
-              why: {
-                tr: "Ağırlıkları değiştiren optimizer'dır; Dropout hiçbir ağırlığı değiştirmez.",
-                en: "The optimizer is what changes weights; Dropout changes none.",
-              },
-            },
-            {
-              text: { tr: "Test görüntüleri daha küçük olduğu için", en: "Because test images are smaller" },
-              why: { tr: "Test görüntüleri de 28×28'dir.", en: "Test images are 28×28 too." },
-            },
-          ],
-          answer: 1,
-          explain: {
-            tr: R`Eğitimde kalan değerler \(1/(1-p)\) ile büyütüldüğü için her değerin beklenen değeri zaten aynıdır. Bu yüzden çıkarımda hiçbir düzeltme gerekmez.`,
-            en: R`In training the remaining values are scaled by \(1/(1-p)\), so every value's expected value is already the same. That is why no correction is needed at inference.`,
           },
         },
       ],
@@ -813,6 +611,208 @@ export function buildPractice(lab: () => Promise<CnnLab>): PracticeSection[] {
           explain: {
             tr: R`Adam, gradyanın hareketli ortalamasını gradyan karelerinin ortalamasının köküne böler. Böylece ölçekleri çok farklı parametreler için tek bir \(\eta\) yeter.`,
             en: R`Adam divides the moving average of the gradient by the root of the moving average of its square. So one \(\eta\) suits parameters of very different scales.`,
+          },
+        },
+      ],
+    },
+    {
+      id: "px-drop",
+      title: { tr: "Dropout", en: "Dropout" },
+      intro: {
+        tr: R`Eğitimde değerlerin \(p\) kadarı sıfırlanır, kalanlar \(1/(1-p)\) ile büyütülür. SimpleCNN'de \(p = 0{,}45\) ve \(p = 0{,}35\) kullanılır.`,
+        en: R`In training a share \(p\) of the values is set to zero and the rest are scaled by \(1/(1-p)\). SimpleCNN uses \(p = 0.45\) and \(p = 0.35\).`,
+      },
+      read: { tab: "theory", section: "t-drop" },
+      questions: [
+        {
+          id: "dr-scale",
+          kind: "number",
+          q: {
+            tr: R`\(p = 0{,}35\) iken değeri \(h = 1{,}3\) olan bir hücre sıfırlanmadı. Dropout'tan sonra değeri kaç olur?`,
+            en: R`With \(p = 0.35\), a cell with the value \(h = 1.3\) was not dropped. What is its value after Dropout?`,
+          },
+          label: { tr: "yeni değer =", en: "new value =" },
+          answer: 2,
+          compute: () => 1.3 / (1 - 0.35),
+          hint: { tr: R`Kalan değerler \(1/(1-p)\) ile çarpılır.`, en: R`Values that remain are multiplied by \(1/(1-p)\).` },
+          mistakes: [
+            {
+              value: 1.3,
+              why: {
+                tr: R`Kalan değerler aynen kalmaz: beklenen değer değişmesin diye \(1/(1 - p)\) ile büyütülür.`,
+                en: R`The values that remain are not left as they are: they are scaled by \(1/(1 - p)\) so that the expected value stays the same.`,
+              },
+            },
+            {
+              value: 0.845,
+              why: {
+                tr: R`\(1 - p\) ile çarpmışsınız. Kalan değerler \(1 - p\)'ye bölünür: \(1{,}3 / 0{,}65\).`,
+                en: R`You multiplied by \(1 - p\). The values that remain are divided by it: \(1.3 / 0.65\).`,
+              },
+            },
+          ],
+          explain: {
+            tr: R`\(1{,}3 / (1 - 0{,}35) = 1{,}3 / 0{,}65 = 2\). Böylece beklenen değer aynı kalır: \(0{,}65\cdot 2 = 1{,}3\).`,
+            en: R`\(1.3 / (1 - 0.35) = 1.3 / 0.65 = 2\). So the expected value stays the same: \(0.65\cdot 2 = 1.3\).`,
+          },
+        },
+        {
+          id: "dr-eval",
+          kind: "choice",
+          q: { tr: "Dropout çıkarımda neden kapalıdır?", en: "Why is Dropout off at inference?" },
+          options: [
+            {
+              text: { tr: "Çıkarımı hızlandırmak için", en: "To make inference faster" },
+              why: {
+                tr: "Dropout'un maliyeti çok küçüktür. Asıl neden sonucun rastgele olmamasıdır.",
+                en: "Dropout costs very little. The real reason is that the result must not be random.",
+              },
+            },
+            {
+              text: {
+                tr: "Tahmin rastgele olmasın ve ağın tamamı kullanılsın diye",
+                en: "So that the prediction is not random and the whole network is used",
+              },
+            },
+            {
+              text: { tr: "Ağırlıklar çıkarımda değişmesin diye", en: "So that the weights do not change at inference" },
+              why: {
+                tr: "Ağırlıkları değiştiren optimizer'dır; Dropout hiçbir ağırlığı değiştirmez.",
+                en: "The optimizer is what changes weights; Dropout changes none.",
+              },
+            },
+            {
+              text: { tr: "Test görüntüleri daha küçük olduğu için", en: "Because test images are smaller" },
+              why: { tr: "Test görüntüleri de 28×28'dir.", en: "Test images are 28×28 too." },
+            },
+          ],
+          answer: 1,
+          explain: {
+            tr: R`Eğitimde kalan değerler \(1/(1-p)\) ile büyütüldüğü için her değerin beklenen değeri zaten aynıdır. Bu yüzden çıkarımda hiçbir düzeltme gerekmez.`,
+            en: R`In training the remaining values are scaled by \(1/(1-p)\), so every value's expected value is already the same. That is why no correction is needed at inference.`,
+          },
+        },
+      ],
+    },
+    {
+      id: "px-bn",
+      title: { tr: "Batch Normalization", en: "Batch Normalization" },
+      intro: {
+        tr: R`Her kanal önce standartlaştırılır, sonra öğrenilen iki sayıyla ölçeklenip kaydırılır: \(\hat x = (x - \mu_B)/\sigma_B\), \(y = \gamma\,\hat x + \beta\).`,
+        en: R`Each channel is first standardized, then scaled and shifted by two learned numbers: \(\hat x = (x - \mu_B)/\sigma_B\), \(y = \gamma\,\hat x + \beta\).`,
+      },
+      read: { tab: "theory", section: "t-bn" },
+      questions: [
+        {
+          id: "bn-calc",
+          kind: "number",
+          q: {
+            tr: R`\(x = 5\), \(\mu_B = 3\), \(\sigma_B = 2\), \(\gamma = 2\) ve \(\beta = 0{,}5\). BatchNorm'un çıktısı \(y\) kaçtır?`,
+            en: R`\(x = 5\), \(\mu_B = 3\), \(\sigma_B = 2\), \(\gamma = 2\) and \(\beta = 0.5\). What is the BatchNorm output \(y\)?`,
+          },
+          label: { tr: R`\(y =\)`, en: R`\(y =\)` },
+          answer: 2.5,
+          compute: () => 2 * ((5 - 3) / 2) + 0.5,
+          hint: {
+            tr: R`Önce \(\hat x\)'i bulun, sonra \(\gamma\) ile çarpıp \(\beta\) ekleyin.`,
+            en: R`Find \(\hat x\) first, then multiply by \(\gamma\) and add \(\beta\).`,
+          },
+          mistakes: [
+            {
+              value: 2,
+              why: {
+                tr: R`\(\beta\)'yı eklemeyi unutmuşsunuz: \(y = \gamma\,\hat x + \beta\).`,
+                en: R`You did not add \(\beta\): \(y = \gamma\,\hat x + \beta\).`,
+              },
+            },
+            {
+              value: 1.5,
+              why: {
+                tr: R`Ya \(\gamma = 2\) ile çarpmayı unuttunuz ya da \(\sigma\) yerine \(\sigma^2 = 4\)'e böldünüz. Önce \(\hat x = (x - \mu)/\sigma = 1\).`,
+                en: R`Either you did not multiply by \(\gamma = 2\), or you divided by \(\sigma^2 = 4\) instead of \(\sigma\). First \(\hat x = (x - \mu)/\sigma = 1\).`,
+              },
+            },
+          ],
+          explain: {
+            tr: R`\(\hat x = (5 - 3)/2 = 1\) ve \(y = 2\cdot 1 + 0{,}5 = 2{,}5\).`,
+            en: R`\(\hat x = (5 - 3)/2 = 1\) and \(y = 2\cdot 1 + 0.5 = 2.5\).`,
+          },
+        },
+        {
+          id: "bn-params",
+          kind: "number",
+          q: {
+            tr: "64 kanallı bir haritaya uygulanan BatchNorm katmanının kaç öğrenilen parametresi vardır?",
+            en: "How many learned parameters does a BatchNorm layer on a 64-channel map have?",
+          },
+          label: { tr: "parametre sayısı =", en: "number of parameters =" },
+          answer: 128,
+          compute: () => 2 * 64,
+          hint: {
+            tr: R`Her kanalın kendi \(\gamma\) ve \(\beta\) değeri vardır. Ortalama ve varyans öğrenilmez, ölçülür.`,
+            en: R`Each channel has its own \(\gamma\) and \(\beta\). The mean and variance are measured, not learned.`,
+          },
+          mistakes: [
+            {
+              value: 64,
+              why: {
+                tr: R`Her kanalda iki öğrenilen sayı var: ölçek \(\gamma\) ve kayma \(\beta\).`,
+                en: R`Each channel has two learned numbers: the scale \(\gamma\) and the shift \(\beta\).`,
+              },
+            },
+            {
+              value: 256,
+              why: {
+                tr: R`Hareketli ortalama ve varyans da saklanır ama öğrenilmez: gradyanla değil, batch'lerden sayılarak güncellenir. Öğrenilenler yalnızca \(\gamma\) ile \(\beta\).`,
+                en: R`The running mean and variance are stored too, but not learned: they are updated by counting over the batches, not by the gradient. Only \(\gamma\) and \(\beta\) are learned.`,
+              },
+            },
+          ],
+          explain: {
+            tr: R`\(2\cdot 64 = 128\). Hareketli ortalama ve varyans da modelle saklanır, ama gradyanla güncellenmedikleri için parametre sayılmazlar.`,
+            en: R`\(2\cdot 64 = 128\). The running mean and variance are stored with the model too, but they are not updated by gradients, so they do not count as parameters.`,
+          },
+        },
+        {
+          id: "bn-eval",
+          kind: "choice",
+          q: {
+            tr: R`Çıkarımda tek bir görüntü gelince BatchNorm \(\mu\) ve \(\sigma\) değerlerini nereden alır?`,
+            en: R`At inference, when a single image comes in, where does BatchNorm get \(\mu\) and \(\sigma\) from?`,
+          },
+          options: [
+            {
+              text: { tr: "O tek görüntüden hesaplar", en: "It computes them from that one image" },
+              why: {
+                tr: "O zaman tahmin görüntünün kendi ölçeğine bağlı olurdu ve aynı görüntü başka bir batch'te başka sonuç verirdi.",
+                en: "Then the prediction would depend on the image's own scale, and the same image would give another result in another batch.",
+              },
+            },
+            {
+              text: { tr: "Test kümesinin tamamından hesaplar", en: "It computes them from the whole test set" },
+              why: {
+                tr: "Model test verisinden hiçbir şey öğrenmemelidir, tahmin de test kümesinin geri kalanına bağlı olmamalıdır.",
+                en: "A model must learn nothing from the test data, and a prediction must not depend on the rest of the test set.",
+              },
+            },
+            {
+              text: {
+                tr: "Eğitim boyunca biriktirdiği hareketli ortalamalardan alır",
+                en: "From the running averages it collected during training",
+              },
+            },
+            {
+              text: { tr: "Hiç kullanmaz, BatchNorm çıkarımda kapalıdır", en: "It does not use them: BatchNorm is off at inference" },
+              why: {
+                tr: "Çıkarımda kapalı olan Dropout'tur. BatchNorm çalışmaya devam eder, yalnızca istatistiklerinin kaynağı değişir.",
+                en: "Dropout is what is off at inference. BatchNorm keeps working; only the source of its statistics changes.",
+              },
+            },
+          ],
+          answer: 2,
+          explain: {
+            tr: R`Eğitimde her batch kendi \(\mu_B, \sigma_B\) değerini kullanır ve bunların hareketli ortalaması saklanır. Çıkarımda bu sabit değerler kullanıldığı için aynı görüntü hep aynı sonucu verir.`,
+            en: R`In training each batch uses its own \(\mu_B, \sigma_B\), and a running average of them is kept. At inference these fixed values are used, so the same image always gives the same result.`,
           },
         },
       ],

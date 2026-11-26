@@ -31,7 +31,7 @@ NumPy, PyTorch) doğrulandı.
 | B10 | Bozuk alıştırmalar: perceptron öğrenme oranı alıştırması fark göstermiyordu, MLP ReLU alıştırmasında doğru kod gradyan kontrolünden geçmiyordu, "1 piksel kayınca girdilerin çoğu değişir" yanlıştı | Çözüldü (`135901d`) |
 | B11 | Terim birliği: "çapraz entropi", z = ön-aktivasyon; **bölüm** = chapter, **kısım** = sekme içindeki numaralı başlık | Çözüldü (`135901d`); bir kalıntı 5. incelemede düzeltildi (P9) |
 | B12 | CNN sayfasının adı "SimpleCNN Paneli" idi | Çözüldü: eğitmen "Evrişimli ağ (CNN)" adını seçti |
-| B13 | CNN Teori sırası: en ağır kısım BatchNorm, ReLU hatırlatmasından önce geliyor | **Açık: eğitmen kararı.** Yalnızca "ilk okumada atlayabilirsiniz" notu eklendi; 5. incelemede C3 olarak yeniden ele alındı |
+| B13 | CNN Teori sırası: en ağır kısım BatchNorm, ReLU hatırlatmasından önce geliyor | Çözüldü (2026-11-26, 5. incelemenin C3'ü): BatchNorm Teori'de son kısım (7) oldu; ReLU artık 2. kısım |
 | B14 | Gösterim: MLP Matematik'te L hem kayıp hem katman sayısı; CNN Matematik'te K hem katman hem sınıf sayısı | Not eklendi. 5. incelemede CNN'deki notun aslında eksik olduğu görüldü (C5) |
 | B15 | Doğrulanması gereken tarihler: Mark I (1960) ve IBM 704 gösterimi, Werbos 1974, Fukushima 1980, LeCun 1989, Ioffe ve Szegedy 2015, Santurkar 2018, Hamey 1998 | Çözüldü (2026-11-26, 5. inceleme): hepsi kaynakla doğrulandı. Hamey 1998'in iddiası tartışmalı çıktı, metin buna göre düzeltildi (M3) |
 
@@ -39,3 +39,5 @@ NumPy, PyTorch) doğrulandı.
 
 - 2026-11-26: [5. inceleme](5_2026-11-26_pedagojik-inceleme.md) aynı üç bölüme, bu arada eklenen
   Alıştırma sekmesiyle birlikte yeniden baktı.
+- 2026-11-26: B13, 5. incelemenin 5. önerisiyle kapandı: CNN bölümünde BatchNorm Teori'nin,
+  Matematik'in ve Alıştırma'nın son kısmına taşındı (ayrıntılar 5. incelemede, C3).
