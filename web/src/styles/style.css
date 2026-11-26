@@ -1374,10 +1374,10 @@ h2 > .info-btn { vertical-align: 2px; }
 .chm-home { padding: 2px 6px; margin: -2px -6px; border-radius: 6px; font-size: 12.5px; font-weight: 550; letter-spacing: 0; text-transform: none; color: var(--accent-strong); text-decoration: none; white-space: nowrap; }
 .chm-home:hover { background: var(--surface-2); text-decoration: underline; }
 .chm-home:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-/* The house at the far left of every chapter's top bar: back to the start page */
+/* The house at the start of the top bar's tools, next to the glossary: back to the start page */
 .home-link {
-  flex: none; display: grid; place-items: center; width: 32px; height: 32px; margin-right: -4px;
-  border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); color: var(--text-2);
+  flex: none; display: grid; place-items: center; width: 30px; height: 30px;
+  border: 1px solid var(--border); border-radius: 999px; background: var(--surface-2); color: var(--text-2);
 }
 .home-link svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .home-link:hover { color: var(--text); border-color: var(--axis); }
@@ -1406,9 +1406,7 @@ a.chm-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2p
 @media (max-width: 720px) {
   .brand-btn { gap: 8px; }
   .chapter-menu { left: -4px; }
-  /* On a phone the house takes the logo's place, so the bar is no taller than before */
-  .brand { gap: 10px; }
-  .home-link { width: 30px; height: 30px; }
+  /* On a phone the house on the right takes the logo's room, so the bar is no taller than before */
   .brand-btn .logo { display: none; }
 }
 @media (max-width: 360px) {
