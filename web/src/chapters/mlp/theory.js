@@ -1,9 +1,9 @@
 /*
  * Chapter 2: the multilayer network (MLP). Everything runs in the browser, on net.js.
  *
- * Theory tab: six sections, each with a live demo (activation functions, the hidden layer on
- * XOR, the loss and gradient descent, backpropagation step by step, how many neurons, an MLP on
- * images). Playground tab: train a small network on 2-D data and look inside it.
+ * Theory tab: seven sections, each with a live demo (activation functions, the hidden layer on
+ * XOR, the loss and gradient descent, backpropagation step by step, how many neurons, overfitting
+ * and the validation set, an MLP on images). Playground tab: train a small network on 2-D data and look inside it.
  *
  * Texts are { tr, en } pairs of HTML; \( TeX \) is typeset by math.js and [[key|text]] links a
  * glossary term. The panels are rebuilt on every language change; the demos keep their state.
@@ -18,6 +18,7 @@ import { $, PLACE_TITLES, clamp, cssVar, fmtNum, fmtPct, h, hexToRgb, hideTip, l
 import { termify } from "../../shared/glossary/terms.js";
 import { NET } from "../../engines/net.js";
 import { KIT } from "../../shared/kit.js";
+import { OVERFIT, advanceOverfit, startOverfit, truth } from "./overfit.ts";
 
 Object.assign(TABS, {
   theory: { tab: "#tab-theory", panel: "#panel-theory", hash: "#teori" },
@@ -52,8 +53,8 @@ const TEXT = {
         en: R`The perceptron could not learn XOR. The way out was to connect perceptrons in layers, but there was no rule to teach the weights of the [[hidden-layer|hidden layer]] in between. In 1986 David Rumelhart, Geoffrey Hinton and Ronald Williams showed, in a paper in <i>Nature</i>, that multilayer networks can be trained with [[backprop|backpropagation]] and that their hidden layers learn useful features by themselves.` },
       { tr: R`Bu bölümde perceptrondan üç farkı göreceğiz: basamak yerine yumuşak bir [[activation|aktivasyon]]; yalnızca yanlışlara bakan perceptron ölçütü yerine her örneği ölçen bir [[loss|kayıp fonksiyonu]]; ve hatayı katman katman geriye taşıyarak her ağırlığın [[gradient-descent|gradyan inişi]] için gereken türevini bulan geri yayılım. Sonunda bir [[mlp|MLP]]'nin neler öğrenebildiğine ve görüntülerde neden yetersiz kaldığına bakacağız; bu da bizi CNN'e götürecek. MLP, <i>multilayer perceptron</i>'un kısaltmasıdır (Türkçe kaynaklarda çok katmanlı algılayıcı, ÇKA): derslerde çoğu zaman kısaca YSA (yapay sinir ağı, ANN) denen klasik ileri beslemeli ağdır; YSA ise bütün ailenin adıdır, CNN ve RNN de birer YSA'dır.`,
         en: R`In this chapter we meet three differences from the perceptron: a smooth [[activation|activation]] instead of the step; a [[loss|loss function]] that measures every example instead of the perceptron criterion, which looks only at the mistakes; and backpropagation, which carries the error back layer by layer and finds the derivative [[gradient-descent|gradient descent]] needs for every weight. At the end we look at what an [[mlp|MLP]] can learn and why it falls short on images, which leads to the CNN. MLP stands for <i>multilayer perceptron</i> (in Turkish sources çok katmanlı algılayıcı, ÇKA): it is the classic feed-forward network that courses often just call an ANN (artificial neural network, Turkish YSA); ANN is the name of the whole family, and CNNs and RNNs are ANNs too.` },
-      { tr: R`<b>Bu bölümün sonunda</b> şunları yapabileceksiniz: bir gizli katmanın XOR'u nasıl çözdüğünü gizli uzayda açıklamak; çapraz entropi kaybını ve çıktıdaki gradyanını yazmak; küçük bir ağda geri yayılımı adım adım hesaplamak; nöron sayısının ağın öğrenebileceklerini nasıl değiştirdiğini ve MLP'nin görüntülerde neden zorlandığını anlatmak.`,
-        en: R`<b>By the end of this chapter</b> you will be able to: explain in the hidden space how a hidden layer solves XOR; write down the cross-entropy loss and its gradient at the output; compute backpropagation step by step on a small network; and describe how the number of neurons changes what a network can learn, and why an MLP struggles with images.` },
+      { tr: R`<b>Bu bölümün sonunda</b> şunları yapabileceksiniz: bir gizli katmanın XOR'u nasıl çözdüğünü gizli uzayda açıklamak; çapraz entropi kaybını ve çıktıdaki gradyanını yazmak; küçük bir ağda geri yayılımı adım adım hesaplamak; nöron sayısının ağın öğrenebileceklerini nasıl değiştirdiğini anlatmak; aşırı uyumu eğitim ve doğrulama hatasından tanımak; ve MLP'nin görüntülerde neden zorlandığını açıklamak.`,
+        en: R`<b>By the end of this chapter</b> you will be able to: explain in the hidden space how a hidden layer solves XOR; write down the cross-entropy loss and its gradient at the output; compute backpropagation step by step on a small network; describe how the number of neurons changes what a network can learn; recognize overfitting from the training and validation errors; and explain why an MLP struggles with images.` },
     ],
     compare: {
       title: { tr: "Perceptrondan MLP'ye", en: "From the perceptron to the MLP" },
@@ -126,6 +127,19 @@ const TEXT = {
     model: { tr: R`<b>Deneyin</b> (her seferinde önce tahmin edin, sonra eğitin): <b>Tepe</b>'yi seçip \(H = 1\) ve \(H = 2\) ile eğitin. Bir nöron neden yetmiyor da iki nöron yetiyor? (Biri yukarı, biri aşağı iki yumuşak basamak bir tepe yapar; Matematik, 6. kısım.) <b>Basamak</b>'ta \(H = 1\) yapın: tek nöronun kendisi basamak olur ve eğitim sürdükçe dikleşir. <b>Dalga</b>'da \(H = 1\)'den başlayıp artırın: kaç nörondan sonra iyi uyuyor?`,
       en: R`<b>Try it</b> (each time, predict first, then train): pick the <b>Bump</b> and train with \(H = 1\) and \(H = 2\). Why is one neuron not enough while two are? (Two soft steps, one up and one down, make a bump; Math, section 6.) For the <b>Step</b>, set \(H = 1\): the single neuron itself becomes the step and gets steeper the longer it trains. For the <b>Wave</b>, start at \(H = 1\) and go up: from how many neurons on is the fit good?` },
   },
+  general: {
+    h: PLACE_TITLES["ml-general"],
+    p1: { tr: R`Bir ağın asıl işi eğitim noktalarına uymak değil, hiç görmediği yeni noktalarda doğru tahmin yapmaktır: buna [[generalization|genelleme]] denir. Genellemeyi ölçmek için veri üçe bölünür. [[train-set|Eğitim seti]] ağırlıkları öğrenmek için kullanılır. [[val-set|Doğrulama seti]] eğitimde kullanılmaz; eğitim sürerken ağın ne kadar genellediğini izlemeye ve nöron sayısı, epoch sayısı, \(\eta\) gibi [[hyperparameter|hiperparametreleri]] seçmeye yarar. [[test-set|Test seti]] ise en sonda, bütün seçimler bittikten sonra bir kez kullanılır.`,
+      en: R`A network's real job is not to fit its training points but to predict well on new points it has never seen: this is called [[generalization|generalization]]. To measure it, the data are split three ways. The [[train-set|training set]] is used to learn the weights. The [[val-set|validation set]] is not trained on; it shows how well the network generalizes while it trains, and it is used to choose [[hyperparameter|hyperparameters]] such as the number of neurons, the number of epochs and \(\eta\). The [[test-set|test set]] is used once, at the very end, after every choice has been made.` },
+    p2: { tr: R`Sağdaki demoda 12 eğitim noktası (dolu) kesikli eğriden gürültüyle alınmış; içi boş 60 nokta aynı eğriden alınmış doğrulama noktalarıdır ve ağ onları hiç görmez. Ağ büyüdükçe eğitim noktalarının hepsinden geçmeyi öğrenir ve eğitim hatası sıfıra yaklaşır. Ama eğri gürültüyü de izleyerek kıvrılır ve doğrulama hatası bir noktadan sonra yükselir. Bu, [[overfitting|aşırı uyumdur]] (overfitting): ağ eğrinin kuralını değil, eğitim noktalarının gürültüsünü öğrenmiştir. Tersi, ağın eğitim noktalarına bile uyamaması, [[underfitting|yetersiz öğrenmedir]].`,
+      en: R`In the demo on the right, 12 training points (filled) are taken from the dashed curve with noise; the 60 open points are validation points from the same curve, which the network never sees. The bigger the network, the better it learns to pass through every training point, and the training error approaches zero. But the curve bends to follow the noise too, and after a while the validation error rises. This is [[overfitting|overfitting]]: the network has learned the noise of the training points instead of the rule of the curve. The opposite, a network that cannot fit even its training points, is [[underfitting|underfitting]].` },
+    p3: { tr: R`Doğrulama hatasının en düşük olduğu an, eğitimi durdurmak için iyi bir yerdir: buna [[early-stopping|erken durdurma]] denir. Doğrulama setine bakarak seçim yaptığımız için doğrulama hatası da biraz iyimserdir; asıl sonucu bu yüzden test setinde ölçeriz ve test sonucuna bakıp modeli bir daha değiştirmeyiz. Aşırı uyuma karşı başka çareler de var: daha çok veri, daha küçük bir model ve [[dropout|dropout]] gibi düzenlileştirme yöntemleri (CNN bölümünde).`,
+      en: R`The moment the validation error is lowest is a good place to stop training: this is called [[early-stopping|early stopping]]. Since we choose by looking at the validation set, the validation error is a little optimistic too; so the real result is measured on the test set, and the model is not changed again after looking at it. There are other remedies for overfitting: more data, a smaller model, and regularization such as [[dropout|dropout]] (in the CNN chapter).` },
+    model: { tr: R`<b>SimpleCNN'de:</b> MNIST'in 60.000 eğitim görüntüsünden 12.000'i doğrulama için ayrılır (<code>validation_split = 0.2</code>) ve ağırlıklar kalan 48.000 görüntüyle öğrenilir. Her epoch'tan sonra doğrulama doğruluğuna bakılır. Bilinen %99,29 ise eğitim bittikten sonra ayrı 10.000 test görüntüsünde bir kez ölçülen sonuçtur.`,
+      en: R`<b>In SimpleCNN:</b> 12,000 of MNIST's 60,000 training images are set aside for validation (<code>validation_split = 0.2</code>), and the weights are learned from the other 48,000. The validation accuracy is checked after every epoch. The familiar 99.29% is measured once, after training, on the separate 10,000 test images.` },
+    try: { tr: R`<b>Deneyin</b> (önce tahmin edin): \(H = 2\) ile eğitin, sonra \(H = 40\) ile. Hangisinde iki hata birbirinden ayrılıyor? 40 nöronda doğrulama hatası en düşük değerine hangi epoch'ta iniyor? Eğitim bitince yeşil eğri o anı, yani erken durdurulmuş ağı gösterir: son eğriyle karşılaştırın. <b>Başka veri</b> ile aynı deneyi tekrarlayın: etki her veride aynı büyüklükte değildir. Aynısını sınıflandırmada görmek için Deneme alanında <b>Gürültülü</b> veriyi deneyin.`,
+      en: R`<b>Try it</b> (predict first): train with \(H = 2\), then with \(H = 40\). In which do the two errors part ways? With 40 neurons, at which epoch does the validation error reach its lowest? When training ends, the green curve shows that moment, the early-stopped network: compare it with the final curve. Repeat with <b>Other data</b>: the effect is not equally large for every data set. To see the same in classification, try the <b>Noisy</b> data in the Playground.` },
+  },
   images: {
     h: PLACE_TITLES["ml-images"],
     p1: { tr: R`Bir MLP görüntüyü nasıl görür? 28×28 piksellik bir MNIST rakamı [[flatten|düzleştirilip]] 784 sayılık bir vektör olur ve her gizli nöron bu 784 sayının her birine ayrı bir ağırlık verir. 512 gizli nöronlu tek bir katman \(784 \cdot 512 + 512 = 401\,920\) [[parameter|parametre]] demektir. İyi eğitilmiş bir MLP, MNIST'te yaklaşık %98 doğruluğa ulaşabilir.`,
@@ -136,8 +150,8 @@ const TEXT = {
       en: R`[[convolution|Convolution]] solves both problems at once: a small filter (5×5 = 25 weights in the first convolution layer of SimpleCNN) looks only at neighbouring pixels, and the same weights are used everywhere in the image. Because it looks for the same pattern everywhere with the same weights, the two convolution layers that extract SimpleCNN's features need only 52,096 parameters in all. That is the subject of the next chapter.` },
     model: { tr: R`<b>SimpleCNN'in sonu zaten bir MLP:</b> [[fully-connected|FC1]] (1024 → 512, ReLU) ve FC2 (512 → 10). Evrişim katmanları görüntüden özellikleri çıkarır, MLP de bu özelliklerden sınıfa karar verir. Parametrelerin çoğu da bu kısımdadır: FC1 tek başına 524.800 parametre, bütün modelin %90'ı. Bu yüzden SimpleCNN'in toplamı (582 bin), yukarıdaki tek katmanlı MLP'den (402 bin) az değildir; evrişimin kazancı parametre sayısında değil, komşuluğu kullanması ve aynı deseni her konumda tanımasındadır.`,
       en: R`<b>SimpleCNN ends with an MLP:</b> [[fully-connected|FC1]] (1024 → 512, ReLU) and FC2 (512 → 10). The convolution layers extract features from the image and the MLP decides the class from those features. Most of the parameters are there too: FC1 alone has 524,800, 90% of the whole model. So SimpleCNN's total (582 thousand) is not smaller than the one-layer MLP above (402 thousand); what convolution gains is not a smaller parameter count but using the neighbours and recognizing the same pattern at every position.` },
-    recap: { tr: R`<b>Özet:</b> Gizli katmanlar veriyi, bir doğrunun ayırabileceği yeni bir gösterime çevirir. Bunu öğrenmek için türevlenebilir bir aktivasyon, çapraz entropi gibi her örneği ölçen bir kayıp ve bütün gradyanları bir geri hesapta bulan geri yayılım gerekir. Yeterince nöronla bir MLP her sürekli fonksiyona yaklaşabilir; ama görüntülerde komşuluğu bilmez ve aynı deseni her konumda yeniden öğrenir. CNN bu eğitim düzeneğini aynen kullanır, yalnızca katmanları değişir.`,
-      en: R`<b>Recap:</b> hidden layers turn the data into a new representation that a line can separate. Learning it takes a differentiable activation, a loss that measures every example, such as cross-entropy, and backpropagation, which finds all the gradients in one backward pass. With enough neurons an MLP can approximate any continuous function; but on images it knows nothing about neighbours and learns the same pattern again at every position. The CNN keeps exactly this training machinery; only its layers change.` },
+    recap: { tr: R`<b>Özet:</b> Gizli katmanlar veriyi, bir doğrunun ayırabileceği yeni bir gösterime çevirir. Bunu öğrenmek için türevlenebilir bir aktivasyon, çapraz entropi gibi her örneği ölçen bir kayıp ve bütün gradyanları bir geri hesapta bulan geri yayılım gerekir. Yeterince nöronla bir MLP her sürekli fonksiyona yaklaşabilir; ama eğitim noktalarına fazla uyarsa genellemesi bozulur, bunu da ancak eğitimde kullanılmayan doğrulama ve test verisi gösterir. Görüntülerde ise komşuluğu bilmez ve aynı deseni her konumda yeniden öğrenir. CNN bu eğitim düzeneğini aynen kullanır, yalnızca katmanları değişir.`,
+      en: R`<b>Recap:</b> hidden layers turn the data into a new representation that a line can separate. Learning it takes a differentiable activation, a loss that measures every example, such as cross-entropy, and backpropagation, which finds all the gradients in one backward pass. With enough neurons an MLP can approximate any continuous function; but if it fits its training points too closely it generalizes worse, and only validation and test data the network did not train on can show that. On images, moreover, it knows nothing about neighbours and learns the same pattern again at every position. The CNN keeps exactly this training machinery; only its layers change.` },
   },
 };
 
@@ -744,7 +758,108 @@ function buildCapacityDemo() {
 }
 
 // =====================================================================
-// Theory 6 · an MLP on images: shift a digit by one pixel
+// Theory 6 · memorizing or generalizing: training and validation error (overfit.ts)
+// =====================================================================
+const OV = { hidden: 2, data: 1, run: null, timer: 0 };
+OV.run = startOverfit(OV.hidden, OV.data);
+
+function buildGeneralDemo() {
+  const host = h("div", { class: "pc-demo" });
+  const stage = h("div", { class: "pc-stage" });
+  const graph = createGraph(stage, { x: [-1.05, 1.05], y: [-1.6, 1.6], xTicks: [-1, -0.5, 0, 0.5, 1], yTicks: [-1, 0, 1], xName: "x", yName: "y",
+    label: L({ tr: "Eğitim ve doğrulama noktaları, ağın çıktısı", en: "Training and validation points, and the network's output" }) });
+  const sizes = segmented(OVERFIT.sizes.map((n) => [String(n), L({ tr: `${n} nöron`, en: `${n} neurons` })]), String(OV.hidden),
+    (v) => { OV.hidden = Number(v); restart(); }, L({ tr: "Gizli nöron sayısı", en: "Number of hidden neurons" }));
+  const play = button("", "btn primary");
+  const again = button(L({ tr: "Baştan", en: "Restart" }));
+  const other = button(L({ tr: "Başka veri", en: "Other data" }));
+  const status = msg("");
+  const legend = h("div", { class: "legend" },
+    h("span", { class: "legend-item" }, h("span", { class: "key-dot" }), L({ tr: "eğitim noktası", en: "training point" })),
+    h("span", { class: "legend-item" }, h("span", { class: "key-dot hollow" }), L({ tr: "doğrulama noktası", en: "validation point" })),
+    h("span", { class: "legend-item" }, h("span", { class: "key-line muted dashed" }), L({ tr: "gerçek eğri", en: "true curve" })),
+    h("span", { class: "legend-item" }, h("span", { class: "key-line s1" }), L({ tr: "ağın çıktısı", en: "network output" })),
+    h("span", { class: "legend-item" }, h("span", { class: "key-line s3" }), L({ tr: "en iyi doğrulama anı (eğitim bitince)", en: "best validation moment (when training ends)" })));
+  const chart = chartHost(190);
+  host.append(h("div", { class: "t-controls" }, sizes), stage, legend,
+    h("div", { class: "mini-title", text: L({ tr: "Ortalama kare hata (epoch'a göre)", en: "Mean squared error (by epoch)" }) }), chart,
+    h("div", { class: "t-controls" }, play, again, other), status);
+
+  function restart() {
+    const was = Boolean(OV.timer);
+    OV.timer = stop(OV.timer);
+    OV.run = startOverfit(OV.hidden, OV.data);
+    if (was) start();
+    update();
+  }
+  function start() {
+    if (OV.run.net.epoch >= OVERFIT.epochs) OV.run = startOverfit(OV.hidden, OV.data);
+    OV.timer = every(30, () => {
+      advanceOverfit(OV.run, 20);
+      if (OV.run.net.epoch >= OVERFIT.epochs) OV.timer = stop(OV.timer);
+      update();
+    });
+  }
+  play.addEventListener("click", () => {
+    if (OV.timer) OV.timer = stop(OV.timer); else start();
+    update();
+  });
+  again.addEventListener("click", restart);
+  other.addEventListener("click", () => { OV.data = (OV.data % 3) + 1; restart(); });
+
+  function update() {
+    const run = OV.run;
+    const done = run.net.epoch >= OVERFIT.epochs;
+    const curves = [{ f: truth, color: COLORS.muted, width: 2, dash: true }];
+    if (done && run.best.epoch < run.net.epoch) curves.push({ f: (x) => NET.predict(run.best.net, [x]), color: COLORS.one, width: 1.8 });
+    curves.push({ f: (x) => NET.predict(run.net, [x]), color: COLORS.lineB, width: 3 });
+    graph.draw({
+      curves,
+      points: [
+        ...run.val.map((p) => ({ x: p.x[0], y: p.y, r: 2.6, hollow: true, color: COLORS.muted })),
+        ...run.train.map((p) => ({ x: p.x[0], y: p.y, r: 4, color: COLORS.text })),
+      ],
+    });
+    const n = OVERFIT.epochs / OVERFIT.every + 1;
+    const epochAt = (i) => (i - 1) * OVERFIT.every;
+    const top = 0.3;
+    const at = (v) => Math.min(v, top);
+    const bestIndex = run.history.findIndex((p) => p.epoch === run.best.epoch) + 1;
+    lineChart(chart, {
+      label: L({ tr: "Eğitim ve doğrulama hatası", en: "Training and validation error" }),
+      empty: "",
+      x: { min: 1, max: n, ticks: [0, 1000, 2000, 3000, 4000].map((e) => ({ v: e / OVERFIT.every + 1, label: fmtNum(e, 0) })) },
+      y: { min: 0, max: top, ticks: linearTicks(0, top, 0.1, (v) => fmtNum(v, 1)) },
+      series: [
+        { points: run.history.map((p, i) => [i + 1, at(p.train)]), color: "var(--series-1)" },
+        { points: run.history.map((p, i) => [i + 1, at(p.val)]), color: "var(--series-2)" },
+        ...(run.best.epoch > 0 ? [{ points: [[bestIndex, at(run.best.val)]], color: "var(--text-2)", markers: true, hoverDot: false }] : []),
+      ],
+      tooltip: (i) => ({
+        title: `Epoch ${epochAt(i + 1)}`,
+        rows: [
+          { value: nf(run.history[i].train, 3), label: L({ tr: "eğitim hatası", en: "training error" }), color: "var(--series-1)" },
+          { value: nf(run.history[i].val, 3), label: L({ tr: "doğrulama hatası", en: "validation error" }), color: "var(--series-2)" },
+        ],
+      }),
+    });
+    play.textContent = OV.timer ? L({ tr: "❚❚ Durdur", en: "❚❚ Pause" }) : L({ tr: "▶ Eğit", en: "▶ Train" });
+    const last = run.history.at(-1);
+    const rose = done && last.val > run.best.val * 1.2;
+    const params = NET.paramCount([1, OV.hidden, 1]);
+    setMsg(status, L({
+      tr: `${OV.hidden} nöron (${params} parametre, ${run.train.length} eğitim noktası) · epoch ${run.net.epoch} · eğitim hatası ${nf(last.train, 3)} · doğrulama hatası ${nf(last.val, 3)} · en düşük doğrulama hatası ${nf(run.best.val, 3)} (epoch ${run.best.epoch})${done ? (rose ? " · aşırı uyum: doğrulama hatası en düşük değerinden yükseldi" : " · iki hata birbirine yakın kaldı") : ""}`,
+      en: `${OV.hidden} neurons (${params} parameters, ${run.train.length} training points) · epoch ${run.net.epoch} · training error ${nf(last.train, 3)} · validation error ${nf(last.val, 3)} · lowest validation error ${nf(run.best.val, 3)} (epoch ${run.best.epoch})${done ? (rose ? " · overfitting: the validation error rose from its lowest" : " · the two errors stayed close") : ""}`,
+    }), done ? (rose ? "bad" : "good") : "");
+  }
+  OV.update = update;
+  redrawers.add(update);
+  update();
+  return host;
+}
+
+// =====================================================================
+// Theory 7 · an MLP on images: shift a digit by one pixel
 // =====================================================================
 const DIGIT = [
   "..............",
@@ -840,6 +955,7 @@ function buildTheory() {
   const Ls = TEXT.loss;
   const B = TEXT.backprop;
   const C = TEXT.capacity;
+  const G = TEXT.general;
   const Im = TEXT.images;
   const inModel = (t) => html("div", { class: "in-model" }, t);
   panel.replaceChildren(
@@ -851,7 +967,8 @@ function buildTheory() {
       formula(L({ tr: R`= \underbrace{(\hat y - y)}_{\text{Geri 1}}\cdot\underbrace{v_1}_{\text{Geri 3}}\cdot\underbrace{h_1(1 - h_1)}_{\text{Geri 4}}\cdot\underbrace{x_1}_{\text{Geri 5}}`,
         en: R`= \underbrace{(\hat y - y)}_{\text{Backward 1}}\cdot\underbrace{v_1}_{\text{Backward 3}}\cdot\underbrace{h_1(1 - h_1)}_{\text{Backward 4}}\cdot\underbrace{x_1}_{\text{Backward 5}}` })), html("p", {}, B.p2), html("p", {}, B.p3), inModel(B.model)], buildBackpropDemo()),
     card("ml-capacity", 5, C, [html("p", {}, C.p1), formula(R`\hat y(x) = c + \sum_{j=1}^{H} v_j \tanh(w_j x + b_j)`), html("p", {}, C.p2), html("p", {}, C.p3), inModel(C.model)], buildCapacityDemo()),
-    card("ml-images", 6, Im, [html("p", {}, Im.p1), html("p", {}, Im.p2), html("p", {}, Im.p3), inModel(Im.model), html("p", {}, Im.recap), nextChapterCard()], buildImageDemo()));
+    card("ml-general", 6, G, [html("p", {}, G.p1), html("p", {}, G.p2), html("p", {}, G.p3), inModel(G.model), inModel(G.try)], buildGeneralDemo()),
+    card("ml-images", 7, Im, [html("p", {}, Im.p1), html("p", {}, Im.p2), html("p", {}, Im.p3), inModel(Im.model), html("p", {}, Im.recap), nextChapterCard()], buildImageDemo()));
 }
 
 // =====================================================================
@@ -863,10 +980,10 @@ const PG = {
 };
 const LRS = [0.003, 0.01, 0.03, 0.1, 0.3, 1, 3];
 const SPEEDS = [1, 5, 20, 60, 200];
-const PRESETS = ["xor", "circle", "moons", "spiral", "blobs", "empty"];
+const PRESETS = ["xor", "circle", "moons", "spiral", "blobs", "noisy", "empty"];
 const presetName = (k) => L({
   xor: { tr: "XOR", en: "XOR" }, circle: { tr: "Daire", en: "Circle" }, moons: { tr: "İki hilal", en: "Two moons" },
-  spiral: { tr: "Spiral", en: "Spiral" }, blobs: { tr: "İki küme", en: "Two blobs" }, empty: { tr: "Boş", en: "Empty" }, custom: { tr: "Özel", en: "Custom" },
+  spiral: { tr: "Spiral", en: "Spiral" }, blobs: { tr: "İki küme", en: "Two blobs" }, noisy: { tr: "Gürültülü", en: "Noisy" }, empty: { tr: "Boş", en: "Empty" }, custom: { tr: "Özel", en: "Custom" },
 }[k]);
 
 function makePreset(kind, seed, n = 160) {
@@ -905,9 +1022,17 @@ function makePreset(kind, seed, n = 160) {
       const k = i % 2;
       pts.push({ x: [(k ? 0.55 : -0.55) + 0.32 * gauss(r), (k ? 0.45 : -0.45) + 0.32 * gauss(r)], y: k });
     }
+  } else if (kind === "noisy") {   // two blobs that overlap: fewer points, so a big network can memorize them
+    for (let i = 0; i < 100; i++) {
+      const k = i % 2;
+      pts.push({ x: [(k ? 0.45 : -0.45) + 0.5 * gauss(r), (k ? 0.35 : -0.35) + 0.5 * gauss(r)], y: k });
+    }
   }
-  return pts;
+  // A quarter of the points, as many of each class, are set aside for testing: the network never trains on them
+  return pts.map((p, i) => ({ ...p, test: i % 8 === 3 || i % 8 === 6 }));
 }
+const trainPoints = () => PG.data.filter((p) => !p.test);
+const testPoints = () => PG.data.filter((p) => p.test);
 
 const pgSizes = () => [2, ...Array(PG.layers).fill(PG.width), 1];
 function pgReset() {
@@ -919,10 +1044,12 @@ PG.data = makePreset(PG.preset, PG.seed);
 pgReset();
 
 function pgEpoch() {
-  if (!PG.data.length) return;
-  NET.trainEpoch(PG.net, PG.data, { lr: LRS[PG.lrIndex], batch: 10, rand: seeded(PG.net.epoch + 1) });
-  const loss = NET.lossOf(PG.net, PG.data);
-  PG.history.push(Number.isFinite(loss) ? loss : 10);
+  const train = trainPoints();
+  if (!train.length) return;
+  NET.trainEpoch(PG.net, train, { lr: LRS[PG.lrIndex], batch: 10, rand: seeded(PG.net.epoch + 1) });
+  const finite = (v) => (Number.isFinite(v) ? v : 10);
+  const test = testPoints();
+  PG.history.push({ train: finite(NET.lossOf(PG.net, train)), test: test.length ? finite(NET.lossOf(PG.net, test)) : null });
 }
 
 function buildPlay() {
@@ -931,11 +1058,11 @@ function buildPlay() {
   const intro = h("div", { class: "card pg-intro" },
     h("h2", { text: L({ tr: "Deneme alanı: bir sinir ağını kendiniz eğitin", en: "Playground: train a neural network yourself" }) }),
     html("p", { class: "sub" }, {
-      tr: R`Bir veri seçin, ağın katman ve nöron sayısını ayarlayın ve <b>Eğit</b>'e basın. Arka plan ağın her noktaya verdiği olasılıktır, kalın çizgi karar sınırı (\(\hat y = 0{,}5\)). Sağdaki şemada her kare bir nöronun düzlemin her yerindeki çıktısını gösterir; bir nörona tıklayınca büyük düzlemde onu görürsünüz. 0 gizli katman bir perceptrondur (sigmoid'li): yalnızca doğru çizebilir. <b>Deneyin:</b>`,
-      en: R`Pick a dataset, set the number of layers and neurons and press <b>Train</b>. The background is the probability the network gives every point, the thick line is the decision boundary (\(\hat y = 0.5\)). In the diagram on the right each square shows a neuron's output over the whole plane; click a neuron to see it on the big plane. 0 hidden layers is a perceptron (with a sigmoid): it can only draw a line. <b>Try this:</b>` }),
+      tr: R`Bir veri seçin, ağın katman ve nöron sayısını ayarlayın ve <b>Eğit</b>'e basın. Hazır verilerde noktaların dörtte biri (halkalı olanlar) test için ayrılır: ağ onlarla eğitilmez, yalnızca ne kadar genellediğini ölçmeye yarar. Arka plan ağın her noktaya verdiği olasılıktır, kalın çizgi karar sınırı (\(\hat y = 0{,}5\)). Sağdaki şemada her kare bir nöronun düzlemin her yerindeki çıktısını gösterir; bir nörona tıklayınca büyük düzlemde onu görürsünüz. 0 gizli katman bir perceptrondur (sigmoid'li): yalnızca doğru çizebilir. <b>Deneyin:</b>`,
+      en: R`Pick a dataset, set the number of layers and neurons and press <b>Train</b>. In the ready-made datasets a quarter of the points (the ringed ones) are set aside for testing: the network does not train on them, they only measure how well it generalizes. The background is the probability the network gives every point, the thick line is the decision boundary (\(\hat y = 0.5\)). In the diagram on the right each square shows a neuron's output over the whole plane; click a neuron to see it on the big plane. 0 hidden layers is a perceptron (with a sigmoid): it can only draw a line. <b>Try this:</b>` }),
     html("ol", { class: "sub" }, {
-      tr: R`<li><b>Daire</b>, 0 gizli katman: doğruluk neden %50–60 civarında kalıyor?</li><li>1 gizli katman, 1, 2, sonra 3 nöron: önce tahmin edin, daireyi çözmek için en az kaç nöron gerekir? (Her gizli nöron bir doğru çizer; iç noktaları çevrelemek için kaç doğru gerekir?) Sonra nöronlara tek tek tıklayıp doğrularına bakın.</li><li><b>Spiral</b>: 1 katmanda 8 nöron ile 2 katmanda 8'er nöronu karşılaştırın.</li><li>Aynı ağı sigmoid, tanh ve ReLU ile eğitin: hangisi daha hızlı öğreniyor?</li>`,
-      en: R`<li><b>Circle</b> with 0 hidden layers: why does the accuracy stay around 50–60%?</li><li>1 hidden layer with 1, 2, then 3 neurons: predict first, what is the fewest neurons that solves the circle? (Each hidden neuron draws one line; how many lines does it take to fence in the inner points?) Then click the neurons one by one and look at their lines.</li><li><b>Spiral</b>: compare 1 layer of 8 neurons with 2 layers of 8.</li><li>Train the same network with sigmoid, tanh and ReLU: which one learns fastest?</li>` }));
+      tr: R`<li><b>Daire</b>, 0 gizli katman: doğruluk neden %50–60 civarında kalıyor?</li><li>1 gizli katman, 1, 2, sonra 3 nöron: önce tahmin edin, daireyi çözmek için en az kaç nöron gerekir? (Her gizli nöron bir doğru çizer; iç noktaları çevrelemek için kaç doğru gerekir?) Sonra nöronlara tek tek tıklayıp doğrularına bakın.</li><li><b>Spiral</b>: 1 katmanda 8 nöron ile 2 katmanda 8'er nöronu karşılaştırın.</li><li>Aynı ağı sigmoid, tanh ve ReLU ile eğitin: hangisi daha hızlı öğreniyor?</li><li><b>Gürültülü</b>, \(\eta = 0{,}1\): önce 1 katman 2 nöron, sonra 3 katman 8 nöron ile 2000 epoch kadar eğitin. Eğitim ve test doğruluğu, eğitim ve test kaybı nasıl ayrışıyor? Sınır, test noktalarına mı yoksa eğitim noktalarına mı uyuyor? (Teori, 6. kısım.)</li>`,
+      en: R`<li><b>Circle</b> with 0 hidden layers: why does the accuracy stay around 50–60%?</li><li>1 hidden layer with 1, 2, then 3 neurons: predict first, what is the fewest neurons that solves the circle? (Each hidden neuron draws one line; how many lines does it take to fence in the inner points?) Then click the neurons one by one and look at their lines.</li><li><b>Spiral</b>: compare 1 layer of 8 neurons with 2 layers of 8.</li><li>Train the same network with sigmoid, tanh and ReLU: which one learns fastest?</li><li><b>Noisy</b>, \(\eta = 0.1\): train 1 layer of 2 neurons, then 3 layers of 8, for about 2000 epochs. How do the training and test accuracy, and the training and test loss, part ways? Does the boundary follow the test points or the training points? (Theory, section 6.)</li>` }));
 
   const presets = segmented(PRESETS.map((k) => [k, presetName(k)]), PG.preset, (k) => {
     PG.preset = k;
@@ -967,7 +1094,7 @@ function buildPlay() {
     else PG.data.push({ x: plane.toData(px, py), y: PG.cls });
     PG.preset = "custom";
     presets.set("custom");
-    if (!PG.data.length) pgStop();   // nothing left to train on
+    if (!trainPoints().length) pgStop();   // nothing left to train on
     update(true);
   });
   plane.canvas.addEventListener("pointermove", (event) => {
@@ -1013,7 +1140,7 @@ function buildPlay() {
   const chartLoss = chartHost(190);
   const charts = h("div", { class: "card chart-card" }, h("div", { class: "card-head" }, h("div", {},
     h("h2", { text: L({ tr: "Kayıp", en: "Loss" }) }),
-    h("p", { class: "sub", text: L({ tr: "Her epoch'tan sonra bütün noktalar üzerindeki ortalama çapraz entropi.", en: "The mean cross-entropy over all the points after every epoch." }) }))), chartLoss);
+    h("p", { class: "sub", text: L({ tr: "Her epoch'tan sonra ortalama çapraz entropi: eğitim noktalarında (mavi) ve test noktalarında (turuncu).", en: "The mean cross-entropy after every epoch: on the training points (blue) and on the test points (orange)." }) }))), chartLoss);
   panel.replaceChildren(intro, layout, charts);
 
   // The network diagram: a canvas with every neuron's output over the plane
@@ -1059,19 +1186,27 @@ function buildPlay() {
         : L({ tr: "Fareyle gezinince ağın o noktadaki olasılığı görünür.", en: "Hover to see the network's probability at any point." });
     }
     play.textContent = PG.running ? L({ tr: "❚❚ Durdur", en: "❚❚ Pause" }) : L({ tr: "▶ Eğit", en: "▶ Train" });
-    const acc = NET.accuracy(n, PG.data);
-    const lossNow = PG.history.at(-1);
+    const train = trainPoints();
+    const test = testPoints();
+    const acc = train.length ? NET.accuracy(n, train) : 0;
+    const testAcc = test.length ? NET.accuracy(n, test) : null;
+    const last = PG.history.at(-1);
+    const lossNow = last?.train;
     const tile = (label, value) => h("div", { class: "pg-tile" }, h("span", { class: "tile-label", text: label }), h("span", { class: "pg-tile-value", text: value }));
     tiles.replaceChildren(
       tile("Epoch", fmtNum(n.epoch, 0)),
-      tile(L({ tr: "Kayıp", en: "Loss" }), lossNow == null ? "—" : nf(lossNow, 3)),
-      tile(L({ tr: "Doğruluk", en: "Accuracy" }), PG.data.length ? fmtPct(acc * 100, 0) : "—"),
-      tile(L({ tr: "Parametre", en: "Parameters" }), fmtNum(NET.paramCount(n.sizes), 0)));
-    if (!PG.data.length) setMsg(status, L({ tr: "Önce düzleme tıklayarak nokta ekleyin ya da hazır bir veri seçin.", en: "First add points by clicking the plane, or pick a dataset." }), "bad");
+      tile(L({ tr: "Eğitim doğruluğu", en: "Training accuracy" }), train.length ? fmtPct(acc * 100, 0) : "—"),
+      tile(L({ tr: "Test doğruluğu", en: "Test accuracy" }), testAcc == null ? "—" : fmtPct(testAcc * 100, 0)),
+      tile(L({ tr: "Parametre", en: "Parameters" }), fmtNum(NET.paramCount(n.sizes), 0)),
+      tile(L({ tr: "Eğitim kaybı", en: "Training loss" }), lossNow == null ? "—" : nf(lossNow, 3)),
+      tile(L({ tr: "Test kaybı", en: "Test loss" }), last?.test == null ? "—" : nf(last.test, 3)));
+    const points = L({ tr: `${train.length} eğitim${test.length ? `, ${test.length} test` : ""} noktası`, en: `${train.length} training${test.length ? `, ${test.length} test` : ""} points` });
+    if (!train.length) setMsg(status, L({ tr: "Önce düzleme tıklayarak nokta ekleyin ya da hazır bir veri seçin.", en: "First add points by clicking the plane, or pick a dataset." }), "bad");
     else if (lossNow != null && !Number.isFinite(lossNow) || lossNow >= 5) setMsg(status, L({ tr: "Kayıp patladı: η çok büyük. Küçültüp ağırlıkları sıfırlayın.", en: "The loss blew up: η is too large. Lower it and reset the weights." }), "bad");
-    else if (acc === 1 && n.epoch) setMsg(status, L({ tr: `Bütün noktalar doğru ✓ (${n.epoch}. epoch)`, en: `Every point is right ✓ (epoch ${n.epoch})` }), "good");
+    else if (acc === 1 && n.epoch && testAcc != null && testAcc < 0.9) setMsg(status, L({ tr: `Bütün eğitim noktaları doğru, ama test noktalarının yalnızca %${Math.round(testAcc * 100)}'i: ağ eğitim noktalarını ezberliyor olabilir.`, en: `Every training point is right, but only ${Math.round(testAcc * 100)}% of the test points: the network may be memorizing its training points.` }), "bad");
+    else if (acc === 1 && n.epoch) setMsg(status, L({ tr: `Bütün eğitim noktaları doğru ✓ (${n.epoch}. epoch)`, en: `Every training point is right ✓ (epoch ${n.epoch})` }), "good");
     else if (PG.layers === 0 && n.epoch > 200 && acc < 0.95) setMsg(status, L({ tr: "Gizli katman yok: ağ yalnızca bir doğru çizebilir. Bir gizli katman ekleyin.", en: "No hidden layer: the network can only draw a line. Add a hidden layer." }), "bad");
-    else setMsg(status, PG.running ? L({ tr: "Eğitiliyor…", en: "Training…" }) : L({ tr: `${PG.data.length} nokta. Eğit'e basın.`, en: `${PG.data.length} points. Press Train.` }));
+    else setMsg(status, PG.running ? L({ tr: "Eğitiliyor…", en: "Training…" }) : L({ tr: `${points}. Eğit'e basın.`, en: `${points}. Press Train.` }));
     if (full || now - lastChart > 250) { lastChart = now; drawLossChart(chartLoss, PG.history); }
   }
   update(true);
@@ -1087,9 +1222,11 @@ function neuronScale(net, l) {
 
 function drawLossChart(host, history) {
   const stepX = Math.max(1, Math.ceil(history.length / 300));
-  const pts = history.filter((_, i) => i % stepX === 0).map((v, i) => [i + 1, Math.min(v, 2)]);
+  const kept = history.filter((_, i) => i % stepX === 0);
+  const pts = kept.map((v, i) => [i + 1, Math.min(v.train, 2)]);
+  const testPts = kept[0]?.test == null ? [] : kept.map((v, i) => [i + 1, Math.min(v.test, 2)]);
   const xMax = Math.max(pts.length, 5);
-  const top = Math.max(0.2, ...pts.map((p) => p[1]));
+  const top = Math.max(0.2, ...pts.map((p) => p[1]), ...testPts.map((p) => p[1]));
   const yStep = niceStep(top, 4);
   const epochAt = (i) => (i - 1) * stepX + 1;
   lineChart(host, {
@@ -1097,8 +1234,11 @@ function drawLossChart(host, history) {
     empty: L({ tr: "Henüz epoch yok", en: "No epochs yet" }),
     x: { min: 1, max: xMax, ticks: linearTicks(1, xMax, Math.max(1, niceStep(xMax, 6)), (v) => fmtNum(epochAt(v), 0)) },
     y: { min: 0, max: Math.ceil(top / yStep) * yStep, ticks: linearTicks(0, top, yStep, (v) => fmtNum(v, yStep < 0.1 ? 2 : 1)) },
-    series: [{ points: pts, color: "var(--series-2)" }],
-    tooltip: (i) => ({ title: `Epoch ${epochAt(i + 1)}`, rows: [{ value: nf(pts[i][1], 3), label: L({ tr: "kayıp", en: "loss" }), color: "var(--series-2)" }] }),
+    series: [{ points: pts, color: "var(--series-1)" }, ...(testPts.length ? [{ points: testPts, color: "var(--series-2)" }] : [])],
+    tooltip: (i) => ({ title: `Epoch ${epochAt(i + 1)}`, rows: [
+      { value: nf(pts[i][1], 3), label: L({ tr: "eğitim kaybı", en: "training loss" }), color: "var(--series-1)" },
+      ...(testPts.length ? [{ value: nf(testPts[i][1], 3), label: L({ tr: "test kaybı", en: "test loss" }), color: "var(--series-2)" }] : []),
+    ] }),
   });
 }
 
@@ -1245,7 +1385,7 @@ function createNetDiagram(host, onPick) {
 }
 
 function pgStart() {
-  if (!PG.data.length) { PG.update?.(); return; }
+  if (!trainPoints().length) { PG.update?.(); return; }
   PG.running = true;
   let last = performance.now();
   let acc = 0;
@@ -1287,6 +1427,7 @@ function stopAll() {
   HS.timer = 0;
   LS.timer = 0;
   CP.timer = 0;
+  OV.timer = 0;
 }
 function buildAll() {
   stopAll();
@@ -1308,7 +1449,7 @@ document.addEventListener("tab-shown", (event) => {
   if (event.detail !== "play") pgStop();
   if (event.detail !== "theory") {
     stopAll();
-    for (const demo of [HS, LS, CP]) demo.update?.();
+    for (const demo of [HS, LS, CP, OV]) demo.update?.();
   }
 });
 })();

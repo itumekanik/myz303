@@ -43,7 +43,12 @@ const cnnLab = (): Promise<CnnLab> => {
 
 const BANKS = [
   { name: "perceptron", sections: PRACTICE, count: 15, theory: ["p-neuron", "p-boundary", "p-rule", "p-converge", "p-xor"] },
-  { name: "mlp", sections: MLP_PRACTICE, count: 19, theory: ["ml-act", "ml-hidden", "ml-loss", "ml-backprop", "ml-capacity", "ml-images"] },
+  {
+    name: "mlp",
+    sections: MLP_PRACTICE,
+    count: 23,
+    theory: ["ml-act", "ml-hidden", "ml-loss", "ml-backprop", "ml-capacity", "ml-general", "ml-images"],
+  },
   {
     name: "cnn",
     sections: buildPractice(cnnLab),

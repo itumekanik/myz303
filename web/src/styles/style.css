@@ -1543,6 +1543,9 @@ a.chm-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2p
 .key-line.dashed { background: none; border-top: 2px dashed var(--series-2); height: 0; }
 .key-line.muted.dashed { border-top-color: var(--muted); }
 .key-line.thin { height: 1px; background: var(--text-2); opacity: .7; }
+.key-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text); display: inline-block; }
+.key-dot.hollow { background: var(--surface); border: 1.6px solid var(--muted); box-sizing: border-box; }
+.key-ring { width: 12px; height: 12px; border-radius: 50%; border: 1.4px solid var(--text-2); display: inline-block; box-sizing: border-box; }
 a.pc-next.link {
   padding: 10px 14px; border: 1px solid var(--accent); border-radius: 10px; background: var(--accent-soft);
   color: var(--text); text-decoration: none; width: fit-content; max-width: 100%;
@@ -1593,7 +1596,7 @@ a.pc-next.link:focus-visible { outline: 2px solid var(--accent); outline-offset:
 .ml-diagram { min-width: 0; }
 .ml-diagram-canvas { display: block; width: 100%; height: 210px; }
 .ml-field { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-2); }
-.ml-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.ml-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .ml-focus-note { min-height: 1.4em; }
 @media (max-width: 720px) {
   .ml-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }

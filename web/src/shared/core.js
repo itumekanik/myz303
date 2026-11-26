@@ -630,6 +630,7 @@ export const PLACE_TITLES = {
   "ml-loss": { tr: "Hatayı ölçmek: kayıp ve gradyan inişi", en: "Measuring the error: the loss and gradient descent" },
   "ml-backprop": { tr: "Geri yayılım: hatayı geriye dağıtmak", en: "Backpropagation: sending the error back" },
   "ml-capacity": { tr: "Kaç nöron yeter? Evrensel yaklaşım", en: "How many neurons? Universal approximation" },
+  "ml-general": { tr: "Ezberlemek mi, genellemek mi? Eğitim, doğrulama, test", en: "Memorizing or generalizing? Training, validation, test" },
   "ml-images": { tr: "Görüntülerde MLP ve sınırları", en: "The MLP on images, and its limits" },
   "mm-forward": { tr: "Katmanlar ve ileri hesap", en: "Layers and the forward pass" },
   "mm-act": { tr: "Aktivasyonlar ve türevleri", en: "Activations and their derivatives" },

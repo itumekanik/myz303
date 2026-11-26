@@ -5,6 +5,7 @@
  */
 import { NET, type Example, type Net } from "../../engines/net.js";
 import type { PracticeSection } from "../../shared/practice.ts";
+import { OVERFIT, advanceOverfit, startOverfit } from "./overfit.ts";
 
 const R = String.raw;
 
@@ -604,6 +605,154 @@ export const PRACTICE: PracticeSection[] = [
         explain: {
           tr: "Teorem iyi ağırlıkların var olduğunu söyler, ama kaç nöron gerektiğini ya da eğitimin onları bulacağını söylemez. Eğitim verisine mükemmel uymak da iyi genelleme demek değildir.",
           en: "The theorem says good weights exist, but not how many neurons it takes or that training will find them. Fitting the training data perfectly does not mean good generalization either.",
+        },
+      },
+    ],
+  },
+  {
+    id: "px-general",
+    title: { tr: "Ezberlemek mi, genellemek mi?", en: "Memorizing or generalizing?" },
+    intro: {
+      tr: R`Ağın başarısı eğitimde kullanılmayan veride ölçülür: doğrulama seti eğitim sürerken ve seçim yaparken, test seti en sonda bir kez.`,
+      en: R`A network's success is measured on data it did not train on: the validation set while training and choosing, the test set once at the end.`,
+    },
+    read: { tab: "theory", section: "ml-general" },
+    questions: [
+      {
+        id: "g-gap",
+        kind: "choice",
+        q: {
+          tr: "Bir ağ eğitim noktalarının %100'ünü, test noktalarının ise %86'sını doğru sınıflıyor. En olası açıklama hangisi?",
+          en: "A network classifies 100% of its training points correctly, but only 86% of the test points. What is the most likely explanation?",
+        },
+        options: [
+          {
+            text: { tr: "Ağ yetersiz öğrenmiş: daha uzun eğitilmeli", en: "The network is underfitting: it needs more training" },
+            why: {
+              tr: "Eğitim noktalarının hepsi zaten doğru: ağ eğitim verisini fazlasıyla öğrenmiş. Daha uzun eğitmek farkı genellikle büyütür.",
+              en: "Every training point is already right: the network has learned its training data more than enough. Training longer usually widens the gap.",
+            },
+          },
+          {
+            text: {
+              tr: "Ağ aşırı uyuyor: eğitim noktalarını, gürültüleriyle birlikte ezberlemiş",
+              en: "The network is overfitting: it has memorized its training points, noise and all",
+            },
+          },
+          {
+            text: { tr: "Öğrenme oranı çok küçük", en: "The learning rate is too small" },
+            why: {
+              tr: "Öğrenme oranı çok küçük olsaydı ağ eğitim noktalarına bile tam uyamazdı.",
+              en: "With a learning rate that small the network could not fit even its training points fully.",
+            },
+          },
+          {
+            text: { tr: "Test noktaları yanlış etiketlenmiş", en: "The test points are labelled wrongly" },
+            why: {
+              tr: "Olabilir ama ilk açıklama bu değildir: eğitim ve test noktaları aynı veriden rastgele ayrıldıysa, aradaki fark genellikle aşırı uyumdan gelir.",
+              en: "Possible, but not the first explanation: if the training and test points were split at random from the same data, the gap usually comes from overfitting.",
+            },
+          },
+        ],
+        answer: 1,
+        explain: {
+          tr: R`Eğitim ile test başarısı arasındaki büyük fark aşırı uyumun belirtisidir. Çareler: daha az nöron, daha çok veri, erken durdurma ya da dropout gibi düzenlileştirme. Kodlama sekmesinin 4. alıştırmasında tam olarak bu sayılar çıkar.`,
+          en: R`A large gap between training and test success is the sign of overfitting. Remedies: fewer neurons, more data, early stopping or regularization such as dropout. Exercise 4 of the Coding tab gives exactly these numbers.`,
+        },
+      },
+      {
+        id: "g-val",
+        kind: "choice",
+        q: {
+          tr: "Doğrulama seti ne için kullanılır?",
+          en: "What is the validation set used for?",
+        },
+        options: [
+          {
+            text: { tr: "Ağırlıkları güncellemek için", en: "To update the weights" },
+            why: {
+              tr: "Ağırlıklar yalnızca eğitim setiyle güncellenir; doğrulama noktaları eğitimde hiç kullanılmaz.",
+              en: "The weights are updated with the training set only; the validation points are never trained on.",
+            },
+          },
+          {
+            text: {
+              tr: "Nöron sayısı, epoch sayısı ve η gibi seçimleri yapmak için",
+              en: "To make choices such as the number of neurons, the number of epochs and η",
+            },
+          },
+          {
+            text: { tr: "Modelin son başarısını raporlamak için", en: "To report the model's final performance" },
+            why: {
+              tr: "Seçimleri doğrulama setine bakarak yaptığımız için onun sonucu biraz iyimserdir. Son başarı, hiç dokunulmamış test setinde ölçülür.",
+              en: "Since we make our choices by looking at the validation set, its result is a little optimistic. The final performance is measured on the untouched test set.",
+            },
+          },
+          {
+            text: { tr: "Eğitimi hızlandırmak için", en: "To speed up training" },
+            why: {
+              tr: "Doğrulama hesabı eğitimi hızlandırmaz; her epoch'a biraz ek iş katar.",
+              en: "Validation does not speed up training; it adds a little work to every epoch.",
+            },
+          },
+        ],
+        answer: 1,
+        explain: {
+          tr: R`Eğitim seti ağırlıkları öğretir, doğrulama seti seçim yapmaya ve ne zaman durulacağına karar vermeye yarar, test seti en sonda bir kez dürüst bir ölçüm verir.`,
+          en: R`The training set teaches the weights, the validation set is for choosing and for deciding when to stop, and the test set gives one honest measurement at the very end.`,
+        },
+      },
+      {
+        id: "g-split",
+        kind: "number",
+        q: {
+          tr: R`SimpleCNN, MNIST'in 60.000 eğitim görüntüsünün %20'sini doğrulama için ayırıyor (<code>validation_split = 0.2</code>). Ağırlıklar kaç görüntüyle öğrenilir?`,
+          en: R`SimpleCNN sets aside 20% of MNIST's 60,000 training images for validation (<code>validation_split = 0.2</code>). How many images are the weights learned from?`,
+        },
+        label: { tr: "görüntü sayısı =", en: "number of images =" },
+        answer: 48000,
+        compute: () => 60000 * (1 - 0.2),
+        hint: {
+          tr: "Doğrulamaya ayrılan görüntüler eğitimde kullanılmaz: önce onların sayısını bulun.",
+          en: "The images set aside for validation are not trained on: find how many they are first.",
+        },
+        explain: {
+          tr: R`\(60\,000 \cdot 0{,}2 = 12\,000\) görüntü doğrulamaya ayrılır, ağırlıklar kalan \(48\,000\) görüntüyle öğrenilir. Ayrı 10.000 test görüntüsü ise yalnızca en sonda kullanılır.`,
+          en: R`\(60{,}000 \cdot 0.2 = 12{,}000\) images are set aside for validation, and the weights are learned from the other \(48{,}000\). The separate 10,000 test images are used only at the very end.`,
+        },
+      },
+      {
+        id: "g-curve",
+        kind: "predict",
+        q: {
+          tr: R`Teori 6'daki demo: 12 gürültülü noktaya 40 gizli nöronlu bir ağ 4000 epoch eğitiliyor. Eğitim hatası sıfıra yaklaşırken doğrulama hatası ne yapar?`,
+          en: R`The demo of Theory 6: a network with 40 hidden neurons is trained on 12 noisy points for 4000 epochs. While the training error approaches zero, what does the validation error do?`,
+        },
+        options: [
+          { tr: "O da sürekli düşer", en: "It keeps falling too" },
+          { tr: "Önce düşer, sonra yükselir", en: "It falls first, then rises" },
+          { tr: "Baştan sona hiç düşmez", en: "It never falls at all" },
+        ],
+        answer: 1,
+        run: () => {
+          const run = startOverfit(40);
+          advanceOverfit(run, OVERFIT.epochs);
+          const end = run.history.at(-1)!;
+          const best = run.best;
+          const answer = best.epoch === 0 ? 2 : end.val > best.val * 1.2 ? 1 : 0;
+          const n = (v: number) => decimal(v, 3);
+          return {
+            answer,
+            result: {
+              tr: `Doğrulama hatası ${best.epoch}. epoch'ta en düşük değerine (${n(best.val).tr}) indi, ${end.epoch}. epoch'ta ${n(end.val).tr} oldu. Eğitim hatası ${n(end.train).tr}.`,
+              en: `The validation error reached its lowest (${n(best.val).en}) at epoch ${best.epoch} and was ${n(end.val).en} at epoch ${end.epoch}. The training error is ${n(end.train).en}.`,
+            },
+          };
+        },
+        tryIt: { tab: "theory", section: "ml-general" },
+        explain: {
+          tr: R`Ağ önce eğrinin genel biçimini öğrenir ve iki hata birlikte düşer. Sonra gürültüyü de ezberlemeye başlar: eğitim hatası düşmeye devam eder, doğrulama hatası yükselir. Doğrulama hatasının en düşük olduğu an, erken durdurmanın seçeceği andır.`,
+          en: R`The network first learns the overall shape of the curve and both errors fall together. Then it starts memorizing the noise too: the training error keeps falling while the validation error rises. The moment the validation error is lowest is the one early stopping would pick.`,
         },
       },
     ],

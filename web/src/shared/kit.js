@@ -320,6 +320,10 @@ function createPlane(host, { domain = [-0.5, 1.5, -0.5, 1.5], ticks = [0, 1], la
         ctx.strokeStyle = COLORS.accent;
         ctx.lineWidth = 3;
         ctx.beginPath(); ctx.arc(px, py, r + 7, 0, Math.PI * 2); ctx.stroke();
+      } else if (p.test) {   // set aside for testing: a thin ring around the point
+        ctx.strokeStyle = COLORS.text2;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.arc(px, py, r + 4, 0, Math.PI * 2); ctx.stroke();
       } else if (p.wrong) {
         ctx.strokeStyle = COLORS.zero;
         ctx.lineWidth = 1.6;
@@ -483,6 +487,13 @@ function createGraph(host, { x, y, xTicks = [], yTicks = [], label = "", xName =
         ctx.strokeStyle = p.color || COLORS.accent;
         ctx.lineWidth = 2;
         ctx.beginPath(); ctx.arc(px, py, r + 4, 0, Math.PI * 2); ctx.stroke();
+      }
+      if (p.hollow) {   // an open circle: a point the network does not train on
+        ctx.fillStyle = COLORS.surface;
+        ctx.strokeStyle = p.color || COLORS.accent;
+        ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        continue;
       }
       ctx.fillStyle = p.color || COLORS.accent;
       ctx.strokeStyle = COLORS.surface;

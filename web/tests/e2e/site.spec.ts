@@ -17,7 +17,7 @@ const CHAPTERS = [
     id: "mlp",
     number: 2,
     title: "Çok katmanlı ağ",
-    sections: ["ml-intro", "ml-act", "ml-hidden", "ml-loss", "ml-backprop", "ml-capacity", "ml-images"],
+    sections: ["ml-intro", "ml-act", "ml-hidden", "ml-loss", "ml-backprop", "ml-capacity", "ml-general", "ml-images"],
     math: "#mm",
     code: "#mc",
     python: "class MLP",
@@ -185,6 +185,31 @@ test("mlp: the hidden layer learns XOR in the browser", async ({ page, errors })
   const demo = page.locator("#ml-hidden");
   await demo.getByRole("button", { name: "▶ Eğit" }).click();
   await expect(demo.locator(".pc-msg")).toContainText("Çözüldü", { timeout: 20_000 });
+  void errors;
+});
+
+test("mlp: with 40 neurons the validation error rises again, with 2 it stays close", async ({ page, errors }) => {
+  test.slow();
+  await open(page, "mlp.html#teori/ml-general");
+  const demo = page.locator("#ml-general");
+  await demo.getByRole("button", { name: "▶ Eğit" }).click();
+  await expect(demo.locator(".pc-msg")).toContainText("iki hata birbirine yakın kaldı", { timeout: 60_000 });
+  await demo.getByRole("button", { name: "40 nöron" }).click();
+  await demo.getByRole("button", { name: "▶ Eğit" }).click();
+  await expect(demo.locator(".pc-msg")).toContainText("aşırı uyum", { timeout: 60_000 });
+  expect(await demo.locator(".chart svg path.series-line").count()).toBeGreaterThanOrEqual(2);
+  void errors;
+});
+
+test("mlp: the Playground keeps a quarter of the points for testing", async ({ page, errors }) => {
+  await open(page, "mlp.html#deneme");
+  const play = page.locator("#panel-play");
+  await expect(play.locator(".pc-msg")).toContainText("120 eğitim, 40 test noktası");
+  await play.getByRole("button", { name: "Gürültülü" }).click();
+  await expect(play.locator(".pc-msg")).toContainText("75 eğitim, 25 test noktası");
+  await play.getByRole("button", { name: "Tek epoch" }).click();
+  await expect(play.locator(".pg-tile", { hasText: "Test doğruluğu" })).not.toContainText("—");
+  await expect(play.locator(".chart-card svg path.series-line")).toHaveCount(2);
   void errors;
 });
 
@@ -362,8 +387,8 @@ test.describe("mlp: the Practice tab", () => {
 
   test("takes a rounded number, runs a real prediction and keeps its own progress", async ({ page, errors }) => {
     await open(page, "mlp.html#alistirma");
-    await expect(page.locator(".px-count")).toContainText("0 / 19");
-    await expect(page.locator("#px-toc button")).toHaveCount(6);
+    await expect(page.locator(".px-count")).toContainText("0 / 23");
+    await expect(page.locator("#px-toc button")).toHaveCount(7);
     const rounded = question(page, "l-bce");
     await rounded.locator("input").fill("0,8");
     await rounded.locator("input").press("Enter");
@@ -376,12 +401,12 @@ test.describe("mlp: the Practice tab", () => {
     await predict.getByRole("button", { name: "Tahmini sına" }).click();
     await expect(predict).toHaveAttribute("data-state", "correct");
     await expect(predict.locator(".px-run")).toContainText("birebir aynı");
-    await expect(page.locator(".px-count")).toContainText("2 / 19");
+    await expect(page.locator(".px-count")).toContainText("2 / 23");
     await expect(page.locator(".katex-error")).toHaveCount(0);
     await open(page, "perceptron.html#alistirma");
     await expect(page.locator(".px-count")).toContainText("0 / 15");
     await open(page, "index.html");
-    await expect(page.locator("a.lp-chapter").nth(1)).toContainText("Alıştırma 2/19");
+    await expect(page.locator("a.lp-chapter").nth(1)).toContainText("Alıştırma 2/23");
     await expect(page.locator("a.lp-chapter").first()).not.toContainText("Alıştırma");
     void errors;
   });
@@ -389,12 +414,12 @@ test.describe("mlp: the Practice tab", () => {
   test("every prediction runs, in English too", async ({ page, errors }) => {
     await page.addInitScript(() => localStorage.setItem("lang", "en"));
     await open(page, "mlp.html#alistirma");
-    for (const id of ["h-xor", "l-mse", "bp-sym", "i-shift"]) {
+    for (const id of ["h-xor", "l-mse", "bp-sym", "g-curve", "i-shift"]) {
       await question(page, id).locator(".px-opt").first().click();
       await question(page, id).getByRole("button", { name: "Test my prediction" }).click();
       await expect(question(page, id).locator(".px-run")).toBeVisible();
     }
-    await expect(page.locator(".px-count")).toContainText("4 / 19");
+    await expect(page.locator(".px-count")).toContainText("5 / 23");
     await expect(page.locator(".katex-error")).toHaveCount(0);
     void errors;
   });

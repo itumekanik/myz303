@@ -545,8 +545,8 @@ export const GLOSSARY = {
       en: "Data not used for training, which measures how well the model [[generalization|generalizes]] while it trains. It is checked after every epoch, and the [[hyperparameter|hyperparameters]] and when to stop training are chosen by it. Because those choices are tuned to it, the final measurement uses a separate [[test-set|test set]].",
     },
     model: { tr: "Eğitim görüntülerinden ayrılan 12.000 görüntü.", en: "12,000 images split off from the training images." },
-    see: ["train-set"],
-    link: { tab: "code", section: "c-data" },
+    see: ["train-set", "early-stopping"],
+    link: [{ chapter: "mlp", tab: "theory", section: "ml-general" }, { tab: "code", section: "c-data" }],
   },
   "test-set": {
     group: "data",
@@ -561,7 +561,7 @@ export const GLOSSARY = {
       en: "MNIST's separate 10,000 test images; with the default settings SimpleCNN reaches 99.29% [[accuracy|accuracy]].",
     },
     see: ["train-set", "val-set"],
-    link: { tab: "code", section: "c-evaluate" },
+    link: [{ chapter: "mlp", tab: "theory", section: "ml-general" }, { tab: "code", section: "c-evaluate" }],
   },
   accuracy: {
     group: "data",
@@ -581,8 +581,8 @@ export const GLOSSARY = {
       tr: "Modelin genel kuralları öğrenmek yerine eğitim verisini ezberlemesi. Belirtisi: [[train-set|eğitim]] kaybı düşmeye devam ederken [[val-set|doğrulama]] kaybının yükselmesi. Daha çok veri, [[dropout|dropout]] gibi düzenlileştirme yöntemleri ya da eğitimi erken durdurmak bunu önlemeye yardım eder.",
       en: "The model memorizes the training data instead of learning general rules. The sign: the [[train-set|training]] loss keeps going down while the [[val-set|validation]] loss goes up. More data, regularization such as [[dropout|dropout]], or stopping training early help prevent it.",
     },
-    see: ["underfitting", "generalization"],
-    link: { tab: "theory", section: "t-drop" },
+    see: ["underfitting", "generalization", "early-stopping"],
+    link: [{ chapter: "mlp", tab: "theory", section: "ml-general" }, { tab: "theory", section: "t-drop" }],
   },
   underfitting: {
     group: "data",
@@ -593,6 +593,18 @@ export const GLOSSARY = {
       en: "The model does not learn even the training data well enough: both the training and the validation loss stay high. Training too briefly, a model that is too small, or an unsuitable [[learning-rate|learning rate]] can cause it.",
     },
     see: ["overfitting"],
+    link: { chapter: "mlp", tab: "theory", section: "ml-general" },
+  },
+  "early-stopping": {
+    group: "data",
+    name: { tr: "Erken durdurma", en: "Early stopping" },
+    aka: ["early stopping", "erken durdurmak", "durdurma", "patience"],
+    def: {
+      tr: "Eğitimi, [[val-set|doğrulama]] hatasının en düşük olduğu anda durdurmak ya da o andaki ağırlıklara geri dönmek. Eğitim hatası düşmeye devam ederken doğrulama hatası yükselmeye başladıysa ağ [[overfitting|aşırı uyuyordur]]; o andan sonraki epoch'lar genellemeyi bozar. Durma anı doğrulama setine bakılarak seçildiği için asıl sonuç [[test-set|test setinde]] ölçülür.",
+      en: "Stopping training when the [[val-set|validation]] error is lowest, or going back to the weights of that moment. If the validation error starts rising while the training error keeps falling, the network is [[overfitting|overfitting]]; the epochs after that make it generalize worse. Since the moment to stop is chosen by looking at the validation set, the real result is measured on the [[test-set|test set]].",
+    },
+    see: ["overfitting", "val-set"],
+    link: { chapter: "mlp", tab: "theory", section: "ml-general" },
   },
   generalization: {
     group: "data",
@@ -603,6 +615,7 @@ export const GLOSSARY = {
       en: "The model's ability to predict correctly on new data it did not see in training; this is the real goal of machine learning. The [[val-set|validation]] and [[test-set|test]] sets are set aside exactly to measure it.",
     },
     see: ["overfitting"],
+    link: { chapter: "mlp", tab: "theory", section: "ml-general" },
   },
   "log-scale": {
     group: "data",

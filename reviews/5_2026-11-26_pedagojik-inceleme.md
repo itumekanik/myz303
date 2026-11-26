@@ -54,7 +54,7 @@ gösteriyorlar (XOR'da takılma, H = 1 ile kapasite). Türkçe akıcı, TR/EN e�
 1. CNN bölümünün Teori ile açılması (C1). Tek satırlık bir değişiklik, en büyük etki. *(Yapıldı,
    2026-11-26.)*
 2. MLP bölümüne kısa bir "eğitim, doğrulama ve test" kısmı ile Deneme alanına test doğruluğu
-   (M9). CNN'e geçmeden önceki en önemli eksik bu.
+   (M9). CNN'e geçmeden önceki en önemli eksik bu. *(Yapıldı, 2026-11-26.)*
 3. Her bölüme 4–6 transfer sorusu ve tipik yanlışlara özel geri bildirim (M10, C10, P6).
 4. Kodlama sekmelerine "Python'unuz yoksa" kutusu: dosyayı indirme bağlantısı, kurulum ya da
    Colab (P2).
@@ -95,7 +95,7 @@ gösteriyorlar (XOR'da takılma, H = 1 ile kapasite). Türkçe akıcı, TR/EN e�
 | M6 | orta | Teori (kapasite) | Demo kare hata ve Adam kullanıyor, metin söylemiyor; regresyon ile sınıflandırma ayrımı yapılmıyor | Çözüldü: bir cümle |
 | M7 | orta | Teori (görüntüler) | "Evrişimin yalnızca 52.096 parametresi var" karşılaştırması bütün CNN'in daha az parametreli olduğunu düşündürüyor (SimpleCNN 582.218, tek katmanlı MLP 401.920) | Çözüldü |
 | M8 | orta | Teori (geri yayılım) | ∂L/∂w gösterimi Teori'de tanımlanmadan beş çarpanlı zincire geçiliyor; çarpanların demodaki adımlarla eşleşmesi gösterilmiyor | Çözüldü |
-| M9 | orta | Teori, Deneme alanı | Aşırı uyum ve doğrulama CNN'den önce gereken en önemli eksik; Deneme alanında test doğruluğu yok | **Açık: büyük iş** (önerimin 2. maddesi) |
+| M9 | orta | Teori, Deneme alanı | Aşırı uyum ve doğrulama CNN'den önce gereken en önemli eksik; Deneme alanında test doğruluğu yok | Çözüldü (2026-11-26, eğitmen kararıyla): Teori'de yeni 6. kısım, Deneme alanında test noktaları ve "Gürültülü" veri, Alıştırma'da 4 yeni soru (ayrıntılar Takip'te) |
 | M10 | orta | Alıştırma | Zayıf çeldiriciler; 19 sorunun neredeyse hepsi tek adımlık. Mini-batch, η'nın etkisi, kaybolan gradyan, aşırı uyum sorulmuyor | **Açık: eğitmen kararı** |
 | M11 | orta | Teori (XOR) | Takılmanın asıl mekanizması gösterilmiyor (iki farklı etiketli nokta gizli uzayda üst üste düşüyor); gizli nöronların 1. bölümdeki OR/AND'e benzemesi köprüsü kaçıyor | Çözüldü |
 | M12 | orta | Teori, sözlük | Terimler: "ileri hesap" ile "ileri yayılım"; "hata" üç anlamda (δ, kayıp, MSE); sözlükte geri yayılıma "geri besleme" eş adı (RNN'deki feedback ile karışır) | Kısmen çözüldü: "geri besleme" sözlükten çıktı. Gerisi **Açık: eğitmen kararı** |
@@ -159,3 +159,30 @@ gösteriyorlar (XOR'da takılma, H = 1 ile kapasite). Türkçe akıcı, TR/EN e�
 - 2026-11-26: eğitmen, önerinin 1. maddesini onayladı; CNN bölümü artık Teori ile açılıyor (C1).
   Eğitim sekmesini doğrudan açan testler `#egitim` adresine geçti. Bölümün Teori ile açıldığını ve
   Eğitim sekmesine geçince grafiklerin çizildiğini denetleyen bir test eklendi.
+- 2026-11-26: eğitmen, önerinin 2. maddesini onayladı (M9). MLP bölümüne eklenenler:
+  - **Teori, yeni 6. kısım "Ezberlemek mi, genellemek mi? Eğitim, doğrulama, test":**
+    - Eğitim, doğrulama ve test setleri, aşırı uyum, yetersiz öğrenme ve erken durdurma anlatılıyor.
+      SimpleCNN'in 48.000 / 12.000 / 10.000 bölmesi ve %99,29'un test setinde bir kez ölçüldüğü de
+      yazıyor. "Görüntüler" kısmı 7. sıraya geçti.
+    - Demo: 12 gürültülü eğitim noktasına ve hiç görülmeyen 60 doğrulama noktasına 2, 8 ya da 40
+      nöronlu bir ağ uyduruluyor. Eğitim ve doğrulama hatası aynı grafikte izleniyor; eğitim bitince
+      doğrulama hatasının en düşük olduğu andaki ağ (erken durdurma) ayrı bir eğriyle gösteriliyor.
+    - Ölçülen sonuçlar (ilk veri seti): 2 nöronda iki hata yakın kalıyor (doğrulama en düşük
+      0,109, sonda 0,116). 40 nöronda eğitim hatası sıfıra iniyor, doğrulama hatası 190. epoch'ta
+      0,108'e inip 4000. epoch'ta 0,200'e çıkıyor. "Başka veri" ile etkinin her veride aynı
+      büyüklükte olmadığı görülebiliyor (öteki iki veride doğrulama hatası %27–30 artıyor).
+  - **Deneme alanı:**
+    - Hazır verilerde noktaların dörtte biri (her sınıftan eşit) test için ayrılıyor ve halkayla
+      gösteriliyor; ağ onlarla eğitilmiyor.
+    - Eğitim ve test doğruluğu ile eğitim ve test kaybı yan yana; kayıp grafiğinde iki çizgi var.
+    - Yeni "Gürültülü" veri: üst üste binen iki küme, 100 nokta. η = 0,1 ile 1 katman 2 nöron
+      eğitimde %83, testte %92'de kalıyor. 3 katman 8 nöron 2000 epoch'ta eğitimde %97–100'e çıkıyor,
+      testte %84'e iniyor; test kaybı 0,24'ten 0,6'ya yükseliyor.
+  - **Alıştırma:** yeni kısım, 4 soru (eğitim %100 / test %86 farkı, doğrulama setinin işi,
+    48.000 görüntü, demonun doğrulama eğrisi için tahmin sorusu). MLP'de soru sayısı 19'dan 23'e
+    çıktı. Tahmin sorusunun cevabı birim testinde demonun koduyla yeniden hesaplanıyor.
+  - **Sözlük:** yeni "Erken durdurma" maddesi. Aşırı uyum, yetersiz öğrenme, genelleme, doğrulama
+    seti ve test seti maddeleri yeni kısma bağlanıyor.
+  - Kodlama sekmesindeki "Deneme alanında da deneyin" ipucu artık "Gürültülü" veriye yönlendiriyor.
+  - Bu iş C6'ya (%99'un anlamı) ve C7'ye (erken durdurma) kısmen değiniyor. İkisi de CNN bölümü
+    için açık kalıyor.
