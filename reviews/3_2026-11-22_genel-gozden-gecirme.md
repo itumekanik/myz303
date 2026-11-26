@@ -13,7 +13,7 @@ Bütün site (üç bölüm, tarayıcıda CNN eğitimi, gezinme, erişilebilirlik
 ## Bulgular
 
 | No | Bulgu | Durum |
-|---|---|---|
+| --- | --- | --- |
 | G1 | Güvenlik: açık bir web sitesi, panel çalışırken eğitimi başlatıp modelin üzerine yazabiliyordu | Çözüldü (1.0.1) |
 | G2 | Tarayıcıda CNN eğitimi: her batch'te bellek sızıyordu; GPU kilitlenince sayfa yenilenene kadar eğitim çalışmıyordu | Çözüldü (1.0.1) |
 | G3 | CNN Teori: hızlı model değişiminde yanlış ağırlıklar kalabiliyordu; uç değerlerde kayıp yanlış çıkıyordu | Çözüldü (1.0.1) |
@@ -29,7 +29,7 @@ Bütün site (üç bölüm, tarayıcıda CNN eğitimi, gezinme, erişilebilirlik
 ## Doğrulanamayanlar ve sonraki durumu
 
 | Konu | Durum |
-|---|---|
+| --- | --- |
 | Firefox ve Safari | Çözüldü (1.0.2): Firefox, WebKit ve öykünülmüş Android/iPhone testleri eklendi. Gerçek iPhone ve Android cihazda deneme hâlâ yapılmadı |
 | GitHub'daki Python işi | Çözüldü (2026-11-26): iş akışının main'e gelen push'taki çalışmasında başarılı |
 | Gerçek ekran okuyucuyla deneme | **Açık** |

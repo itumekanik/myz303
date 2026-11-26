@@ -53,7 +53,7 @@ test.describe("served by dashboard.py", () => {
 
   test("the CNN page shows the server's run and texts for training with PyTorch", async ({ page, errors }) => {
     await asDashboard(page);
-    await open(page, "cnn.html");
+    await open(page, "cnn.html#egitim");
     await expect(page.locator("#run-banner")).toContainText("Son eğitim yüklendi");
     await expect(page.locator("#run-banner")).not.toContainText("Siteyle gelen");
     await expect(page.locator("#run-banner button")).toHaveCount(1); // "Try inference", no "back to the site's model"
@@ -71,7 +71,7 @@ test.describe("served by dashboard.py", () => {
     page.on("request", (r) => {
       if (/\/(vendor|data)\//.test(r.url())) tf.push(r.url());
     });
-    await open(page, "cnn.html");
+    await open(page, "cnn.html#egitim");
     await expect(page.locator("#state-pill")).toContainText("Tamamlandı");
     await page.fill('input[name="epochs"]', "2");
     await page.locator("#btn-start").click();
@@ -89,7 +89,7 @@ test.describe("served by dashboard.py", () => {
       await held;
       await route.fulfill({ json: status() });
     });
-    await open(page, "cnn.html");
+    await open(page, "cnn.html#egitim");
     await page.fill('input[name="epochs"]', "2");
     answer();
     await expect(page.locator("#state-pill")).toContainText("Tamamlandı");
@@ -101,7 +101,7 @@ test.describe("served by dashboard.py", () => {
   test("a stopped server is reported with how to restart it", async ({ page }) => {
     await asDashboard(page);
     await page.route("**/api/status", (route) => route.abort());
-    await open(page, "cnn.html");
+    await open(page, "cnn.html#egitim");
     await expect(page.locator("#conn-banner")).toBeVisible();
     // innerText: only the text shown (the banner holds both versions, one of them hidden)
     const shown = await page.locator("#conn-banner").innerText();

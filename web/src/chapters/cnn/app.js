@@ -764,9 +764,9 @@ export function renderModelState(st) {
 // Tabs, polling, start-up
 // =====================================================================
 Object.assign(TABS, {
-  train: { tab: "#tab-train", panel: "#panel-train", hash: "#egitim" },
+  theory: { tab: "#tab-theory", panel: "#panel-theory", hash: "#teori" },   // the first tab: what a CNN is, before training one
   infer: { tab: "#tab-infer", panel: "#panel-infer", hash: "#cikarim" },
-  theory: { tab: "#tab-theory", panel: "#panel-theory", hash: "#teori" },
+  train: { tab: "#tab-train", panel: "#panel-train", hash: "#egitim" },
   math: { tab: "#tab-math", panel: "#panel-math", hash: "#matematik" },
   code: { tab: "#tab-code", panel: "#panel-code", hash: "#kodlama" },
   practice: { tab: "#tab-practice", panel: "#panel-practice", hash: "#alistirma" },

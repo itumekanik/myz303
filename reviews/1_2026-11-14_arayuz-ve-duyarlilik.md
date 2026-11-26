@@ -14,7 +14,7 @@ taşma, üst çubuk, dokunmatik kullanım ve yazı kesilmesi.
 ## Bulgular
 
 | No | Bulgu | Durum |
-|---|---|---|
+| --- | --- | --- |
 | A1 | Üst çubuk dar ekranda satır satır uzuyordu; telefonda ekranın yaklaşık %27'sini kaplıyordu, 768 px'de başlık sekmelerin altında kesiliyordu | Çözüldü (`1ed5f98`): dar ekranda kısa rozetler ve ikonlar, telefonda aşağı kaydırınca gizlenen çubuk |
 | A2 | Dokunmatik ekranda küçük dokunma alanları (bilgi düğmeleri, dil/tema, kopyalama, filtre okları, onay kutuları) | Çözüldü (`1ed5f98`) |
 | A3 | KaTeX'in ekran okuyucu kopyası telefonda sayfayı yana taşırıyordu (340 px'de Matematik sekmesi) | Çözüldü (`1ed5f98`) |

@@ -9,6 +9,6 @@
   "sub": { "tr": "Görüntüden öğrenen ağ: SimpleCNN", "en": "A network that learns from images: SimpleCNN" },
   "page": {
     "title": { "tr": "CNN", "en": "CNN" },
-    "tabs": ["train", "infer", "theory", "math", "code", "practice"]
+    "tabs": ["theory", "infer", "train", "math", "code", "practice"]
   }
 }

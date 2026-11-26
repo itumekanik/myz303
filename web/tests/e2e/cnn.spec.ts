@@ -2,8 +2,25 @@ import type { Page } from "@playwright/test";
 import { expect, open, overflows, test } from "./fixtures";
 
 test.describe("chapter 3: cnn", () => {
-  test("training tab shows the run that trained the bundled model", async ({ page, errors }) => {
+  test("opens on the Theory tab, and the Training tab then draws its charts", async ({ page, errors }) => {
     await open(page, "cnn.html");
+    await expect(page.locator("#tab-theory")).toHaveAttribute("aria-selected", "true");
+    await expect(page.locator(".tabs [role=tab]").first()).toHaveId("tab-theory");
+    await expect(page.locator("#panel-theory")).toBeVisible();
+    await expect(page.locator("#panel-train")).toBeHidden();
+    await page.locator("#tab-train").click();
+    await expect(page).toHaveURL(/#egitim$/);
+    for (const chart of ["#chart-batch", "#chart-loss", "#chart-acc"]) {
+      const drawn = page.locator(`${chart} svg`);
+      await expect(drawn).toBeVisible();
+      expect(Number(await drawn.getAttribute("width")), chart).toBeGreaterThan(100);
+      expect(await page.locator(`${chart} svg path, ${chart} svg polyline`).count(), chart).toBeGreaterThan(0);
+    }
+    void errors;
+  });
+
+  test("training tab shows the run that trained the bundled model", async ({ page, errors }) => {
+    await open(page, "cnn.html#egitim");
     await expect(page).toHaveTitle("CNN · Bölüm 3");
     await expect(page.locator("#run-banner")).toContainText("PyTorch");
     await expect(page.locator("#model-badge-text")).toContainText("99,29");
@@ -59,7 +76,7 @@ test.describe("chapter 3: cnn", () => {
   test("fits a phone screen", async ({ page, errors }) => {
     await page.setViewportSize({ width: 375, height: 760 });
     await open(page, "cnn.html");
-    for (const tab of ["train", "infer", "theory", "math", "code"]) {
+    for (const tab of ["theory", "infer", "train", "math", "code"]) {
       await page.locator(`#tab-${tab}`).click();
       await page.waitForTimeout(400);
       expect(await overflows(page), tab).toBe(false);
@@ -175,7 +192,7 @@ test.describe("chapter 3: training in the browser", () => {
   test.slow();
 
   test("a run starts on TensorFlow.js, reports batches and can be stopped", async ({ page, errors }) => {
-    await open(page, "cnn.html");
+    await open(page, "cnn.html#egitim");
     await page.fill('input[name="epochs"]', "1");
     await page.locator("#btn-start").click();
     // only the new run's log names TensorFlow.js (the bundled PyTorch run is shown before it)

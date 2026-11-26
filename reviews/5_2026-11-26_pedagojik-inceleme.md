@@ -51,7 +51,8 @@ gösteriyorlar (XOR'da takılma, H = 1 ile kapasite). Türkçe akıcı, TR/EN e�
 
 **Önerim (sırasıyla):**
 
-1. CNN bölümünün Teori ile açılması (C1). Tek satırlık bir değişiklik, en büyük etki.
+1. CNN bölümünün Teori ile açılması (C1). Tek satırlık bir değişiklik, en büyük etki. *(Yapıldı,
+   2026-11-26.)*
 2. MLP bölümüne kısa bir "eğitim, doğrulama ve test" kısmı ile Deneme alanına test doğruluğu
    (M9). CNN'e geçmeden önceki en önemli eksik bu.
 3. Her bölüme 4–6 transfer sorusu ve tipik yanlışlara özel geri bildirim (M10, C10, P6).
@@ -63,7 +64,7 @@ gösteriyorlar (XOR'da takılma, H = 1 ile kapasite). Türkçe akıcı, TR/EN e�
 ## Bölüm 1 · Perceptron
 
 | No | Önem | Yer | Bulgu | Durum |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | P1 | yüksek | `Perceptron.py`, Kodlama | Yakınsamayan her kapı için "no straight line separates XOR" yazılıyordu. Alıştırmanın önerdiği seed 3'te AND 20 epoch'a sığmıyor (22 epoch gerekiyor), öğrenci AND'in ayrılamadığı sonucunu çıkarabiliyordu | Çözüldü: mesaj her veri için doğru ("…no straight line separates the data, or it needs more epochs"), Kodlama'daki çıktı güncellendi, seed alıştırmasına not eklendi |
 | P2 | yüksek | Kodlama | Python ve `.venv` kurulu varsayılıyor; kurulum ancak 3. bölümde, dosyayı indirme bağlantısı yok, komut yalnızca Windows için | **Açık: eğitmen kararı / büyük iş** |
 | P3 | orta | Alıştırma `c-eta` | "Kendiniz deneyin" bağlantısı, cevapla çelişen bir demoya götürüyordu (o demo sıfırdan başlamıyor, orada η epoch sayısını değiştiriyor) | Çözüldü: bağlantı, iddianın ispatlandığı Matematik kısmına gidiyor |
@@ -85,7 +86,7 @@ gösteriyorlar (XOR'da takılma, H = 1 ile kapasite). Türkçe akıcı, TR/EN e�
 ## Bölüm 2 · Çok katmanlı ağ (MLP)
 
 | No | Önem | Yer | Bulgu | Durum |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | M1 | yüksek | Alıştırma | Açıklama "geri hesabın maliyeti ağırlık sayısıyla artmaz" diyordu; yanlış (ileri hesap gibi doğrusal artar; ileri hesaba oranı sabittir) ve Teori ile çelişiyordu | Çözüldü |
 | M2 | yüksek | Alıştırma `bp-sym` | "Aynı ağırlıklarla başlatıp" belirsiz: yalnızca giren ağırlıklar eşitse nöronlar ayrışıyor | Çözüldü: giren ağırlıklar, biaslar ve çıkış ağırlıkları |
 | M3 | yüksek | Teori, sözlük | "Bu küçük XOR ağında gerçek bir yerel minimum olmadığı gösterilmiştir" iddiası tartışmalı (Hamey 1998'e karşı Sprinkhuizen-Kuyper ve Boers 1999); sözlük de Teori ile çelişiyordu | Çözüldü: tarafsız ifade, sözlük uyumlu |
@@ -109,8 +110,8 @@ gösteriyorlar (XOR'da takılma, H = 1 ile kapasite). Türkçe akıcı, TR/EN e�
 ## Bölüm 3 · Evrişimli ağ (CNN)
 
 | No | Önem | Yer | Bulgu | Durum |
-|---|---|---|---|---|
-| C1 | yüksek | `chapter.json` | Bölüm Eğitim sekmesiyle açılıyor; öğrenci CNN'i öğrenmeden hiperparametre formuyla karşılaşıyor. Bölüm 1 ve 2 Teori ile açılıyor | **Açık: eğitmen kararı** (önerimin 1. maddesi: sekme sırası Teori, Çıkarım, Eğitim, …) |
+| --- | --- | --- | --- | --- |
+| C1 | yüksek | `chapter.json` | Bölüm Eğitim sekmesiyle açılıyor; öğrenci CNN'i öğrenmeden hiperparametre formuyla karşılaşıyor. Bölüm 1 ve 2 Teori ile açılıyor | Çözüldü (2026-11-26, eğitmen kararıyla): bölüm Teori ile açılıyor, sekme sırası Teori, Çıkarım, Eğitim, Matematik, Kodlama, Alıştırma |
 | C2 | yüksek | bütün bölüm | Tek oturum için çok büyük (Teori 7 kısım ve 7 demo, Matematik 10 kısım, Kodlama 17 adım, 20 soru); optimizasyon kısmı CNN'e özgü değil | **Açık: büyük iş** (3a "Evrişimli ağ" ve 3b "Derin ağı eğitmek" diye bölmek önerildi) |
 | C3 | yüksek | Teori, Matematik, Alıştırma | BatchNorm hâlâ 2. sırada (2. incelemede B13). Ek kanıt: BatchNorm'suz model aynı seed ile %99,30, BatchNorm'lu %99,29 | **Açık: eğitmen kararı** |
 | C4 | orta-yüksek | Teori, Alıştırma `sm-equal` | "−log 0,1 ≈ 2,30": lisede log 10 tabanlı; öğrenci 1 bulur. ln olduğu yalnızca Matematik'te yazıyor | Çözüldü: ilk geçtiği yerde ve soruda "log = doğal logaritma (ln)" |
@@ -134,7 +135,7 @@ gösteriyorlar (XOR'da takılma, H = 1 ile kapasite). Türkçe akıcı, TR/EN e�
 ## Tarihî bilgiler
 
 | Bilgi | Sonuç | Kaynak |
-|---|---|---|
+| --- | --- | --- |
 | Rosenblatt 1958 (Psychological Review 65(6)); IBM 704 gösterimi 7 Temmuz 1958; Mark I'ın ilk halka açık gösterimi 23 Haziran 1960; 400 fotosel | Doğru | Wikipedia "Perceptron", Cornell Chronicle |
 | Novikoff 1962, Minsky–Papert 1969 | Doğru | Wikipedia "Perceptron" |
 | İlk "yapay zekâ kışı" | Düzeltildi (P4) | Wikipedia "AI winter" |
@@ -153,4 +154,8 @@ gösteriyorlar (XOR'da takılma, H = 1 ile kapasite). Türkçe akıcı, TR/EN e�
 
 ## Takip
 
-- 2026-11-26: "Çözüldü" diye işaretlenen maddeler bu incelemenin commit'inde düzeltildi.
+- 2026-11-26: "Çözüldü" diye işaretlenen maddeler bu incelemenin commit'inde (`f97cdad`)
+  düzeltildi.
+- 2026-11-26: eğitmen, önerinin 1. maddesini onayladı; CNN bölümü artık Teori ile açılıyor (C1).
+  Eğitim sekmesini doğrudan açan testler `#egitim` adresine geçti. Bölümün Teori ile açıldığını ve
+  Eğitim sekmesine geçince grafiklerin çizildiğini denetleyen bir test eklendi.

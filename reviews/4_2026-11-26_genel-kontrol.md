@@ -20,7 +20,7 @@
 ## Bulgular
 
 | No | Bulgu | Durum |
-|---|---|---|
+| --- | --- | --- |
 | K1 | Bölüm sayfalarından ana sayfaya doğrudan bir bağlantı yoktu; başlangıç sayfasına yalnızca adres çubuğundan dönülebiliyordu | Çözüldü: üst çubuğun en solunda ev ikonu (telefonda logonun yerini alır, 360 px'in altında gizlenir), bölüm menüsünün başında "← Ana sayfa". Testi eklendi |
 | K2 | Geniş ekranda üst çubuk sığmayınca rozetler ikinci satıra tek başına düşüyordu. CNN sayfasında bu, son commit'te de 1050–1630 px arasında 16–30 genişlikte vardı; ev ikonu bunu biraz artırdı | Çözüldü: çubuk sığmadığında önce alt başlık ve uzun rozetler, sonra model rozeti gizleniyor, en son sekmeler kendi satırına iniyor (dar ekranlardaki düzenin aynısı). Rozetler artık hiçbir genişlikte tek başına kalmıyor |
 | K3 | Kod taraması #1: 1000 ve üzeri sayısal cevaplar. "1.024" (Türkçe yazım) yanlış sayılıyordu; "Cevabı göster" de "1.024" gösterip aynı yazımı reddediyordu (CNN `pl-flat`, cevap 1024) | Çözüldü: binlik ayırıcılı yazım da kabul ediliyor, gösterilen cevapta ayırıcı yok. Birim ve tarayıcı testleri eklendi |

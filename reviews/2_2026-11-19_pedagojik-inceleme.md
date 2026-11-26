@@ -18,7 +18,7 @@ NumPy, PyTorch) doğrulandı.
 ## Bulgular
 
 | No | Bulgu | Durum |
-|---|---|---|
+| --- | --- | --- |
 | B1 | CNN bölümü nöronu, aktivasyonu, çapraz entropiyi ve geri yayılımı 1–2. bölümlere bağlanmadan yeniden anlatıyordu | Çözüldü (`135901d`): giriş MLP'nin görüntüdeki sorunundan başlıyor, tekrarlar bağlantıyla hatırlatılıyor |
 | B2 | MLP bölümü perceptron kuralını "yalnızca hata sayan" bir yöntem gibi anlatıyordu (1. bölümle çelişki) | Çözüldü (`135901d`) |
 | B3 | Öğrenme hedefi, bölüm sonu özeti, tahmin yönergeleri ve sıralı, ipuçlu alıştırmalar yoktu | Çözüldü (`135901d`) |
