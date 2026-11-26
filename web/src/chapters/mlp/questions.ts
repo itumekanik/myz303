@@ -35,6 +35,14 @@ function train(net: Net, epochs: number): Net {
   return net;
 }
 
+/** A small 2 → 3 → 1 tanh network after 500 epochs of XOR with the learning rate eta, the same start every time. */
+function xorAfter(eta: number): Net {
+  const net = NET.create([2, 3, 1], { act: "tanh", out: "sigmoid", rand: seeded(1) });
+  for (let epoch = 0; epoch < 500; epoch++) NET.trainEpoch(net, XOR, { lr: eta, batch: XOR.length });
+  return net;
+}
+const ETAS = [0.05, 1, 20];
+
 const rightOf4 = (net: Net): number => Math.round(NET.accuracy(net, XOR) * XOR.length);
 const decimal = (value: number, digits: number) => ({ tr: value.toFixed(digits).replace(".", ","), en: value.toFixed(digits) });
 
@@ -59,6 +67,15 @@ export const PRACTICE: PracticeSection[] = [
           tr: R`Önce \(\sigma(0) = 0{,}5\) değerini \(\sigma(z)\,(1 - \sigma(z))\) formülüne koyun.`,
           en: R`Put \(\sigma(0) = 0.5\) into \(\sigma(z)\,(1 - \sigma(z))\).`,
         },
+        mistakes: [
+          {
+            value: 0.5,
+            why: {
+              tr: R`Bu \(\sigma(0)\)'ın kendisi. Türev \(\sigma(0)\,(1 - \sigma(0)) = 0{,}5\cdot 0{,}5\)'tir.`,
+              en: R`That is \(\sigma(0)\) itself. The derivative is \(\sigma(0)\,(1 - \sigma(0)) = 0.5\cdot 0.5\).`,
+            },
+          },
+        ],
         explain: {
           tr: R`\(\sigma'(0) = 0{,}5\cdot(1 - 0{,}5) = 0{,}25\). Bu, sigmoid'in en büyük eğimidir: iki uca gidildikçe türev 0'a yaklaşır ve nöron doyar.`,
           en: R`\(\sigma'(0) = 0.5\cdot(1 - 0.5) = 0.25\). This is the sigmoid's largest slope: towards both ends the derivative approaches 0 and the neuron saturates.`,
@@ -202,6 +219,22 @@ export const PRACTICE: PracticeSection[] = [
           tr: "Her nöronun, girdi sayısı kadar ağırlığı ve bir biası vardır. Üç nöronu ayrı ayrı sayın.",
           en: "Each neuron has one weight per input and one bias. Count the three neurons one by one.",
         },
+        mistakes: [
+          {
+            value: 6,
+            why: {
+              tr: R`Biasları unutmuş olabilirsiniz: üç nöronun her birinin bir biası vardır.`,
+              en: R`You may have left out the biases: each of the three neurons has one.`,
+            },
+          },
+          {
+            value: 8,
+            why: {
+              tr: R`Çıktı nöronunun biasını da sayın.`,
+              en: R`Count the output neuron's bias too.`,
+            },
+          },
+        ],
         explain: {
           tr: R`Her gizli nöron: 2 ağırlık + 1 bias = 3. Çıktı nöronu: 2 ağırlık + 1 bias = 3. Toplam \(3 + 3 + 3 = 9\).`,
           en: R`Each hidden neuron: 2 weights + 1 bias = 3. The output neuron: 2 weights + 1 bias = 3. In all, \(3 + 3 + 3 = 9\).`,
@@ -269,6 +302,29 @@ export const PRACTICE: PracticeSection[] = [
         tolerance: 0.006,
         compute: () => NET.lossOne(0.5, 1),
         hint: { tr: R`\(y = 1\) iken formül \(L = -\ln\hat y\)'ye iner.`, en: R`With \(y = 1\) the formula becomes \(L = -\ln\hat y\).` },
+        mistakes: [
+          {
+            value: 0.3,
+            why: {
+              tr: R`Bu 10 tabanlı logaritma. Kayıptaki log doğal logaritmadır, ln: \(-\ln 0{,}5\).`,
+              en: R`That is the base-10 logarithm. The log in the loss is the natural one, ln: \(-\ln 0.5\).`,
+            },
+          },
+          {
+            value: 1,
+            why: {
+              tr: R`Bu 2 tabanlı logaritma (\(\log_2 2 = 1\)). Kayıptaki log doğal logaritmadır, ln: \(-\ln 0{,}5\).`,
+              en: R`That is the base-2 logarithm (\(\log_2 2 = 1\)). The log in the loss is the natural one, ln: \(-\ln 0.5\).`,
+            },
+          },
+          {
+            value: 0.5,
+            why: {
+              tr: R`Bu, modelin olasılığı \(\hat y\). Kayıp onun eksi logaritmasıdır: \(-\ln\hat y\).`,
+              en: R`That is the model's probability \(\hat y\). The loss is minus its logarithm: \(-\ln\hat y\).`,
+            },
+          },
+        ],
         explain: {
           tr: R`\(L = -\ln 0{,}5 = \ln 2 \approx 0{,}69\). Bu, hiçbir şey bilmeyen bir modelin kaybıdır: iki sınıfa da eşit olasılık veriyor.`,
           en: R`\(L = -\ln 0.5 = \ln 2 \approx 0.69\). This is the loss of a model that knows nothing: it gives both classes the same probability.`,
@@ -293,6 +349,22 @@ export const PRACTICE: PracticeSection[] = [
           tr: R`Sigmoid ile çapraz entropi birlikte çok basit bir türev verir: \(\hat y - y\).`,
           en: R`The sigmoid and cross-entropy together give a very simple derivative: \(\hat y - y\).`,
         },
+        mistakes: [
+          {
+            value: 0.2,
+            why: {
+              tr: R`İşarete dikkat: \(\delta_o = \hat y - y = 0{,}8 - 1\). Negatif işaret, \(z_o\) büyürse kaybın azalacağını söyler.`,
+              en: R`Watch the sign: \(\delta_o = \hat y - y = 0.8 - 1\). The minus says the loss falls if \(z_o\) grows.`,
+            },
+          },
+          {
+            value: -0.032,
+            why: {
+              tr: R`Sonucu bir de \(\sigma'(z_o) = 0{,}16\) ile çarpmışsınız. Çapraz entropi ile sigmoid birlikte kullanılınca bu çarpan sadeleşir, geriye \(\hat y - y\) kalır. Bu çarpım MSE kaybında olurdu.`,
+              en: R`You also multiplied by \(\sigma'(z_o) = 0.16\). With cross-entropy and a sigmoid together, that factor cancels and \(\hat y - y\) is left. The product belongs to the MSE loss.`,
+            },
+          },
+        ],
         explain: {
           tr: R`\(\delta_o = \hat y - y = 0{,}8 - 1 = -0{,}2\). Negatif işaret, \(z_o\) büyürse kaybın azalacağını söyler.`,
           en: R`\(\delta_o = \hat y - y = 0.8 - 1 = -0.2\). The negative sign says the loss falls if \(z_o\) grows.`,
@@ -407,6 +479,36 @@ export const PRACTICE: PracticeSection[] = [
           tr: R`Önce \(\delta_o = \hat y - y\)'yi bulun, sonra üç çarpanla çarpın.`,
           en: R`First find \(\delta_o = \hat y - y\), then multiply by the three factors.`,
         },
+        mistakes: [
+          {
+            value: 0.125,
+            why: {
+              tr: R`İşarete dikkat: \(\delta_o = \hat y - y = 0{,}75 - 1 = -0{,}25\).`,
+              en: R`Watch the sign: \(\delta_o = \hat y - y = 0.75 - 1 = -0.25\).`,
+            },
+          },
+          {
+            value: -0.5,
+            why: {
+              tr: R`\(h_1 (1 - h_1) = 0{,}25\) çarpanını unutmuşsunuz: hata, gizli nöronun sigmoid'inden de geçer.`,
+              en: R`You left out the factor \(h_1 (1 - h_1) = 0.25\): the error also passes through the hidden neuron's sigmoid.`,
+            },
+          },
+          {
+            value: -0.0625,
+            why: {
+              tr: R`\(v_1 = 2\) ile çarpmayı unutmuşsunuz: hata, gizli nörona çıktıya giden ağırlığı üzerinden ulaşır.`,
+              en: R`You did not multiply by \(v_1 = 2\): the error reaches the hidden neuron through its weight to the output.`,
+            },
+          },
+          {
+            value: -0.25,
+            why: {
+              tr: R`Bu \(\delta_o\)'nun kendisi ya da \(h_1 (1 - h_1)\) yerine yalnızca \(h_1\) ile çarpılmış hâli. Formül: \(\delta_o\, v_1\, h_1 (1 - h_1)\).`,
+              en: R`That is \(\delta_o\) itself, or multiplied by \(h_1\) alone instead of \(h_1 (1 - h_1)\). The formula is \(\delta_o\, v_1\, h_1 (1 - h_1)\).`,
+            },
+          },
+        ],
         explain: {
           tr: R`\(\delta_o = 0{,}75 - 1 = -0{,}25\). \(\delta_1 = -0{,}25\cdot 2\cdot 0{,}5\cdot 0{,}5 = -0{,}125\). Sigmoid'in eğimi en fazla 0,25 olduğu için, ağırlıklar büyük değilse hata geriye giderken küçülür.`,
           en: R`\(\delta_o = 0.75 - 1 = -0.25\). \(\delta_1 = -0.25\cdot 2\cdot 0.5\cdot 0.5 = -0.125\). The sigmoid's slope is at most 0.25, so, if the weights are not large, the error shrinks as it goes back.`,
@@ -565,6 +667,29 @@ export const PRACTICE: PracticeSection[] = [
           tr: "Her gizli nöronda 1 ağırlık ve 1 bias, çıktı nöronunda 5 ağırlık ve 1 bias vardır.",
           en: "Each hidden neuron has 1 weight and 1 bias; the output neuron has 5 weights and 1 bias.",
         },
+        mistakes: [
+          {
+            value: 10,
+            why: {
+              tr: R`Biasları unutmuşsunuz: 5 gizli nöronun ve çıktı nöronunun her birinin bir biası var.`,
+              en: R`You left out the biases: each of the 5 hidden neurons and the output neuron has one.`,
+            },
+          },
+          {
+            value: 15,
+            why: {
+              tr: R`Çıktı nöronunun biasını da sayın.`,
+              en: R`Count the output neuron's bias too.`,
+            },
+          },
+          {
+            value: 11,
+            why: {
+              tr: R`Gizli nöronların biaslarını da sayın: her birinde 1 tane.`,
+              en: R`Count the hidden neurons' biases too: one each.`,
+            },
+          },
+        ],
         explain: {
           tr: R`Gizli katman: \(5\cdot(1 + 1) = 10\). Çıktı: \(5 + 1 = 6\). Toplam \(10 + 6 = 16\).`,
           en: R`Hidden layer: \(5\cdot(1 + 1) = 10\). Output: \(5 + 1 = 6\). In all, \(10 + 6 = 16\).`,
@@ -716,6 +841,22 @@ export const PRACTICE: PracticeSection[] = [
           tr: "Doğrulamaya ayrılan görüntüler eğitimde kullanılmaz: önce onların sayısını bulun.",
           en: "The images set aside for validation are not trained on: find how many they are first.",
         },
+        mistakes: [
+          {
+            value: 12000,
+            why: {
+              tr: R`Bu, doğrulamaya ayrılan görüntülerin sayısı. Soru, ağırlıkların öğrenildiği görüntüleri soruyor.`,
+              en: R`That is the number of images set aside for validation. The question asks for the images the weights learn from.`,
+            },
+          },
+          {
+            value: 60000,
+            why: {
+              tr: R`Doğrulamaya ayrılan görüntüler eğitimde kullanılmaz: \(60\,000\)'in %20'sini çıkarın.`,
+              en: R`The images set aside for validation are not trained on: take away 20% of \(60\,000\).`,
+            },
+          },
+        ],
         explain: {
           tr: R`\(60\,000 \cdot 0{,}2 = 12\,000\) görüntü doğrulamaya ayrılır, ağırlıklar kalan \(48\,000\) görüntüyle öğrenilir. Ayrı 10.000 test görüntüsü ise yalnızca en sonda kullanılır.`,
           en: R`\(60{,}000 \cdot 0.2 = 12{,}000\) images are set aside for validation, and the weights are learned from the other \(48{,}000\). The separate 10,000 test images are used only at the very end.`,
@@ -780,6 +921,22 @@ export const PRACTICE: PracticeSection[] = [
           tr: R`Düzleştirilince 100 girdi olur. Her nöronda 100 ağırlık ve 1 bias vardır.`,
           en: R`Flattened, that is 100 inputs. Each neuron has 100 weights and 1 bias.`,
         },
+        mistakes: [
+          {
+            value: 800,
+            why: {
+              tr: R`Biasları unutmuşsunuz: 8 nöronun her birinin bir biası var.`,
+              en: R`You left out the biases: each of the 8 neurons has one.`,
+            },
+          },
+          {
+            value: 108,
+            why: {
+              tr: R`Her nöron 100 girdinin hepsine bağlıdır: bir nöronda 100 ağırlık, 8 nöronda \(8\cdot 100\).`,
+              en: R`Each neuron is connected to all 100 inputs: 100 weights in one neuron, \(8\cdot 100\) in eight.`,
+            },
+          },
+        ],
         explain: {
           tr: R`\(100\cdot 8 + 8 = 808\). Parametre sayısı görüntünün piksel sayısıyla doğrudan büyür: MNIST'te 512 nöronlu tek bir katman 401.920 parametre demektir.`,
           en: R`\(100\cdot 8 + 8 = 808\). The parameters grow directly with the number of pixels: on MNIST a single layer of 512 neurons has 401,920 parameters.`,
@@ -852,6 +1009,211 @@ export const PRACTICE: PracticeSection[] = [
         explain: {
           tr: R`MLP hangi pikselin hangisinin yanında olduğunu hiç kullanmaz. Evrişim bu yüzden farklıdır: küçük bir filtre komşu piksellere bakar ve aynı ağırlıkları görüntünün her yerinde kullanır.`,
           en: R`An MLP never uses which pixel is next to which. That is what makes convolution different: a small filter looks at neighbouring pixels and uses the same weights everywhere in the image.`,
+        },
+      },
+    ],
+  },
+  {
+    id: "px-transfer",
+    title: { tr: "Hepsi bir arada", en: "Putting it together" },
+    intro: {
+      tr: R`Bu kısımdaki sorular birkaç kısmı birlikte kullanır ve onları yeni bir duruma taşır: türev ile geri yayılımı derin bir ağa, mini-batch'i gerçek bir veri setine, kapasiteyi bir eğitim sonucunu yorumlamaya.`,
+      en: R`The questions here use several sections at once and carry them to a new case: the derivative and backpropagation to a deep network, mini-batches to a real dataset, capacity to reading a training result.`,
+    },
+    read: { tab: "theory" },
+    questions: [
+      {
+        id: "t-vanish",
+        kind: "number",
+        q: {
+          tr: R`Gradyan geri yayılırken geçtiği her sigmoid nöronunda \(\sigma'(z)\) ile çarpılır ve \(\sigma'(z) \le 0{,}25\)'tir. Ağırlıkları 1 sayarsak, 4 sigmoid katmanını geriye doğru geçen bir gradyan en çok kaçla çarpılmış olur? (Dört ondalığa yuvarlayın.)`,
+          en: R`As the gradient flows back, it is multiplied by \(\sigma'(z)\) at every sigmoid neuron it passes, and \(\sigma'(z) \le 0.25\). Counting the weights as 1, at most what is a gradient multiplied by after passing back through 4 sigmoid layers? (Round to four decimals.)`,
+        },
+        label: { tr: "çarpan ≈", en: "factor ≈" },
+        answer: 0.0039,
+        tolerance: 0.00006,
+        compute: () => {
+          let factor = 1;
+          for (let layer = 0; layer < 4; layer++) factor *= NET.ACT.sigmoid.d(0, NET.sigmoid(0)); // the largest derivative, at z = 0
+          return factor;
+        },
+        hint: {
+          tr: R`Zincir kuralında çarpanlar çarpılır: her katman bir \(0{,}25\) daha getirir.`,
+          en: R`The chain rule multiplies the factors: every layer brings one more \(0.25\).`,
+        },
+        mistakes: [
+          {
+            value: 1,
+            why: {
+              tr: R`Çarpanları toplamışsınız: \(4\cdot 0{,}25 = 1\). Zincir kuralında çarpılırlar: \(0{,}25^4\).`,
+              en: R`You added the factors: \(4\cdot 0.25 = 1\). The chain rule multiplies them: \(0.25^4\).`,
+            },
+          },
+          {
+            value: 0.0625,
+            why: {
+              tr: R`Bu iki katmanın çarpanı, \(0{,}25^2\). Gradyan dört katmandan geçiyor.`,
+              en: R`That is the factor of two layers, \(0.25^2\). The gradient passes through four.`,
+            },
+          },
+        ],
+        explain: {
+          tr: R`\(0{,}25^4 \approx 0{,}0039\): ilk katmanlara ulaşan işaret en iyi durumda bile 256'da birine iner; nöronlar doymuşsa, yani \(|z|\) büyükse, çok daha azına. İlk katmanlar bu yüzden çok yavaş öğrenir. Buna [[vanishing-gradient|kaybolan gradyan]] denir. ReLU'nun türevi pozitif tarafta 1 olduğu için bu çarpım küçülmez; CNN bölümü bu yüzden ReLU kullanır.`,
+          en: R`\(0.25^4 \approx 0.0039\): even at best, the signal that reaches the first layers is cut to one 256th, and to far less if the neurons are saturated, that is, if \(|z|\) is large. So the first layers learn very slowly. This is the [[vanishing-gradient|vanishing gradient]]. The ReLU's derivative is 1 on the positive side, so the product does not shrink there; that is why the CNN chapter uses ReLU.`,
+        },
+      },
+      {
+        id: "t-batch",
+        kind: "number",
+        q: {
+          tr: R`MNIST'in 60.000 eğitim görüntüsünün %20'si doğrulamaya ayrılıyor. Kalanlarla 64 görüntülük mini-batch'lerle eğitiliyor ve her mini-batch'ten sonra ağırlıklar bir kez güncelleniyor. 10 epoch'ta ağırlıklar kaç kez güncellenir?`,
+          en: R`20% of MNIST's 60,000 training images are set aside for validation. The rest are trained on in mini-batches of 64 images, and the weights are updated once after every mini-batch. How many times are the weights updated in 10 epochs?`,
+        },
+        label: { tr: "güncelleme sayısı =", en: "number of updates =" },
+        answer: 7500,
+        compute: () => ((60000 * (1 - 0.2)) / 64) * 10,
+        hint: {
+          tr: "Önce eğitimde kalan görüntü sayısını, sonra bir epoch'taki mini-batch sayısını bulun.",
+          en: "Find the number of images left for training first, then the number of mini-batches in one epoch.",
+        },
+        mistakes: [
+          {
+            value: 9375,
+            why: {
+              tr: R`Doğrulama görüntüleri eğitimde kullanılmaz: bir epoch \(48\,000\) görüntüdür, \(60\,000\) değil.`,
+              en: R`The validation images are not trained on: an epoch is \(48{,}000\) images, not \(60{,}000\).`,
+            },
+          },
+          {
+            value: 750,
+            why: {
+              tr: "Bu bir epoch'taki güncelleme sayısı. Eğitim 10 epoch sürüyor.",
+              en: "That is the number of updates in one epoch. Training lasts 10 epochs.",
+            },
+          },
+          {
+            value: 480000,
+            why: {
+              tr: "Ağırlıklar her görüntüden sonra değil, 64 görüntülük her mini-batch'ten sonra, gradyanların ortalamasıyla bir kez güncellenir.",
+              en: "The weights are updated not after every image but once after every mini-batch of 64, with the average of their gradients.",
+            },
+          },
+        ],
+        explain: {
+          tr: R`Eğitimde \(60\,000\cdot 0{,}8 = 48\,000\) görüntü kalır, bir epoch \(48\,000 / 64 = 750\) mini-batch'tir ve 10 epoch'ta \(7\,500\) güncelleme yapılır. Her güncelleme 64 örneğin gradyanlarının ortalamasını kullanır: bütün veriden daha ucuz, tek örnekten daha az gürültülü.`,
+          en: R`\(60{,}000\cdot 0.8 = 48{,}000\) images are left for training, one epoch is \(48{,}000 / 64 = 750\) mini-batches, and 10 epochs make \(7{,}500\) updates. Each update uses the average gradient of 64 examples: cheaper than the whole dataset, less noisy than a single example.`,
+        },
+      },
+      {
+        id: "t-eta",
+        kind: "predict",
+        q: {
+          tr: R`Aynı küçük ağı (2 → 3 → 1, aynı başlangıç ağırlıkları) XOR üzerinde üç öğrenme oranıyla 500'er epoch eğitiyoruz: \(\eta = 0{,}05\), \(1\) ve \(20\). Hangisinin kaybı en düşük olur?`,
+          en: R`We train the same small network (2 → 3 → 1, the same starting weights) on XOR for 500 epochs with three learning rates: \(\eta = 0.05\), \(1\) and \(20\). Which one ends with the lowest loss?`,
+        },
+        options: [
+          { tr: R`\(\eta = 0{,}05\)`, en: R`\(\eta = 0.05\)` },
+          { tr: R`\(\eta = 1\)`, en: R`\(\eta = 1\)` },
+          { tr: R`\(\eta = 20\)`, en: R`\(\eta = 20\)` },
+        ],
+        answer: 1,
+        run: () => {
+          const nets = ETAS.map(xorAfter);
+          const losses = nets.map((net) => NET.lossOf(net, XOR));
+          const best = losses.indexOf(Math.min(...losses));
+          const list = (lang: "tr" | "en") =>
+            ETAS.map((eta, k) => {
+              const loss = decimal(losses[k]!, 3)[lang];
+              const right = rightOf4(nets[k]!);
+              return `η = ${decimal(eta, eta < 1 ? 2 : 0)[lang]}: ${lang === "tr" ? `kayıp ${loss}, ${right}/4 nokta doğru` : `loss ${loss}, ${right}/4 points right`}`;
+            }).join(" · ");
+          return {
+            answer: best,
+            result: { tr: `500 epoch sonra ${list("tr")}.`, en: `After 500 epochs, ${list("en")}.` },
+          };
+        },
+        tryIt: { tab: "play" },
+        explain: {
+          tr: R`Küçük \(\eta\) doğru yönde ama çok küçük adımlar atar: 500 epoch sonra kayıp hâlâ yüksektir ve ağ dört noktanın birini yanlış sınıflar. Büyük \(\eta\) vadinin üzerinden atlar: ağırlıklar büyür, nöronlar doyar, gradyan söner ve ağ yanlış cevaplarında takılı kalır. İyi bir \(\eta\) ikisinin arasındadır ve ağa ve veriye göre denenerek bulunur. Deneme alanında \(\eta\) kaydırıcısıyla kendiniz görün.`,
+          en: R`A small \(\eta\) steps the right way but in tiny steps: after 500 epochs the loss is still high and the network gets one of the four points wrong. A large \(\eta\) jumps over the valley: the weights grow, the neurons saturate, the gradient dies away and the network stays stuck on its wrong answers. A good \(\eta\) lies in between and is found by trying, for each network and dataset. See it yourself with the \(\eta\) slider in the Playground.`,
+        },
+      },
+      {
+        id: "t-deep",
+        kind: "number",
+        q: {
+          tr: R`2 → 8 → 1 ağına, ilkinin arkasına 8 nöronlu ikinci bir gizli katman ekliyoruz: 2 → 8 → 8 → 1. Parametre (ağırlık ve bias) sayısı kaç artar?`,
+          en: R`We add a second hidden layer of 8 neurons behind the first one of a 2 → 8 → 1 network: 2 → 8 → 8 → 1. By how much does the number of parameters (weights and biases) grow?`,
+        },
+        label: { tr: "artış =", en: "increase =" },
+        answer: 72,
+        compute: () => NET.paramCount([2, 8, 8, 1]) - NET.paramCount([2, 8, 1]),
+        hint: {
+          tr: "Yeni katmandaki 8 nöronun her biri, önceki katmanın 8 çıktısının hepsine bağlıdır ve bir bias taşır. Çıktı nöronunun girdisi yine 8 tanedir.",
+          en: "Each of the 8 new neurons is connected to all 8 outputs of the layer before and has a bias. The output neuron still has 8 inputs.",
+        },
+        mistakes: [
+          {
+            value: 64,
+            why: { tr: "Yeni nöronların biaslarını da sayın: 8 tane.", en: "Count the new neurons' biases too: 8 of them." },
+          },
+          {
+            value: 105,
+            why: {
+              tr: R`Bu yeni ağın toplam parametre sayısı. Soru, artışı soruyor: eski ağda \(33\) parametre vardı.`,
+              en: R`That is the new network's total. The question asks for the increase: the old network had \(33\).`,
+            },
+          },
+          {
+            value: 81,
+            why: {
+              tr: R`Çıktı nöronu değişmez: önceden de 8 girdisi vardı, şimdi de 8. Yalnızca yeni katmanın \(8\cdot 8 + 8\) parametresi eklenir.`,
+              en: R`The output neuron does not change: it had 8 inputs before and has 8 now. Only the new layer's \(8\cdot 8 + 8\) parameters are added.`,
+            },
+          },
+        ],
+        explain: {
+          tr: R`Yeni katman: \(8\cdot 8\) ağırlık ve 8 bias, toplam 72. Çıktı nöronu önceden de 8 girdiliydi, değişmez. Ağ \(33\)'ten \(105\) parametreye çıkar. Katmanlar arası bağlantılar, katman genişliklerinin çarpımıyla büyür: geniş katmanları üst üste koymak parametreyi hızla artırır.`,
+          en: R`The new layer: \(8\cdot 8\) weights and 8 biases, 72 in all. The output neuron had 8 inputs before too, so it does not change. The network grows from \(33\) to \(105\) parameters. The connections between two layers grow with the product of their widths: stacking wide layers adds parameters fast.`,
+        },
+      },
+      {
+        id: "t-under",
+        kind: "choice",
+        q: {
+          tr: "Bir ağın eğitim hatası da doğrulama hatası da yüksek ve ikisi birbirine yakın. Hangisi en çok yardım eder?",
+          en: "A network's training error and validation error are both high, and close to each other. What helps most?",
+        },
+        options: [
+          {
+            text: { tr: "Eğitimi erken durdurmak", en: "Stopping training early" },
+            why: {
+              tr: "Erken durdurma, doğrulama hatası yükselmeye başlayınca işe yarar. Bu ağ eğitim noktalarını bile öğrenemiyor; erken durdurmak onu daha da az eğitir.",
+              en: "Early stopping helps once the validation error starts to rise. This network cannot even learn the training points; stopping early trains it even less.",
+            },
+          },
+          {
+            text: { tr: "Dropout gibi bir düzenlileştirme eklemek", en: "Adding regularization such as dropout" },
+            why: {
+              tr: "Düzenlileştirme aşırı uyuma karşıdır ve öğrenmeyi biraz zorlaştırır. Bu ağın sorunu ezberlemek değil, öğrenememek.",
+              en: "Regularization works against overfitting and makes learning a little harder. This network's problem is not memorizing but failing to learn.",
+            },
+          },
+          {
+            text: { tr: "Daha çok nöron kullanmak ya da daha uzun eğitmek", en: "Using more neurons or training longer" },
+          },
+          {
+            text: { tr: "Nöron sayısını azaltmak", en: "Using fewer neurons" },
+            why: {
+              tr: "Kapasite azalınca ağ eğitim verisine daha da az uyar ve eğitim hatası yükselir.",
+              en: "With less capacity the network fits the training data even less, and the training error goes up.",
+            },
+          },
+        ],
+        answer: 2,
+        explain: {
+          tr: R`Bu tablo [[underfitting|yetersiz öğrenmedir]]: ağın kapasitesi ya da eğitim süresi yetmiyor. Kapasite kısmındaki \(H = 1\)'lik ağ böyledir: tepeyi hiç çizemez. [[overfitting|Aşırı uyumda]] tablo terstir: eğitim hatası düşük, doğrulama hatası yüksek. Çare de terstir: daha küçük bir model, daha çok veri ya da erken durdurma.`,
+          en: R`This picture is [[underfitting|underfitting]]: the network's capacity or training time is not enough. The \(H = 1\) network in the capacity section is like this: it cannot draw the bump at all. With [[overfitting|overfitting]] the picture is reversed: low training error, high validation error. So is the cure: a smaller model, more data or early stopping.`,
         },
       },
     ],

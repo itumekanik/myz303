@@ -55,7 +55,8 @@ gösteriyorlar (XOR'da takılma, H = 1 ile kapasite). Türkçe akıcı, TR/EN e�
    2026-11-26.)*
 2. MLP bölümüne kısa bir "eğitim, doğrulama ve test" kısmı ile Deneme alanına test doğruluğu
    (M9). CNN'e geçmeden önceki en önemli eksik bu. *(Yapıldı, 2026-11-26.)*
-3. Her bölüme 4–6 transfer sorusu ve tipik yanlışlara özel geri bildirim (M10, C10, P6).
+3. Her bölüme 4–6 transfer sorusu ve tipik yanlışlara özel geri bildirim (M10, C10, P6). *(Yapıldı,
+   2026-11-26.)*
 4. Kodlama sekmelerine "Python'unuz yoksa" kutusu: dosyayı indirme bağlantısı, kurulum ya da
    Colab (P2).
 5. CNN bölümünün bölünmesi ya da sırasının değişmesi (C2, C3). Büyük bir iş; ders takvimine göre
@@ -70,13 +71,13 @@ gösteriyorlar (XOR'da takılma, H = 1 ile kapasite). Türkçe akıcı, TR/EN e�
 | P3 | orta | Alıştırma `c-eta` | "Kendiniz deneyin" bağlantısı, cevapla çelişen bir demoya götürüyordu (o demo sıfırdan başlamıyor, orada η epoch sayısını değiştiriyor) | Çözüldü: bağlantı, iddianın ispatlandığı Matematik kısmına gidiyor |
 | P4 | orta | Teori, tarih | "Bu döneme ilk yapay zekâ kışı dendi": ilk yapay zekâ kışı 1974–1980 arası ve bütün alanı kapsıyor | Çözüldü |
 | P5 | orta | Teori ↔ MLP Teori | Kayıp ve gradyan inişi 1. bölümde yalnızca Matematik'te; MLP Teori'si bunları 1. bölümden biliniyor sayıyor | **Açık: eğitmen kararı** (p-rule'a 2–3 cümle ve bir soru önerildi) |
-| P6 | orta | Alıştırma | MLP'ye geçişin ana fikirleri sorulmuyor: gizli gösterim, gizli ağırlıkların neden perceptron kuralıyla öğrenilemediği, kayıp | **Açık: eğitmen kararı** |
+| P6 | orta | Alıştırma | MLP'ye geçişin ana fikirleri sorulmuyor: gizli gösterim, gizli ağırlıkların neden perceptron kuralıyla öğrenilemediği, kayıp | Kısmen çözüldü (2026-11-26, öneri 3): yeni "Hepsi bir arada" kısmında gizli gösterim (`t-hidden`, `t-and`) ve gizli nöronun hedefi (`t-target`) soruları. Kayıp sorusu P5'e bağlı, **Açık: eğitmen kararı** |
 | P7 | orta | Matematik | "z = 0'da adım atmak da atmamak da geçerli" ifadesi: sıfırdan başlayan perceptronu yürüten şey, z = 0'ı y = 1 için hata saymak | Çözüldü: açıklayıcı cümle eklendi |
 | P8 | orta-düşük | Teori, sözlük | (R/γ)² sınırı yalnızca sıfırdan başlayınca geçerli; R, bias için eklenen 1 bileşeniyle ölçülüyor | Çözüldü (Teori ve sözlük) |
 | P9 | düşük-orta | Teori | "Bölümler sırayla okunmak üzere yazıldı": kısım olmalı | Çözüldü |
 | P10 | düşük | Teori, tarih | Mark I aslında üç katmanlı: 400 fotosel, rastgele ve sabit bağlı 512 ilişki birimi, 8 çıktı. Bu, 2. bölümün konusuna doğal bir köprü | **Açık: eğitmen kararı** |
-| P11 | düşük | Alıştırma `c-flip` ↔ `x-why` | Bir sorunun açıklaması sonrakinin cevabını veriyor; doğru şık belirgin biçimde uzun | **Açık: eğitmen kararı** |
-| P12 | düşük | Alıştırma `c-bound` | Formüle sayı koymaktan ibaret ("marj yarıya inerse sınır kaç katına çıkar?" önerildi) | **Açık: eğitmen kararı** |
+| P11 | düşük | Alıştırma `c-flip` ↔ `x-why` | Bir sorunun açıklaması sonrakinin cevabını veriyor; doğru şık belirgin biçimde uzun | Çözüldü (öneri 3): `x-why` artık imkânsızlığın kanıtını soruyor; şıkların uzunluğu dengeli |
+| P12 | düşük | Alıştırma `c-bound` | Formüle sayı koymaktan ibaret ("marj yarıya inerse sınır kaç katına çıkar?" önerildi) | Çözüldü (öneri 3): `c-bound` marj yarıya inince sınırın ne olacağını soruyor (cevap 256) |
 | P13 | düşük | Kodlama | "Perceptron kuralı gradyan istemez" ifadesi Matematik'teki "kural bir gradyan inişidir" ile çelişiyordu | Çözüldü: "gradyanı elle yazılacak kadar basit, autograd gerekmez" |
 | P14 | düşük | Teori, sözlük | Basamak fonksiyonunun eğimi "her yerde 0" değil, z = 0 dışında 0 | Çözüldü (Teori ve sözlük) |
 | P15 | düşük | Kodlama, Deneme alanı | Eksik iki fikir: x₃ = x₁x₂ ile sınır "özelliklerde doğrusal, girdilerde eğri"; ayrılamayan gürültülü veride perceptron hiç durulmuyor | **Açık: eğitmen kararı** |
@@ -96,10 +97,10 @@ gösteriyorlar (XOR'da takılma, H = 1 ile kapasite). Türkçe akıcı, TR/EN e�
 | M7 | orta | Teori (görüntüler) | "Evrişimin yalnızca 52.096 parametresi var" karşılaştırması bütün CNN'in daha az parametreli olduğunu düşündürüyor (SimpleCNN 582.218, tek katmanlı MLP 401.920) | Çözüldü |
 | M8 | orta | Teori (geri yayılım) | ∂L/∂w gösterimi Teori'de tanımlanmadan beş çarpanlı zincire geçiliyor; çarpanların demodaki adımlarla eşleşmesi gösterilmiyor | Çözüldü |
 | M9 | orta | Teori, Deneme alanı | Aşırı uyum ve doğrulama CNN'den önce gereken en önemli eksik; Deneme alanında test doğruluğu yok | Çözüldü (2026-11-26, eğitmen kararıyla): Teori'de yeni 6. kısım, Deneme alanında test noktaları ve "Gürültülü" veri, Alıştırma'da 4 yeni soru (ayrıntılar Takip'te) |
-| M10 | orta | Alıştırma | Zayıf çeldiriciler; 19 sorunun neredeyse hepsi tek adımlık. Mini-batch, η'nın etkisi, kaybolan gradyan, aşırı uyum sorulmuyor | **Açık: eğitmen kararı** |
+| M10 | orta | Alıştırma | Zayıf çeldiriciler; 19 sorunun neredeyse hepsi tek adımlık. Mini-batch, η'nın etkisi, kaybolan gradyan, aşırı uyum sorulmuyor | Çözüldü (öneri 3): yeni kısımda 5 transfer sorusu (kaybolan gradyan, mini-batch, η'nın etkisi, derin ağın parametreleri, yetersiz öğrenme); aşırı uyum 6. kısımda. Eski çeldiriciler yeniden yazılmadı |
 | M11 | orta | Teori (XOR) | Takılmanın asıl mekanizması gösterilmiyor (iki farklı etiketli nokta gizli uzayda üst üste düşüyor); gizli nöronların 1. bölümdeki OR/AND'e benzemesi köprüsü kaçıyor | Çözüldü |
 | M12 | orta | Teori, sözlük | Terimler: "ileri hesap" ile "ileri yayılım"; "hata" üç anlamda (δ, kayıp, MSE); sözlükte geri yayılıma "geri besleme" eş adı (RNN'deki feedback ile karışır) | Kısmen çözüldü: "geri besleme" sözlükten çıktı. Gerisi **Açık: eğitmen kararı** |
-| M13 | düşük-orta | Teori (kayıp demosu) | Bu veride kayıp hiçbir η'da ıraksamıyor; büyük η daha hızlı varıyor, öğrenci "büyük η hep iyi" sonucuna varabilir | **Açık: eğitmen kararı** |
+| M13 | düşük-orta | Teori (kayıp demosu) | Bu veride kayıp hiçbir η'da ıraksamıyor; büyük η daha hızlı varıyor, öğrenci "büyük η hep iyi" sonucuna varabilir | Kısmen çözüldü (öneri 3): Alıştırma'daki `t-eta` sorusu büyük η'nın ıraksadığını gerçek eğitimle gösteriyor. Teori demosu aynı; gerisi **Açık: eğitmen kararı** |
 | M14 | düşük | Teori, Alıştırma, sözlük | "σ′ ≤ 0,25 olduğu için sinyal küçülür" ancak ağırlıklar büyük değilse doğru | Çözüldü |
 | M15 | düşük | Matematik | "Bu bölümdeki bütün kodlar bu başlatma kuralını kullanır": PyTorch kodu kendi varsayılanını kullanıyor | Çözüldü |
 | M16 | düşük | Kodlama (alıştırma ipucu) | "Yanlış gradyan kabaca doğru yönü gösterir, fark etmek zor" ipucu: öğrencinin gördüğü sonuç çelişiyor (XOR açıkça başarısız) | Çözüldü |
@@ -120,11 +121,11 @@ gösteriyorlar (XOR'da takılma, H = 1 ile kapasite). Türkçe akıcı, TR/EN e�
 | C7 | orta | Teori | Eksik konular: derinliğin neden işe yaradığı, veri artırma, eşdeğişkenlik/değişmezlik, tümevarımsal yanlılık, erken durdurma | **Açık: eğitmen kararı** |
 | C8 | orta | Alıştırma `ac-why`, Teori | "Aktivasyon yoksa evrişimler tek doğrusal katmana eşit": SimpleCNN'de aradaki max pooling de doğrusal değil | Çözüldü |
 | C9 | orta | Alıştırma `e-shift` | "Küçük kayma" 1–2 piksel demek; 4 pikselde CNN de %82'ye düşüyor | Çözüldü: açıklamaya eklendi |
-| C10 | orta | Alıştırma | 20 sorunun 17'si tek adımlık; üçü Teori'deki öz-sınamayla örtüşüyor; zayıf çeldiriciler; algı alanı, kayıp eğrisi okuma, max-pool gradyanı sorulmuyor | **Açık: eğitmen kararı** |
+| C10 | orta | Alıştırma | 20 sorunun 17'si tek adımlık; üçü Teori'deki öz-sınamayla örtüşüyor; zayıf çeldiriciler; algı alanı, kayıp eğrisi okuma, max-pool gradyanı sorulmuyor | Çözüldü (öneri 3): yeni kısımda 5 çok adımlı soru (algı alanı, max pooling gradyanı, padding'in FC1'e etkisi, skorları ölçeklemek, eğitim > doğrulama kaybı). Öz-sınamayla örtüşen üç soru yerinde kaldı |
 | C11 | orta | Teori, sözlük | "Sonraki çalışmalar gösterdi": Santurkar ve ark. (2018) öne sürdü, konu tartışmalı; sözlük eski açıklamayı tekrarlıyordu | Çözüldü (Teori ve sözlük) |
 | C12 | orta | Kodlama (alıştırma) | "BatchNorm'suz büyük fark arayın" ipucu, gerçek sonuçla çelişiyor (fark neredeyse yok) | Çözüldü |
 | C13 | düşük-orta | Teori (BatchNorm) | "γ = σ, β = μ ile normalleştirme tamamen geri alınır": yalnızca yaklaşık | Çözüldü |
-| C14 | düşük-orta | sözlük, Kodlama, Teori | "aşırı öğrenme", "aşırı uyum", "ezberleme" karışık | **Açık: eğitmen kararı** (öneri: "aşırı uyum") |
+| C14 | düşük-orta | sözlük, Kodlama, Teori | "aşırı öğrenme", "aşırı uyum", "ezberleme" karışık | Çözüldü (2026-11-26, eğitmen kararı "aşırı uyum"): sözlük maddesinin adı "Aşırı uyum (overfitting)"; Teori, Kodlama ve yardım metinlerinde terim "aşırı uyum", "ezberlemek" yalnızca açıklayıcı fiil |
 | C15 | düşük-orta | Teori | "adım" dört anlamda (stride, eğitim adımı, türetme adımı, Kodlama adımı); başlıkların bir kısmı çevrilmemiş | **Açık: eğitmen kararı** |
 | C16 | düşük | Kodlama | "Softmax ve cross-entropy" bağlantı adı, kısmın adıyla uyuşmuyordu | Çözüldü |
 | C17 | düşük | Alıştırma | Aynı formülde ayraç olarak hem virgül hem noktalı virgül | Çözüldü |
@@ -186,3 +187,32 @@ gösteriyorlar (XOR'da takılma, H = 1 ile kapasite). Türkçe akıcı, TR/EN e�
   - Kodlama sekmesindeki "Deneme alanında da deneyin" ipucu artık "Gürültülü" veriye yönlendiriyor.
   - Bu iş C6'ya (%99'un anlamı) ve C7'ye (erken durdurma) kısmen değiniyor. İkisi de CNN bölümü
     için açık kalıyor.
+- 2026-11-26: eğitmen, terim için "aşırı uyum"u seçti (C14). Sözlük maddesinin adı "Aşırı uyum
+  (overfitting)" oldu; "aşırı öğrenme" ve "ezberleme" eş ad olarak aranabiliyor. CNN Teori, yardım
+  kutuları, Kodlama ve sözlükteki "ezberlemeye başlamıştır (overfitting)" gibi yerler "aşırı uyum"
+  terimini kullanıyor; "ezberlemek" yalnızca terimi açıklayan fiil olarak kaldı.
+- 2026-11-26: eğitmen, önerinin 3. maddesini onayladı (M10, C10, P6, P11, P12). Yapılanlar:
+  - **Tipik yanlışlara özel geri bildirim:** sayısal soruların bir `mistakes` listesi var. Yazılan
+    sayı (tolerans içinde, iki okunuşundan biriyle) bilinen bir yanlışa denk gelirse genel ipucunun
+    yerine o yanlışın açıklaması çıkıyor: bias'ı unutmak, işaret hatası, log tabanı, +1'i ya da
+    padding'i unutmak, σ' ile fazladan çarpmak, doğrulama görüntülerini saymak gibi. Yenileriyle
+    birlikte 31 sayısal sorunun hepsinde 1–4 tipik yanlış var (toplam 77). Birim testi her yanlışın
+    cevaptan farklı olduğunu ve başka bir yanlışla çakışmadığını denetliyor.
+  - **Transfer soruları:** her bölümün sonuna (CNN'de deneylerden önce) "Hepsi bir arada" kısmı
+    eklendi, her birinde 5 soru:
+    - Perceptron: sınırı eksen kesişimlerinden kurmak, kuralı iki adım izlemek (ikinci düzeltme
+      ilk örneği yeniden bozuyor), OR ve NAND ile gizli gösterim, XOR = AND(OR, NAND), gizli
+      nöronun neden perceptron kuralıyla eğitilemediği.
+    - MLP: kaybolan gradyan (0,25⁴), 10 epoch'taki güncelleme sayısı (7500), η = 0,05 / 1 / 20 ile
+      XOR'u gerçekten eğiten bir tahmin sorusu (kayıp 0,507 / 0,006 / 13,8), ikinci gizli katmanın
+      parametreleri (72), yetersiz öğrenmeyi tanımak.
+    - CNN: iki evrişim ve bir havuzlamanın algı alanı (8; aynı formül SimpleCNN için 14 veriyor),
+      max pooling'de gradyanın yalnızca kazanana gitmesi, Conv1'e padding 2 eklenince düzleştirilen
+      vektör (1600), skorları 2 ile çarpmak (toplamaktan farkı), eğitim kaybının doğrulamadan
+      yüksek olmasının nedeni.
+  - **Değişen eski sorular:** `c-bound` (P12) ve `x-why` (P11) yukarıdaki gibi.
+  - Soru sayıları: Perceptron 15 → 20, MLP 23 → 28, CNN 20 → 25. Bütün yeni cevaplar birim
+    testinde bölümün kendi koduyla yeniden hesaplanıyor.
+  - P6'nın kayıp ayağı yapılmadı: perceptron bölümünde kayıp Teori'de anlatılmıyor (P5).
+  - Bilerek yapılmayanlar: eski soruların zayıf çeldiricileri (M10, C10) tek tek yeniden yazılmadı;
+    CNN'de Teori'deki öz-sınamayla örtüşen üç soru yerinde kaldı.

@@ -26,7 +26,7 @@ export const INFO = {
   epoch: {
     title: { tr: "Epoch", en: "Epoch" },
     body: {
-      tr: "<p>Bir <b>epoch</b>, eğitim verisinin tamamının modele bir kez gösterilmesidir. Veri tek seferde değil küçük gruplar ([[batch|batch]]) hâlinde verilir; bütün batch'ler bir kez işlendiğinde bir epoch biter.</p><p>Her epoch'ta model aynı görüntüleri yeniden görür ve ağırlıklarını biraz daha iyileştirir. Çok az epoch'ta model yeterince öğrenemez ([[underfitting|<i>underfitting</i>]]); çok fazlasında eğitim verisini ezberlemeye başlayabilir ([[overfitting|<i>overfitting</i>]]). Hangisinin olduğunu [[val-set|doğrulama]] kaybını izleyerek anlarız.</p>",
+      tr: "<p>Bir <b>epoch</b>, eğitim verisinin tamamının modele bir kez gösterilmesidir. Veri tek seferde değil küçük gruplar ([[batch|batch]]) hâlinde verilir; bütün batch'ler bir kez işlendiğinde bir epoch biter.</p><p>Her epoch'ta model aynı görüntüleri yeniden görür ve ağırlıklarını biraz daha iyileştirir. Çok az epoch'ta model yeterince öğrenemez ([[underfitting|<i>underfitting</i>]]); çok fazlasında eğitim verisini ezberleyip [[overfitting|aşırı uyuma]] (<i>overfitting</i>) kayabilir. Hangisinin olduğunu [[val-set|doğrulama]] kaybını izleyerek anlarız.</p>",
       en: "<p>An <b>epoch</b> is one pass of the whole training set through the model. The data is not fed all at once but in small groups ([[batch|batches]]); an epoch ends when every batch has been processed once.</p><p>In every epoch the model sees the same images again and improves its weights a little more. With too few epochs it does not learn enough ([[underfitting|<i>underfitting</i>]]); with too many it can start memorizing the training data ([[overfitting|<i>overfitting</i>]]). Watching the [[val-set|validation]] loss tells which one is happening.</p>",
     },
     live: () => {
@@ -101,7 +101,7 @@ export const INFO = {
   "stage.validating": {
     title: { tr: "3 · Doğrulama", en: "3 · Validation" },
     body: {
-      tr: "<p>Her epoch sonunda model, eğitimde hiç görmediği <b>12.000 doğrulama görüntüsünde</b> ölçülür. Bu sırada ağırlıklar değişmez ve model [[train-eval|<b>değerlendirme modundadır</b>]] (<code>model.eval()</code>): Dropout kapalıdır ve BatchNorm, eğitimde biriktirdiği hareketli ortalamaları kullanır.</p><p>Doğrulama sonucu, modelin gerçekten öğrenip öğrenmediğini ya da ezberlediğini ([[overfitting|overfitting]]) gösterir. [[hyperparameter|Hiperparametreleri]] seçerken de bu sonuca bakılır.</p>",
+      tr: "<p>Her epoch sonunda model, eğitimde hiç görmediği <b>12.000 doğrulama görüntüsünde</b> ölçülür. Bu sırada ağırlıklar değişmez ve model [[train-eval|<b>değerlendirme modundadır</b>]] (<code>model.eval()</code>): Dropout kapalıdır ve BatchNorm, eğitimde biriktirdiği hareketli ortalamaları kullanır.</p><p>Doğrulama sonucu, modelin gerçekten öğrenip öğrenmediğini ya da eğitim verisini ezberlediğini, yani [[overfitting|aşırı uyumu]] (overfitting) gösterir. [[hyperparameter|Hiperparametreleri]] seçerken de bu sonuca bakılır.</p>",
       en: "<p>At the end of every epoch the model is measured on <b>12,000 validation images</b> it never saw during training. The weights do not change and the model is in [[train-eval|<b>evaluation mode</b>]] (<code>model.eval()</code>): Dropout is off and BatchNorm uses the running averages it collected during training.</p><p>The validation result shows whether the model is really learning or memorizing ([[overfitting|overfitting]]). It is also what we look at when choosing [[hyperparameter|hyperparameters]].</p>",
     },
     link: { tab: "code", section: "c-evaluate", label: { tr: "Kodlama → Değerlendirme", en: "Coding → Evaluation" } },
@@ -187,7 +187,7 @@ export const INFO = {
   "tile.val": {
     title: { tr: "Doğrulama doğruluğu", en: "Validation accuracy" },
     body: {
-      tr: "<p>Modelin hiç görmediği <b>12.000 doğrulama görüntüsünden</b> kaçını doğru sınıflandırdığı. Her epoch sonunda hesaplanır; altta en iyi epoch'un değeri yazar.</p><p>Bu sayı yükselmeyi bırakıp düşmeye başlarsa model ezberliyor ([[overfitting|overfitting]]) olabilir; eğitimi o noktada durdurmak gerekir.</p>",
+      tr: "<p>Modelin hiç görmediği <b>12.000 doğrulama görüntüsünden</b> kaçını doğru sınıflandırdığı. Her epoch sonunda hesaplanır; altta en iyi epoch'un değeri yazar.</p><p>Bu sayı yükselmeyi bırakıp düşmeye başlarsa [[overfitting|aşırı uyum]] (overfitting) başlamış olabilir; eğitimi o noktada durdurmak gerekir.</p>",
       en: "<p>How many of the <b>12,000 validation images</b>, which the model never trained on, it classifies correctly. It is computed after every epoch; the best epoch's value is shown underneath.</p><p>If this number stops rising and starts falling, the model may be memorizing ([[overfitting|overfitting]]) and training should stop there.</p>",
     },
   },
@@ -215,7 +215,7 @@ export const INFO = {
   losscurve: {
     title: { tr: "Epoch kaybı grafiği", en: "Epoch loss chart" },
     body: {
-      tr: "<p>Her epoch sonundaki ortalama <b>eğitim</b> (mavi) ve <b>doğrulama</b> (turuncu) kaybı.</p><p>İkisi birlikte düşüyorsa model öğreniyordur. Eğitim kaybı düşmeye devam ederken doğrulama kaybı yükselirse model ezberlemeye başlamıştır ([[overfitting|overfitting]]). Burada eğitim kaybının doğrulamadan yüksek olması normaldir, iki nedeni var: eğitimde [[dropout|Dropout]] açıktır, doğrulamada kapalıdır; ve eğitim kaybı epoch boyunca, model henüz gelişirken ortalanır, doğrulama ise epoch sonundaki modelle ölçülür.</p>",
+      tr: "<p>Her epoch sonundaki ortalama <b>eğitim</b> (mavi) ve <b>doğrulama</b> (turuncu) kaybı.</p><p>İkisi birlikte düşüyorsa model öğreniyordur. Eğitim kaybı düşmeye devam ederken doğrulama kaybı yükselirse [[overfitting|aşırı uyum]] (overfitting) başlamıştır: model eğitim verisini ezberliyordur. Burada eğitim kaybının doğrulamadan yüksek olması normaldir, iki nedeni var: eğitimde [[dropout|Dropout]] açıktır, doğrulamada kapalıdır; ve eğitim kaybı epoch boyunca, model henüz gelişirken ortalanır, doğrulama ise epoch sonundaki modelle ölçülür.</p>",
       en: "<p>The average <b>training</b> (blue) and <b>validation</b> (orange) loss at the end of each epoch.</p><p>If both go down, the model is learning. If the training loss keeps falling while the validation loss rises, the model has started memorizing ([[overfitting|overfitting]]). Here it is normal for the training loss to be higher than the validation loss, for two reasons: [[dropout|Dropout]] is on during training and off during validation; and the training loss is averaged over the epoch while the model is still improving, whereas validation uses the model as it is at the end of the epoch.</p>",
     },
     link: { tab: "theory", section: "t-drop", label: { tr: "Teori → Dropout", en: "Theory → Dropout" } },

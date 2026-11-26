@@ -529,7 +529,7 @@ export const GLOSSARY = {
     name: { tr: "Eğitim seti", en: "Training set" },
     aka: ["training data", "eğitim verisi", "train", "train set"],
     def: {
-      tr: "Modelin ağırlıklarını güncellemek için kullanılan veri. Model bu görüntüleri her [[epoch|epoch]]'ta yeniden görür. Eğitim setindeki başarı tek başına pek bir şey söylemez: model bu görüntüleri ezberlemiş olabilir ([[overfitting|overfitting]]).",
+      tr: "Modelin ağırlıklarını güncellemek için kullanılan veri. Model bu görüntüleri her [[epoch|epoch]]'ta yeniden görür. Eğitim setindeki başarı tek başına pek bir şey söylemez: model bu görüntüleri ezberlemiş olabilir ([[overfitting|aşırı uyum]]).",
       en: "The data used to update the model's weights. The model sees these images again in every [[epoch|epoch]]. Success on the training set alone says little: the model may have memorized these images ([[overfitting|overfitting]]).",
     },
     model: { tr: "48.000 görüntü; her epoch'ta karıştırılır.", en: "48,000 images, shuffled every epoch." },
@@ -575,8 +575,8 @@ export const GLOSSARY = {
   },
   overfitting: {
     group: "data",
-    name: { tr: "Aşırı öğrenme (overfitting)", en: "Overfitting" },
-    aka: ["ezberleme", "ezber", "aşırı uyum", "memorization", "overfit"],
+    name: { tr: "Aşırı uyum (overfitting)", en: "Overfitting" },
+    aka: ["aşırı öğrenme", "ezberleme", "ezber", "memorization", "overfit"],
     def: {
       tr: "Modelin genel kuralları öğrenmek yerine eğitim verisini ezberlemesi. Belirtisi: [[train-set|eğitim]] kaybı düşmeye devam ederken [[val-set|doğrulama]] kaybının yükselmesi. Daha çok veri, [[dropout|dropout]] gibi düzenlileştirme yöntemleri ya da eğitimi erken durdurmak bunu önlemeye yardım eder.",
       en: "The model memorizes the training data instead of learning general rules. The sign: the [[train-set|training]] loss keeps going down while the [[val-set|validation]] loss goes up. More data, regularization such as [[dropout|dropout]], or stopping training early help prevent it.",
@@ -826,7 +826,7 @@ export const GLOSSARY = {
     name: { tr: "Dropout", en: "Dropout" },
     aka: ["seyreltme", "bırakma", "drop", "regularization", "düzenlileştirme"],
     def: {
-      tr: "Eğitim sırasında her adımda değerlerin rastgele bir kısmını (oran <i>p</i>) sıfırlayan, kalanları 1/(1 − p) ile büyüten katman. Hiçbir nöron belirli komşularının orada olacağına güvenemediği için her öznitelik tek başına da işe yarar olmak zorundadır ve [[overfitting|ezberleme]] azalır. Değerlendirmede kapalıdır.",
+      tr: "Eğitim sırasında her adımda değerlerin rastgele bir kısmını (oran <i>p</i>) sıfırlayan, kalanları 1/(1 − p) ile büyüten katman. Hiçbir nöron belirli komşularının orada olacağına güvenemediği için her öznitelik tek başına da işe yarar olmak zorundadır ve [[overfitting|aşırı uyum]] azalır. Değerlendirmede kapalıdır.",
       en: "A layer that, during training, zeroes a random fraction <i>p</i> of the values at every step and scales the rest by 1/(1 − p). No neuron can count on particular neighbours being there, so every feature has to be useful on its own too, and [[overfitting|memorization]] decreases. It is off during evaluation.",
     },
     model: {

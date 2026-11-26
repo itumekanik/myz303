@@ -4,18 +4,19 @@
  *
  *   createPractice({ main: "#px-main", toc: "#px-toc", summary: "#px-summary", sections })
  *
- * A wrong answer says why and can be tried again; "Show the answer" finishes the question without
- * counting it as correct. A prediction question is answered once: the real model then runs. A
- * "model" question loads its model first, so it runs in the background and its result is saved.
+ * A wrong answer says why (a typical wrong number: which slip it comes from) and can be tried
+ * again; "Show the answer" finishes the question without counting it as correct. A prediction
+ * question is answered once: the real model then runs. A "model" question loads its model first, so
+ * it runs in the background and its result is saved.
  */
 import { L } from "./i18n.js";
 import { $, CHAPTER, h, locale, scrollMode } from "./core.js";
 import { placeLabel } from "./glossary/terms.js";
 import { createLesson, lessonHTML } from "./lesson.js";
-import { createProgress, matches, plainMath, readNumber } from "./practice.ts";
+import { createProgress, matches, mistakeOf, plainMath, readNumber } from "./practice.ts";
 
 const say = (tr, en) => L({ tr, en });
-const blankDraft = () => ({ pick: null, value: "", tried: false, notice: null, wrongPick: null, busy: false });
+const blankDraft = () => ({ pick: null, value: "", tried: false, notice: null, wrongPick: null, mistake: null, busy: false });
 // No thousands separator: the answer shown can be typed back as it is
 const showNumber = (value) => new Intl.NumberFormat(locale(), { maximumFractionDigits: 6, useGrouping: false }).format(value);
 const isPrediction = (q) => q.kind === "predict" || q.kind === "model";
@@ -83,7 +84,8 @@ export function createPractice({ main, toc, summary, sections }) {
     if (draft.notice === "pick") return [verdict(say("Önce bir seçenek işaretleyin.", "Pick an option first."))];
     if (draft.notice === "number") return [verdict(say("Bir sayı yazın, örneğin 0,5.", "Type a number, for example 0.5."))];
     if (draft.notice === "wrong") {
-      const why = q.kind === "number" ? q.hint : q.options[draft.wrongPick]?.why;
+      // A typical wrong number gets its own explanation, any other the question's hint
+      const why = q.kind === "number" ? (draft.mistake?.why ?? q.hint) : q.options[draft.wrongPick]?.why;
       return [verdict(say("✕ Henüz değil.", "✕ Not yet.")), why ? note(why) : null].filter(Boolean);
     }
     return [];
@@ -200,6 +202,7 @@ export function createPractice({ main, toc, summary, sections }) {
         else {
           draft.tried = true;
           draft.notice = "wrong";
+          draft.mistake = mistakeOf(q, values);
         }
         return sync();
       }

@@ -11,7 +11,7 @@ import { unpackWeights, type PackedModel } from "../../src/engines/cnn/weights.t
 import { PRACTICE as MLP_PRACTICE } from "../../src/chapters/mlp/questions.ts";
 import { PRACTICE } from "../../src/chapters/perceptron/questions.ts";
 import { ruleStep, stepFn, trainFromZero, zOf } from "../../src/chapters/perceptron/model.ts";
-import { chapterSummary, createProgress, matches, parseNumber, plainMath, readNumber } from "../../src/shared/practice.ts";
+import { chapterSummary, createProgress, matches, mistakeOf, parseNumber, plainMath, readNumber } from "../../src/shared/practice.ts";
 
 function memoryStore(initial?: string) {
   let data = initial ?? null;
@@ -42,18 +42,18 @@ const cnnLab = (): Promise<CnnLab> => {
 };
 
 const BANKS = [
-  { name: "perceptron", sections: PRACTICE, count: 15, theory: ["p-neuron", "p-boundary", "p-rule", "p-converge", "p-xor"] },
+  { name: "perceptron", sections: PRACTICE, count: 20, theory: ["p-neuron", "p-boundary", "p-rule", "p-converge", "p-xor", undefined] },
   {
     name: "mlp",
     sections: MLP_PRACTICE,
-    count: 23,
-    theory: ["ml-act", "ml-hidden", "ml-loss", "ml-backprop", "ml-capacity", "ml-general", "ml-images"],
+    count: 28,
+    theory: ["ml-act", "ml-hidden", "ml-loss", "ml-backprop", "ml-capacity", "ml-general", "ml-images", undefined],
   },
   {
     name: "cnn",
     sections: buildPractice(cnnLab),
-    count: 20,
-    theory: ["t-conv", "t-bn", "t-act", "t-pool", "t-drop", "t-softmax", "t-opt", undefined],
+    count: 25,
+    theory: ["t-conv", "t-bn", "t-act", "t-pool", "t-drop", "t-softmax", "t-opt", "m-pool", undefined],
   },
 ];
 const questions = BANKS.flatMap((b) => b.sections.flatMap((s) => s.questions));
@@ -98,6 +98,19 @@ describe("a typed number (practice.ts)", () => {
     assert.ok(matches(0.1 + 0.2, 0.3));
     assert.ok(!matches(0.31, 0.3));
   });
+  it("knows a typical wrong number, in any of its readings, within the question's tolerance", () => {
+    const q = {
+      tolerance: 0.006,
+      mistakes: [
+        { value: 0.3, why: { tr: "log10", en: "log10" } },
+        { value: 1024, why: { tr: "bin", en: "thousand" } },
+      ],
+    };
+    assert.equal(mistakeOf(q, readNumber("0,301")), q.mistakes[0]);
+    assert.equal(mistakeOf(q, readNumber("1.024")), q.mistakes[1]);
+    assert.equal(mistakeOf(q, readNumber("0,5")), null);
+    assert.equal(mistakeOf({}, [0.3]), null);
+  });
   it("accepts a rounded result within the question's tolerance", () => {
     assert.ok(matches(0.693, 0.69, 0.006));
     assert.ok(matches(0.69, 0.69, 0.006));
@@ -111,6 +124,7 @@ describe("labels for screen readers (practice.ts)", () => {
     assert.equal(plainMath(String.raw`\((1,\ 1,\ -0{,}5)\)`), "(1, 1, -0,5)");
     assert.equal(plainMath(String.raw`yeni \(w_1 =\)`), "yeni w1 =");
     assert.equal(plainMath(String.raw`En küçük \(\eta\) öğrenir`), "En küçük η öğrenir");
+    assert.equal(plainMath(String.raw`\(z \le 0\), \(z \ge 1\), \(a \to b\)`), "z ≤ 0, z ≥ 1, a → b");
   });
 
   it("leaves no TeX in the name of any input", () => {
@@ -286,6 +300,11 @@ for (const bank of BANKS) {
       it(`${q.id}: the stated answer is what the model computes`, async () => {
         if (q.kind === "number") {
           assert.ok(matches(q.compute(), q.answer, q.tolerance), `computed ${q.compute()}, stated ${q.answer}`);
+          for (const m of q.mistakes ?? []) {
+            // a typical mistake is never the answer, and gets its own explanation, not another one's
+            assert.ok(!matches(m.value, q.answer, q.tolerance), `the mistake ${m.value} is the answer`);
+            assert.equal(mistakeOf(q, [m.value]), m, `the mistake ${m.value} is taken for another`);
+          }
         } else if (q.kind === "model") {
           const run = await q.run();
           const text = q.describe(run.values);

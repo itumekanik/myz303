@@ -94,8 +94,8 @@ test.describe("chapter 3: the Practice tab", () => {
 
   test("a question on the real model runs it, and the result survives a reload", async ({ page, errors }) => {
     await open(page, "cnn.html#alistirma");
-    await expect(page.locator(".px-count")).toContainText("0 / 20");
-    await expect(page.locator("#px-toc button")).toHaveCount(8);
+    await expect(page.locator(".px-count")).toContainText("0 / 25");
+    await expect(page.locator("#px-toc button")).toHaveCount(9);
     const number = question(page, "cv-size");
     await number.locator("input").fill("16");
     await number.locator("input").press("Enter");
@@ -106,7 +106,7 @@ test.describe("chapter 3: the Practice tab", () => {
     await expect(black.locator(".px-run")).toContainText('%97,4 olasılıkla "1"');
     await page.reload();
     await expect(question(page, "e-black").locator(".px-run")).toContainText('%97,4 olasılıkla "1"');
-    await expect(page.locator(".px-count")).toContainText("2 / 20");
+    await expect(page.locator(".px-count")).toContainText("2 / 25");
     await expect(page.locator(".katex-error")).toHaveCount(0);
     void errors;
   });
@@ -137,7 +137,7 @@ test.describe("chapter 3: the Practice tab", () => {
     await page.getByRole("button", { name: "Yes, reset" }).click();
     await page.waitForTimeout(4000);
     await expect(question(page, "e-shift")).toHaveAttribute("data-state", "");
-    await expect(page.locator(".px-count")).toContainText("0 / 20");
+    await expect(page.locator(".px-count")).toContainText("0 / 25");
     void errors;
   });
 
@@ -160,8 +160,8 @@ test.describe("chapter 3: the Practice tab", () => {
     await page.addInitScript((saved) => localStorage.setItem("practice-v1", saved), JSON.stringify(damaged));
     await open(page, "cnn.html#alistirma/px-model");
     await expect(question(page, "e-black")).toHaveAttribute("data-state", "correct");
-    await expect(page.locator("#px-main .px-q")).toHaveCount(20);
-    await expect(page.locator(".px-count")).toContainText("1 / 20");
+    await expect(page.locator("#px-main .px-q")).toHaveCount(25);
+    await expect(page.locator(".px-count")).toContainText("1 / 25");
     void errors;
   });
 

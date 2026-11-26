@@ -34,7 +34,17 @@ export interface NumberQuestion extends QuestionBase {
   /** How far a typed value may be from `answer`, for a rounded result (default: exact). */
   tolerance?: number;
   hint: Text;
+  /**
+   * Typical wrong results: a typed value that matches one gets its own feedback instead of the hint,
+   * the slip it most likely comes from (a forgotten bias, the wrong logarithm, a lost +1).
+   */
+  mistakes?: Mistake[];
   compute: () => number;
+}
+
+export interface Mistake {
+  value: number;
+  why: Text;
 }
 
 /** The reader commits to a prediction, then the real model runs and shows what happens. */
@@ -101,6 +111,11 @@ export function readNumber(text: string): number[] {
 
 export const matches = (value: number, answer: number, tolerance = 1e-6): boolean => Math.abs(value - answer) <= tolerance;
 
+/** The typical mistake that one reading of the typed number matches, if any. */
+export function mistakeOf(q: Pick<NumberQuestion, "mistakes" | "tolerance">, values: readonly number[]): Mistake | null {
+  return q.mistakes?.find((m) => values.some((value) => matches(value, m.value, q.tolerance))) ?? null;
+}
+
 /** A label with formulas as plain text, the name of its input for screen readers. */
 export function plainMath(text: string): string {
   return text
@@ -111,6 +126,9 @@ export function plainMath(text: string): string {
     .replace(/\\delta/g, "δ")
     .replace(/\\theta/g, "θ")
     .replace(/\\approx/g, "≈")
+    .replace(/\\le\b/g, "≤")
+    .replace(/\\ge\b/g, "≥")
+    .replace(/\\to\b/g, "→")
     .replace(/\{,\}/g, ",")
     .replace(/\\[ ,;]/g, " ")
     .replace(/_\{?(\w+)\}?/g, "$1")

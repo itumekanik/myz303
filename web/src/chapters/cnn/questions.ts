@@ -18,6 +18,16 @@ const R = String.raw;
 const IMAGES = 40; // the experiments use the first 40 test images
 
 const outSize = (h: number, k: number, p: number, s: number): number => Math.floor((h - k + 2 * p) / s) + 1;
+/** The edge of the input region one value sees: r grows by (k − 1)·j at each layer, j is the product of the strides so far. */
+function receptiveField(layers: readonly [kernel: number, stride: number][]): number {
+  let r = 1;
+  let j = 1;
+  for (const [k, s] of layers) {
+    r += (k - 1) * j;
+    j *= s;
+  }
+  return r;
+}
 const decimal = (value: number, digits: number) => ({ tr: value.toFixed(digits).replace(".", ","), en: value.toFixed(digits) });
 /** Lets the page breathe between two images. */
 const breathe = (): Promise<void> => new Promise((resolve) => setTimeout(resolve));
@@ -92,6 +102,29 @@ export function buildPractice(lab: () => Promise<CnnLab>): PracticeSection[] {
             tr: R`Sayıları formüle koyun. Bölmenin sonucunu aşağı yuvarlayıp 1 ekleyin.`,
             en: R`Put the numbers into the formula. Round the division down, then add 1.`,
           },
+          mistakes: [
+            {
+              value: 15,
+              why: {
+                tr: R`Ya sondaki +1'i ya da padding'i (\(2p = 2\)) unutmuş olabilirsiniz: \(\lfloor (32 - 3 + 2)/2 \rfloor + 1\).`,
+                en: R`You may have left out either the +1 at the end or the padding (\(2p = 2\)): \(\lfloor (32 - 3 + 2)/2 \rfloor + 1\).`,
+              },
+            },
+            {
+              value: 32,
+              why: {
+                tr: R`Stride'ı unutmuşsunuz: filtre ikişer piksel kayar, bu yüzden 2'ye bölünür.`,
+                en: R`You left out the stride: the filter moves two pixels at a time, so divide by 2.`,
+              },
+            },
+            {
+              value: 16.5,
+              why: {
+                tr: R`Bölmenin sonucunu aşağı yuvarlayın: filtrenin konum sayısı bir tam sayıdır.`,
+                en: R`Round the division down: the number of filter positions is a whole number.`,
+              },
+            },
+          ],
           explain: {
             tr: R`\(\lfloor (32 - 3 + 2\cdot 1) / 2 \rfloor + 1 = \lfloor 15{,}5 \rfloor + 1 = 16\). Stride 2 boyutu yaklaşık yarıya indirir.`,
             en: R`\(\lfloor (32 - 3 + 2\cdot 1) / 2 \rfloor + 1 = \lfloor 15.5 \rfloor + 1 = 16\). A stride of 2 roughly halves the size.`,
@@ -111,6 +144,29 @@ export function buildPractice(lab: () => Promise<CnnLab>): PracticeSection[] {
             tr: "Her filtre giriş kanallarının hepsine birden bakar: 3 kanal × 3 × 3 ağırlık ve 1 bias.",
             en: "Each filter looks at all the input channels at once: 3 channels × 3 × 3 weights and 1 bias.",
           },
+          mistakes: [
+            {
+              value: 432,
+              why: {
+                tr: R`Biasları unutmuşsunuz: 16 filtrenin her birinin bir biası var.`,
+                en: R`You left out the biases: each of the 16 filters has one.`,
+              },
+            },
+            {
+              value: 160,
+              why: {
+                tr: R`Giriş kanallarını unutmuşsunuz: her filtre 3 kanalın hepsine bakar, yani \(3\cdot 3\cdot 3 = 27\) ağırlık taşır.`,
+                en: R`You left out the input channels: each filter looks at all 3 channels, so it has \(3\cdot 3\cdot 3 = 27\) weights.`,
+              },
+            },
+            {
+              value: 144,
+              why: {
+                tr: R`Hem giriş kanallarını hem biasları unutmuşsunuz: bir filtre \(3\cdot 3\cdot 3\) ağırlık ve 1 bias taşır.`,
+                en: R`You left out both the input channels and the biases: one filter has \(3\cdot 3\cdot 3\) weights and 1 bias.`,
+              },
+            },
+          ],
           explain: {
             tr: R`Bir filtre \(3\cdot 3\cdot 3 = 27\) ağırlık ve 1 bias taşır. 16 filtre: \(16\cdot 27 + 16 = 448\). Sayı görüntünün boyutuna bağlı değildir.`,
             en: R`One filter has \(3\cdot 3\cdot 3 = 27\) weights and 1 bias. 16 filters: \(16\cdot 27 + 16 = 448\). The number does not depend on the size of the image.`,
@@ -183,6 +239,22 @@ export function buildPractice(lab: () => Promise<CnnLab>): PracticeSection[] {
             tr: R`Önce \(\hat x\)'i bulun, sonra \(\gamma\) ile çarpıp \(\beta\) ekleyin.`,
             en: R`Find \(\hat x\) first, then multiply by \(\gamma\) and add \(\beta\).`,
           },
+          mistakes: [
+            {
+              value: 2,
+              why: {
+                tr: R`\(\beta\)'yı eklemeyi unutmuşsunuz: \(y = \gamma\,\hat x + \beta\).`,
+                en: R`You did not add \(\beta\): \(y = \gamma\,\hat x + \beta\).`,
+              },
+            },
+            {
+              value: 1.5,
+              why: {
+                tr: R`Ya \(\gamma = 2\) ile çarpmayı unuttunuz ya da \(\sigma\) yerine \(\sigma^2 = 4\)'e böldünüz. Önce \(\hat x = (x - \mu)/\sigma = 1\).`,
+                en: R`Either you did not multiply by \(\gamma = 2\), or you divided by \(\sigma^2 = 4\) instead of \(\sigma\). First \(\hat x = (x - \mu)/\sigma = 1\).`,
+              },
+            },
+          ],
           explain: {
             tr: R`\(\hat x = (5 - 3)/2 = 1\) ve \(y = 2\cdot 1 + 0{,}5 = 2{,}5\).`,
             en: R`\(\hat x = (5 - 3)/2 = 1\) and \(y = 2\cdot 1 + 0.5 = 2.5\).`,
@@ -202,6 +274,22 @@ export function buildPractice(lab: () => Promise<CnnLab>): PracticeSection[] {
             tr: R`Her kanalın kendi \(\gamma\) ve \(\beta\) değeri vardır. Ortalama ve varyans öğrenilmez, ölçülür.`,
             en: R`Each channel has its own \(\gamma\) and \(\beta\). The mean and variance are measured, not learned.`,
           },
+          mistakes: [
+            {
+              value: 64,
+              why: {
+                tr: R`Her kanalda iki öğrenilen sayı var: ölçek \(\gamma\) ve kayma \(\beta\).`,
+                en: R`Each channel has two learned numbers: the scale \(\gamma\) and the shift \(\beta\).`,
+              },
+            },
+            {
+              value: 256,
+              why: {
+                tr: R`Hareketli ortalama ve varyans da saklanır ama öğrenilmez: gradyanla değil, batch'lerden sayılarak güncellenir. Öğrenilenler yalnızca \(\gamma\) ile \(\beta\).`,
+                en: R`The running mean and variance are stored too, but not learned: they are updated by counting over the batches, not by the gradient. Only \(\gamma\) and \(\beta\) are learned.`,
+              },
+            },
+          ],
           explain: {
             tr: R`\(2\cdot 64 = 128\). Hareketli ortalama ve varyans da modelle saklanır, ama gradyanla güncellenmedikleri için parametre sayılmazlar.`,
             en: R`\(2\cdot 64 = 128\). The running mean and variance are stored with the model too, but they are not updated by gradients, so they do not count as parameters.`,
@@ -274,6 +362,22 @@ export function buildPractice(lab: () => Promise<CnnLab>): PracticeSection[] {
             tr: R`ReLU negatif değerleri 0 yapar, pozitifleri olduğu gibi bırakır.`,
             en: R`ReLU sets negative values to 0 and leaves positive ones as they are.`,
           },
+          mistakes: [
+            {
+              value: 1.5,
+              why: {
+                tr: R`ReLU'yu uygulamadan toplamışsınız: \(-2\), ReLU'dan sonra 0 olur.`,
+                en: R`You added them without the ReLU: \(-2\) becomes 0 after the ReLU.`,
+              },
+            },
+            {
+              value: 5.5,
+              why: {
+                tr: R`ReLU mutlak değer almaz: negatif değerleri 0 yapar.`,
+                en: R`The ReLU does not take the absolute value: it sets negative values to 0.`,
+              },
+            },
+          ],
           explain: {
             tr: R`\(\max(0;\ -2) + \max(0;\ 0{,}5) + \max(0;\ 3) = 0 + 0{,}5 + 3 = 3{,}5\). Geriye yalnızca filtrenin güçlü tepki verdiği yerler kalır.`,
             en: R`\(\max(0, -2) + \max(0, 0.5) + \max(0, 3) = 0 + 0.5 + 3 = 3.5\). Only the places where the filter responds strongly remain.`,
@@ -349,6 +453,29 @@ export function buildPractice(lab: () => Promise<CnnLab>): PracticeSection[] {
             tr: "Yüksekliği adım adım izleyin: 28 → 24 → 12 → … Sonra kanal × yükseklik × genişlik.",
             en: "Follow the height step by step: 28 → 24 → 12 → … Then channels × height × width.",
           },
+          mistakes: [
+            {
+              value: 576,
+              why: {
+                tr: R`Evrişimdeki +1'i unutmuş olabilirsiniz: \(28 - 5 + 1 = 24\), \(23\) değil.`,
+                en: R`You may have left out the +1 of the convolution: \(28 - 5 + 1 = 24\), not \(23\).`,
+              },
+            },
+            {
+              value: 4096,
+              why: {
+                tr: R`Son havuzlamayı unutmuşsunuz: \(8\times 8\)'lik harita \(4\times 4\)'e iner.`,
+                en: R`You left out the last pooling: the \(8\times 8\) map shrinks to \(4\times 4\).`,
+              },
+            },
+            {
+              value: 16,
+              why: {
+                tr: R`Kanalları unutmuşsunuz: 64 kanalın her biri \(4\times 4\) değer taşır.`,
+                en: R`You left out the channels: each of the 64 channels holds \(4\times 4\) values.`,
+              },
+            },
+          ],
           explain: {
             tr: R`\(28 \to 24 \to 12 \to 8 \to 4\). Düzleştirince \(64\cdot 4\cdot 4 = 1024\) değer olur. SimpleCNN'in FC1 katmanının girişi budur.`,
             en: R`\(28 \to 24 \to 12 \to 8 \to 4\). Flattened, that is \(64\cdot 4\cdot 4 = 1024\) values. This is the input of SimpleCNN's FC1 layer.`,
@@ -406,6 +533,22 @@ export function buildPractice(lab: () => Promise<CnnLab>): PracticeSection[] {
           answer: 2,
           compute: () => 1.3 / (1 - 0.35),
           hint: { tr: R`Kalan değerler \(1/(1-p)\) ile çarpılır.`, en: R`Values that remain are multiplied by \(1/(1-p)\).` },
+          mistakes: [
+            {
+              value: 1.3,
+              why: {
+                tr: R`Kalan değerler aynen kalmaz: beklenen değer değişmesin diye \(1/(1 - p)\) ile büyütülür.`,
+                en: R`The values that remain are not left as they are: they are scaled by \(1/(1 - p)\) so that the expected value stays the same.`,
+              },
+            },
+            {
+              value: 0.845,
+              why: {
+                tr: R`\(1 - p\) ile çarpmışsınız. Kalan değerler \(1 - p\)'ye bölünür: \(1{,}3 / 0{,}65\).`,
+                en: R`You multiplied by \(1 - p\). The values that remain are divided by it: \(1.3 / 0.65\).`,
+              },
+            },
+          ],
           explain: {
             tr: R`\(1{,}3 / (1 - 0{,}35) = 1{,}3 / 0{,}65 = 2\). Böylece beklenen değer aynı kalır: \(0{,}65\cdot 2 = 1{,}3\).`,
             en: R`\(1.3 / (1 - 0.35) = 1.3 / 0.65 = 2\). So the expected value stays the same: \(0.65\cdot 2 = 1.3\).`,
@@ -473,6 +616,36 @@ export function buildPractice(lab: () => Promise<CnnLab>): PracticeSection[] {
             tr: R`Eşit skorlarda her sınıf \(1/4\) olasılık alır.`,
             en: R`With equal scores every class gets a probability of \(1/4\).`,
           },
+          mistakes: [
+            {
+              value: 0.602,
+              why: {
+                tr: R`Bu 10 tabanlı logaritma (\(\log_{10} 4 \approx 0{,}60\)). Kayıptaki log doğal logaritmadır, ln.`,
+                en: R`That is the base-10 logarithm (\(\log_{10} 4 \approx 0.60\)). The log in the loss is the natural one, ln.`,
+              },
+            },
+            {
+              value: 2,
+              why: {
+                tr: R`Bu 2 tabanlı logaritma (\(\log_2 4 = 2\)). Kayıptaki log doğal logaritmadır, ln.`,
+                en: R`That is the base-2 logarithm (\(\log_2 4 = 2\)). The log in the loss is the natural one, ln.`,
+              },
+            },
+            {
+              value: 0.25,
+              why: {
+                tr: R`Bu doğru sınıfın olasılığı. Kayıp onun eksi logaritmasıdır: \(-\ln 0{,}25\).`,
+                en: R`That is the correct class's probability. The loss is minus its logarithm: \(-\ln 0.25\).`,
+              },
+            },
+            {
+              value: 2.303,
+              why: {
+                tr: R`Bu 10 sınıflı bir modelin kaybı (\(\ln 10\)). Buradaki modelin 4 sınıfı var.`,
+                en: R`That is the loss of a 10-class model (\(\ln 10\)). The model here has 4 classes.`,
+              },
+            },
+          ],
           explain: {
             tr: R`\(p = 1/4\) ve \(L = -\ln 0{,}25 = \ln 4 \approx 1{,}39\). SimpleCNN'in 10 sınıfında aynı hesap \(\ln 10 \approx 2{,}30\) verir: eğitimin başındaki kayıp budur.`,
             en: R`\(p = 1/4\) and \(L = -\ln 0.25 = \ln 4 \approx 1.39\). With SimpleCNN's 10 classes the same computation gives \(\ln 10 \approx 2.30\): the loss at the start of training.`,
@@ -526,6 +699,22 @@ export function buildPractice(lab: () => Promise<CnnLab>): PracticeSection[] {
             return (loss(z + 1e-6) - loss(z - 1e-6)) / 2e-6;
           },
           hint: { tr: R`Doğru sınıfta \(y_k = 1\)'dir.`, en: R`For the correct class, \(y_k = 1\).` },
+          mistakes: [
+            {
+              value: 0.3,
+              why: {
+                tr: R`İşarete dikkat: \(p_k - y_k = 0{,}7 - 1\).`,
+                en: R`Watch the sign: \(p_k - y_k = 0.7 - 1\).`,
+              },
+            },
+            {
+              value: 0.7,
+              why: {
+                tr: R`Doğru sınıfın \(y_k = 1\) değerini çıkarmayı unutmuşsunuz.`,
+                en: R`You did not subtract the correct class's \(y_k = 1\).`,
+              },
+            },
+          ],
           explain: {
             tr: R`\(0{,}7 - 1 = -0{,}3\). Negatif gradyan, bu skor büyürse kaybın azalacağını söyler. Bölüm 2'deki \(\hat y - y\) ile aynı biçimdedir.`,
             en: R`\(0.7 - 1 = -0.3\). A negative gradient says the loss falls if this score grows. It has the same form as \(\hat y - y\) in chapter 2.`,
@@ -559,6 +748,29 @@ export function buildPractice(lab: () => Promise<CnnLab>): PracticeSection[] {
             tr: R`Önce yeni hızı \(v\) bulun, sonra \(\theta\)'dan \(\eta\,v\) çıkarın.`,
             en: R`Find the new velocity \(v\) first, then subtract \(\eta\,v\) from \(\theta\).`,
           },
+          mistakes: [
+            {
+              value: 4.9,
+              why: {
+                tr: R`Bu düz SGD adımı: \(\theta - \eta\,g\). Momentum önce hızı günceller: \(v = \mu\,v + g\).`,
+                en: R`That is a plain SGD step: \(\theta - \eta\,g\). Momentum updates the velocity first: \(v = \mu\,v + g\).`,
+              },
+            },
+            {
+              value: 4.8,
+              why: {
+                tr: R`Eski hızı kullanmışsınız. Önce \(v\)'yi güncelleyin: \(v = 0{,}9\cdot 2 + 1 = 2{,}8\).`,
+                en: R`You used the old velocity. Update \(v\) first: \(v = 0.9\cdot 2 + 1 = 2.8\).`,
+              },
+            },
+            {
+              value: 2.2,
+              why: {
+                tr: R`\(\eta\) ile çarpmayı unutmuşsunuz: adım \(\eta\,v = 0{,}28\)'dir.`,
+                en: R`You did not multiply by \(\eta\): the step is \(\eta\,v = 0.28\).`,
+              },
+            },
+          ],
           explain: {
             tr: R`\(v = 0{,}9\cdot 2 + 1 = 2{,}8\) ve \(\theta = 5 - 0{,}1\cdot 2{,}8 = 4{,}72\). Düz SGD'de adım yalnızca \(0{,}1\) olurdu; biriken hız adımı büyüttü.`,
             en: R`\(v = 0.9\cdot 2 + 1 = 2.8\) and \(\theta = 5 - 0.1\cdot 2.8 = 4.72\). With plain SGD the step would be only \(0.1\); the accumulated velocity made it larger.`,
@@ -601,6 +813,223 @@ export function buildPractice(lab: () => Promise<CnnLab>): PracticeSection[] {
           explain: {
             tr: R`Adam, gradyanın hareketli ortalamasını gradyan karelerinin ortalamasının köküne böler. Böylece ölçekleri çok farklı parametreler için tek bir \(\eta\) yeter.`,
             en: R`Adam divides the moving average of the gradient by the root of the moving average of its square. So one \(\eta\) suits parameters of very different scales.`,
+          },
+        },
+      ],
+    },
+    {
+      id: "px-transfer",
+      title: { tr: "Hepsi bir arada", en: "Putting it together" },
+      intro: {
+        tr: R`Bu kısımdaki sorular birkaç katmanı birlikte kullanır ve SimpleCNN'i değiştirince ne olacağını sorar. Algı alanı ile max pooling'in gradyanı Matematik sekmesinde, eğitim eğrileri Eğitim sekmesinde anlatılıyor.`,
+        en: R`The questions here use several layers at once and ask what happens when SimpleCNN changes. The receptive field and the gradient of max pooling are in the Math tab, the training curves in the Training tab.`,
+      },
+      read: { tab: "math", section: "m-pool" },
+      questions: [
+        {
+          id: "t-rf",
+          kind: "number",
+          q: {
+            tr: R`Üst üste üç katman var: 3×3 evrişim (stride 1), 2×2 max pooling (stride 2) ve yine 3×3 evrişim (stride 1). Son katmandaki tek bir değer giriş görüntüsünde kaç × kaç piksellik bir bölgeye bakar? (Bölgenin kenar uzunluğunu yazın.)`,
+            en: R`Three layers are stacked: a 3×3 convolution (stride 1), 2×2 max pooling (stride 2) and another 3×3 convolution (stride 1). How large a region of the input image does a single value of the last layer see? (Type the length of the region's edge.)`,
+          },
+          label: { tr: "kenar =", en: "edge =" },
+          answer: 8,
+          compute: () => {
+            // the same formula gives the 14×14 region of SimpleCNN's Conv2 in the Theory tab
+            const simple = receptiveField([
+              [5, 1],
+              [2, 2],
+              [5, 1],
+            ]);
+            return simple === 14
+              ? receptiveField([
+                  [3, 1],
+                  [2, 2],
+                  [3, 1],
+                ])
+              : NaN;
+          },
+          hint: {
+            tr: R`Kenar her katmanda \((k - 1)\cdot j\) kadar büyür; \(j\), o katmana kadarki stride'ların çarpımıdır. Havuzlamadan sonra \(j = 2\) olur.`,
+            en: R`The edge grows by \((k - 1)\cdot j\) at each layer, where \(j\) is the product of the strides so far. After the pooling, \(j = 2\).`,
+          },
+          mistakes: [
+            {
+              value: 5,
+              why: {
+                tr: R`Havuzlamayı atlamışsınız: o da bölgeyi 1 büyütür ve sonraki katmanlar için \(j\)'yi 2'ye çıkarır.`,
+                en: R`You skipped the pooling: it grows the region by 1 too and raises \(j\) to 2 for the layers after it.`,
+              },
+            },
+            {
+              value: 6,
+              why: {
+                tr: R`Havuzlamadan sonra evrişimin bir adımı girişte 2 piksel tutar: ikinci evrişim bölgeyi \((3 - 1)\cdot 2 = 4\) büyütür, 2 değil.`,
+                en: R`After the pooling, one step of the convolution covers 2 input pixels: the second convolution grows the region by \((3 - 1)\cdot 2 = 4\), not 2.`,
+              },
+            },
+          ],
+          explain: {
+            tr: R`\(r\): \(1 \to 3\) (ilk evrişim) \(\to 4\) (havuzlama; artık \(j = 2\)) \(\to 4 + (3 - 1)\cdot 2 = 8\). Havuzlama stride'ı ikiye katladığı için sonraki evrişimin her adımı iki kat geniş bir alan kaplar. SimpleCNN'de aynı hesap Conv2 için \(14\) verir. Derin katmanlar bu yüzden rakamın büyük parçalarını görür.`,
+            en: R`\(r\): \(1 \to 3\) (first convolution) \(\to 4\) (pooling; now \(j = 2\)) \(\to 4 + (3 - 1)\cdot 2 = 8\). Pooling doubles the stride, so each step of the next convolution covers twice as wide an area. In SimpleCNN the same computation gives \(14\) for Conv2. That is why the deeper layers see large parts of the digit.`,
+          },
+        },
+        {
+          id: "t-poolgrad",
+          kind: "choice",
+          q: {
+            tr: R`2×2 max pooling penceresinde dört değer var: 1, 4, 2 ve 3. Geri yayılımda çıkıştan \(0{,}6\) gradyan geliyor. Dört girdi konumuna hangi gradyanlar gider?`,
+            en: R`A 2×2 max pooling window holds four values: 1, 4, 2 and 3. In backpropagation a gradient of \(0.6\) comes from the output. Which gradients go to the four input positions?`,
+          },
+          options: [
+            {
+              text: {
+                tr: R`Dördüne de \(0{,}15\): gradyan eşit paylaşılır`,
+                en: R`\(0.15\) to each of the four: the gradient is shared equally`,
+              },
+              why: {
+                tr: "Bu average pooling'in kuralı. Max pooling'de çıktıyı yalnızca en büyük değer belirler.",
+                en: "That is the rule of average pooling. In max pooling only the largest value sets the output.",
+              },
+            },
+            { text: { tr: R`4'e \(0{,}6\), öbür üçüne 0`, en: R`\(0.6\) to the 4, 0 to the other three` } },
+            {
+              text: {
+                tr: R`Değerlerle orantılı: 1'e \(0{,}06\), 4'e \(0{,}24\), 2'ye \(0{,}12\), 3'e \(0{,}18\)`,
+                en: R`In proportion to the values: \(0.06\) to the 1, \(0.24\) to the 4, \(0.12\) to the 2, \(0.18\) to the 3`,
+              },
+              why: {
+                tr: "Çıktı bir toplam değil, en büyük değerdir. 4 dışındaki değerler biraz değişse çıktı hiç değişmez: türevleri 0'dır.",
+                en: "The output is not a sum but the largest value. If the values other than 4 changed a little, the output would not change at all: their derivatives are 0.",
+              },
+            },
+            {
+              text: { tr: "Hiçbirine: havuzlamanın öğrenilen parametresi yok", en: "None: pooling has no learned parameters" },
+              why: {
+                tr: "Parametresi olmaması gradyanın orada durduğu anlamına gelmez. Gradyan havuzlamadan geçip önceki katmana ulaşır; ulaşmasaydı Conv1 hiç öğrenemezdi.",
+                en: "Having no parameters does not mean the gradient stops there. It passes through the pooling to the layer before; otherwise Conv1 could never learn.",
+              },
+            },
+          ],
+          answer: 1,
+          explain: {
+            tr: R`Çıktı \(\max(1, 4, 2, 3) = 4\)'tür ve yalnızca 4'e bağlıdır. Türev bir göstergedir: kazanan konum için 1, öbürleri için 0. Gradyan zincir kuralıyla \(0{,}6\cdot 1\) olarak kazanana gider. PyTorch bunun için ileri yayılımda kazananın konumunu saklar.`,
+            en: R`The output is \(\max(1, 4, 2, 3) = 4\) and depends only on the 4. The derivative is an indicator: 1 for the winning position, 0 for the others. By the chain rule, \(0.6\cdot 1\) goes to the winner. That is why PyTorch keeps the winner's position in the forward pass.`,
+          },
+        },
+        {
+          id: "t-pad",
+          kind: "number",
+          q: {
+            tr: R`SimpleCNN'de yalnızca Conv1'e padding \(p = 2\) ekliyoruz, geri kalan her şey aynı (iki 5×5 evrişim, iki 2×2 havuzlama, son haritada 64 kanal). Düzleştirilince kaç değer olur? (Sayıyı ayırıcı kullanmadan yazın.)`,
+            en: R`In SimpleCNN we add padding \(p = 2\) to Conv1 only and keep everything else (two 5×5 convolutions, two 2×2 poolings, 64 channels in the last map). How many values are there after flattening? (Type the number without separators.)`,
+          },
+          label: { tr: "değer sayısı =", en: "number of values =" },
+          answer: 1600,
+          compute: () => {
+            const size = Math.floor(outSize(Math.floor(outSize(28, 5, 2, 1) / 2), 5, 0, 1) / 2);
+            return 64 * size * size;
+          },
+          hint: {
+            tr: R`Yüksekliği adım adım izleyin. Padding 2 ile 5×5 evrişim boyutu korur: \(28 - 5 + 4 + 1 = 28\).`,
+            en: R`Follow the height step by step. With padding 2, a 5×5 convolution keeps the size: \(28 - 5 + 4 + 1 = 28\).`,
+          },
+          mistakes: [
+            {
+              value: 1024,
+              why: {
+                tr: R`Bu, padding'siz SimpleCNN'in değeri. Padding 2 ile Conv1'in çıktısı 24×24 değil, 28×28 olur.`,
+                en: R`That is the value of SimpleCNN without padding. With padding 2, Conv1's output is 28×28, not 24×24.`,
+              },
+            },
+            {
+              value: 3136,
+              why: {
+                tr: R`Padding yalnızca Conv1'de. Conv2 yine boyutu 4 küçültür: \(14 \to 10\).`,
+                en: R`The padding is only in Conv1. Conv2 still takes 4 off the size: \(14 \to 10\).`,
+              },
+            },
+            {
+              value: 25,
+              why: { tr: R`Kanalları unutmuşsunuz: \(64\cdot 5\cdot 5\).`, en: R`You left out the channels: \(64\cdot 5\cdot 5\).` },
+            },
+          ],
+          explain: {
+            tr: R`\(28 \to 28 \to 14 \to 10 \to 5\) ve \(64\cdot 5\cdot 5 = 1600\). Görüntünün kenarındaki pikseller artık filtrenin ortasına da gelir, ama bedeli var: FC1'in girişi 1024'ten 1600'e çıkar ve 512 nöronlu FC1'e \(576\cdot 512 = 294\,912\) yeni ağırlık eklenir.`,
+            en: R`\(28 \to 28 \to 14 \to 10 \to 5\) and \(64\cdot 5\cdot 5 = 1600\). The pixels at the edge of the image now reach the middle of the filter too, but at a price: FC1's input grows from 1024 to 1600, and FC1 with its 512 neurons gains \(576\cdot 512 = 294{,}912\) new weights.`,
+          },
+        },
+        {
+          id: "t-scale",
+          kind: "predict",
+          q: {
+            tr: R`Üç sınıfın skorları \((2,\ 1,\ 0)\). Bu kez bütün skorları 2 ile çarpıyoruz: \((4,\ 2,\ 0)\). Softmax olasılıklarına ne olur?`,
+            en: R`The scores of three classes are \((2,\ 1,\ 0)\). This time we multiply every score by 2: \((4,\ 2,\ 0)\). What happens to the softmax probabilities?`,
+          },
+          options: [
+            { tr: "Hiç değişmez", en: "They do not change" },
+            { tr: "En büyük skorun olasılığı artar", en: "The probability of the largest score goes up" },
+            { tr: "Olasılıklar birbirine yaklaşır", en: "The probabilities move closer together" },
+          ],
+          answer: 1,
+          run: () => {
+            const before = softmax(Float32Array.of(2, 1, 0));
+            const after = softmax(Float32Array.of(4, 2, 0));
+            const same = before.every((p, k) => Math.abs(p - after[k]!) < 1e-6);
+            const text = (lang: "tr" | "en", p: Float32Array) => [...p].map((v) => decimal(v, 3)[lang]).join(" / ");
+            return {
+              answer: same ? 0 : after[0]! > before[0]! ? 1 : 2,
+              result: {
+                tr: `Önce ${text("tr", before)}, sonra ${text("tr", after)}.`,
+                en: `Before ${text("en", before)}, after ${text("en", after)}.`,
+              },
+            };
+          },
+          tryIt: { tab: "theory", section: "t-softmax" },
+          explain: {
+            tr: R`Olasılıkları skorların farkları belirler. 5 eklemek farkları korumuştu; 2 ile çarpmak ise onları da ikiye katlar: \(2 - 1 = 1\) olan fark \(2\) olur. En büyük skor öne çıkar ve dağılım sivrileşir. Eğitim boyunca skorlar büyüdükçe model daha emin konuşur; bu güven, tamamen siyah bir görüntüde bile yüksek bir olasılık verebilir.`,
+            en: R`The differences between the scores set the probabilities. Adding 5 kept the differences; multiplying by 2 doubles them too: the difference \(2 - 1 = 1\) becomes \(2\). The largest score pulls ahead and the distribution gets sharper. As the scores grow during training the model sounds surer; that confidence can give a high probability even to a completely black image.`,
+          },
+        },
+        {
+          id: "t-curve",
+          kind: "choice",
+          q: {
+            tr: "SimpleCNN eğitilirken ilk epoch'larda eğitim kaybı doğrulama kaybından yüksek çıkıyor. En olası açıklama hangisi?",
+            en: "While SimpleCNN trains, the training loss is higher than the validation loss in the first epochs. What is the most likely explanation?",
+          },
+          options: [
+            {
+              text: { tr: "Model eğitim verisine aşırı uyuyor", en: "The model is overfitting the training data" },
+              why: {
+                tr: "Aşırı uyumda tablo terstir: eğitim kaybı düşük, doğrulama kaybı yüksek olur.",
+                en: "Overfitting gives the opposite picture: a low training loss and a high validation loss.",
+              },
+            },
+            {
+              text: { tr: "Öğrenme oranı fazla yüksek seçilmiş", en: "The learning rate is set too high" },
+              why: {
+                tr: R`Fazla yüksek bir \(\eta\) iki kaybı birden bozar; doğrulamayı eğitimden iyi göstermez.`,
+                en: R`Too high an \(\eta\) spoils both losses; it does not make validation look better than training.`,
+              },
+            },
+            { text: { tr: "Dropout eğitimde açık, doğrulamada kapalı", en: "Dropout is on in training and off in validation" } },
+            {
+              text: {
+                tr: "Doğrulama görüntüleri daha kolay olanlardan seçilmiş",
+                en: "The validation images were picked from the easier ones",
+              },
+              why: {
+                tr: R`Doğrulama görüntüleri eğitim setinden rastgele ayrılır (<code>random_split</code>); daha kolay olmaları beklenmez.`,
+                en: R`The validation images are split off the training set at random (<code>random_split</code>); there is no reason for them to be easier.`,
+              },
+            },
+          ],
+          answer: 2,
+          explain: {
+            tr: R`Eğitimde Dropout her adımda nöronların bir kısmını kapatır ve ağ bu eksik hâliyle ölçülür; doğrulamada ağın tamamı çalışır. İkinci bir neden daha var: eğitim kaybı epoch boyunca, model henüz gelişirken ortalanır, doğrulama kaybı ise epoch sonundaki modelle ölçülür. Asıl alarm işareti, doğrulama kaybının yükselmeye başlamasıdır.`,
+            en: R`In training, Dropout switches off part of the neurons at every step, and the network is measured in that reduced form; in validation the whole network runs. There is a second reason: the training loss is averaged over the epoch while the model is still improving, but the validation loss is measured with the model at the end of the epoch. The real warning sign is a validation loss that starts to rise.`,
           },
         },
       ],

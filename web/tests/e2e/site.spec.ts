@@ -269,11 +269,11 @@ test.describe("perceptron: the Practice tab", () => {
     await q.getByRole("button", { name: "Kontrol et" }).click();
     await expect(q.locator(".px-feedback")).toContainText("Doğru.");
     await expect(q.locator(".px-feedback")).toBeFocused();
-    await expect(page.locator(".px-count")).toContainText("1 / 15");
+    await expect(page.locator(".px-count")).toContainText("1 / 20");
     await page.reload();
     await expect(question(page, "n-zero")).toHaveAttribute("data-state", "correct");
     await expect(question(page, "n-zero").locator("input").first()).toBeDisabled();
-    await expect(page.locator(".px-count")).toContainText("1 / 15");
+    await expect(page.locator(".px-count")).toContainText("1 / 20");
     void errors;
   });
 
@@ -288,6 +288,11 @@ test.describe("perceptron: the Practice tab", () => {
     await input.fill("0,4");
     await input.press("Enter");
     await expect(q.locator(".px-feedback")).toContainText("Henüz değil");
+    await expect(q.locator(".px-feedback")).toContainText("Üç terimi toplayın"); // any wrong number: the hint
+    await input.fill("0,2");
+    await input.press("Enter");
+    await expect(q.locator(".px-feedback")).toContainText("Bias'ı unutmuş olabilirsiniz"); // a typical one: its own slip
+    await expect(q.locator(".px-feedback")).not.toContainText("Üç terimi toplayın");
     await input.fill("0,3");
     await input.press("Enter");
     await expect(q).toHaveAttribute("data-state", "correct");
@@ -312,7 +317,7 @@ test.describe("perceptron: the Practice tab", () => {
     await expect(q.locator(".px-opt.is-wrong")).toContainText("birkaç");
     await expect(page.locator(".px-count")).toContainText("Doğru: 0");
     await q.getByRole("button", { name: "Yeniden çöz" }).click();
-    await expect(page.locator(".px-count")).toContainText("0 / 15");
+    await expect(page.locator(".px-count")).toContainText("0 / 20");
     await expect(q.locator("input").first()).toBeFocused();
     void errors;
   });
@@ -325,7 +330,7 @@ test.describe("perceptron: the Practice tab", () => {
     await q.getByRole("button", { name: "Cevabı göster" }).click();
     await expect(q).toHaveAttribute("data-state", "revealed");
     await expect(q.locator(".px-verdict")).toHaveText("Doğru cevap: 1");
-    await expect(page.locator(".px-count")).toContainText("1 / 15");
+    await expect(page.locator(".px-count")).toContainText("1 / 20");
     await expect(page.locator(".px-count")).toContainText("Doğru: 0");
     void errors;
   });
@@ -344,10 +349,10 @@ test.describe("perceptron: the Practice tab", () => {
     await expect(page.locator('#px-toc [data-step="px-neuron"]')).toHaveClass(/px-done/);
     await page.getByRole("button", { name: "İlerlemeyi sıfırla" }).click();
     await page.getByRole("button", { name: "Vazgeç" }).click();
-    await expect(page.locator(".px-count")).toContainText("3 / 15");
+    await expect(page.locator(".px-count")).toContainText("3 / 20");
     await page.getByRole("button", { name: "İlerlemeyi sıfırla" }).click();
     await page.getByRole("button", { name: "Evet, sıfırla" }).click();
-    await expect(page.locator(".px-count")).toContainText("0 / 15");
+    await expect(page.locator(".px-count")).toContainText("0 / 20");
     await expect(question(page, "n-zero")).toHaveAttribute("data-state", "");
     await expect(page.locator('#px-toc [data-step="px-neuron"]')).not.toHaveClass(/px-done/);
     void errors;
@@ -357,9 +362,9 @@ test.describe("perceptron: the Practice tab", () => {
     await open(page, "perceptron.html#alistirma");
     await question(page, "n-zero").locator(".px-opt").nth(0).click();
     await question(page, "n-zero").getByRole("button", { name: "Kontrol et" }).click();
-    await expect(page.locator(".px-count")).toContainText("1 / 15");
+    await expect(page.locator(".px-count")).toContainText("1 / 20");
     await open(page, "index.html");
-    await expect(page.locator("a.lp-chapter").first()).toContainText("Alıştırma 1/15");
+    await expect(page.locator("a.lp-chapter").first()).toContainText("Alıştırma 1/20");
     await expect(page.locator("a.lp-chapter").nth(1)).not.toContainText("Alıştırma");
     void errors;
   });
@@ -387,8 +392,8 @@ test.describe("mlp: the Practice tab", () => {
 
   test("takes a rounded number, runs a real prediction and keeps its own progress", async ({ page, errors }) => {
     await open(page, "mlp.html#alistirma");
-    await expect(page.locator(".px-count")).toContainText("0 / 23");
-    await expect(page.locator("#px-toc button")).toHaveCount(7);
+    await expect(page.locator(".px-count")).toContainText("0 / 28");
+    await expect(page.locator("#px-toc button")).toHaveCount(8);
     const rounded = question(page, "l-bce");
     await rounded.locator("input").fill("0,8");
     await rounded.locator("input").press("Enter");
@@ -401,12 +406,12 @@ test.describe("mlp: the Practice tab", () => {
     await predict.getByRole("button", { name: "Tahmini sına" }).click();
     await expect(predict).toHaveAttribute("data-state", "correct");
     await expect(predict.locator(".px-run")).toContainText("birebir aynı");
-    await expect(page.locator(".px-count")).toContainText("2 / 23");
+    await expect(page.locator(".px-count")).toContainText("2 / 28");
     await expect(page.locator(".katex-error")).toHaveCount(0);
     await open(page, "perceptron.html#alistirma");
-    await expect(page.locator(".px-count")).toContainText("0 / 15");
+    await expect(page.locator(".px-count")).toContainText("0 / 20");
     await open(page, "index.html");
-    await expect(page.locator("a.lp-chapter").nth(1)).toContainText("Alıştırma 2/23");
+    await expect(page.locator("a.lp-chapter").nth(1)).toContainText("Alıştırma 2/28");
     await expect(page.locator("a.lp-chapter").first()).not.toContainText("Alıştırma");
     void errors;
   });
@@ -414,12 +419,12 @@ test.describe("mlp: the Practice tab", () => {
   test("every prediction runs, in English too", async ({ page, errors }) => {
     await page.addInitScript(() => localStorage.setItem("lang", "en"));
     await open(page, "mlp.html#alistirma");
-    for (const id of ["h-xor", "l-mse", "bp-sym", "g-curve", "i-shift"]) {
+    for (const id of ["h-xor", "l-mse", "bp-sym", "g-curve", "i-shift", "t-eta"]) {
       await question(page, id).locator(".px-opt").first().click();
       await question(page, id).getByRole("button", { name: "Test my prediction" }).click();
       await expect(question(page, id).locator(".px-run")).toBeVisible();
     }
-    await expect(page.locator(".px-count")).toContainText("5 / 23");
+    await expect(page.locator(".px-count")).toContainText("6 / 28");
     await expect(page.locator(".katex-error")).toHaveCount(0);
     void errors;
   });

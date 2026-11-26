@@ -683,7 +683,7 @@ print(f"{'flatten':10s} -> {tuple(x.shape)}")`,
         } },
       ] } },
       { callout: "info", title: { tr: "Neyi izliyoruz?", en: "What are we watching?" }, text: {
-        tr: "Eğitim kaybı düşerken doğrulama kaybı da düşüyorsa model öğreniyor demektir. Eğitim kaybı düşmeye devam ederken doğrulama kaybı **yükselmeye** başlarsa model ezberlemeye (overfitting) başlamıştır; o noktada eğitimi durdurmak gerekir.",
+        tr: "Eğitim kaybı düşerken doğrulama kaybı da düşüyorsa model öğreniyor demektir. Eğitim kaybı düşmeye devam ederken doğrulama kaybı **yükselmeye** başlarsa aşırı uyum (overfitting) başlamıştır: model eğitim verisini ezberliyordur; o noktada eğitimi durdurmak gerekir.",
         en: "If the validation loss falls along with the training loss, the model is learning. If the training loss keeps falling while the validation loss starts to **rise**, the model has started to memorize (overfitting); that is the point to stop training.",
       } },
     ],
