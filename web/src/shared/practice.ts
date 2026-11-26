@@ -80,6 +80,25 @@ export function parseNumber(text: string): number | null {
   return Number(clean.replace(",", "."));
 }
 
+/**
+ * Every value a typed number can mean. A point or comma before three digits may group thousands
+ * ("1.024" is 1024 in Turkish, "1,024" in English) or be a decimal one, so both readings count:
+ * "1.024" → [1.024, 1024], "1.024.000" → [1024000], "1.024,5" → [1024.5]. Empty if it is no number.
+ */
+export function readNumber(text: string): number[] {
+  const clean = text.trim().replace(/[−–]/g, "-");
+  const values: number[] = [];
+  const plain = parseNumber(clean);
+  if (plain !== null) values.push(plain);
+  const grouped = /^([+-]?)([1-9]\d{0,2}(?:([.,])\d{3})+)(?:(?!\3)[.,](\d*))?$/.exec(clean);
+  if (grouped) {
+    const [, sign, digits, separator, fraction] = grouped;
+    const value = Number(`${sign}${digits.split(separator).join("")}.${fraction || "0"}`);
+    if (!values.includes(value)) values.push(value);
+  }
+  return values;
+}
+
 export const matches = (value: number, answer: number, tolerance = 1e-6): boolean => Math.abs(value - answer) <= tolerance;
 
 /** A label with formulas as plain text, the name of its input for screen readers. */
@@ -149,7 +168,8 @@ function cleaned(a: Answer): Answer {
 
 /** The progress of one chapter, for the questions it has now. */
 export function createProgress(chapter: string, ids: readonly string[], store: Store | null = browserStore()) {
-  const stored: unknown = readAll(store)[chapter]?.answers;
+  const record = readAll(store)[chapter];
+  const stored: unknown = record?.answers;
   const answers = new Map<string, Answer>();
   if (stored && typeof stored === "object") {
     for (const id of ids) {
@@ -169,6 +189,12 @@ export function createProgress(chapter: string, ids: readonly string[], store: S
       /* storage full or blocked: the progress lasts until the page is closed */
     }
   };
+  // A newer site may have more, fewer or renamed questions: the start page reads the stored record,
+  // so it is brought up to date as soon as the chapter opens
+  const outdated =
+    record !== undefined &&
+    (record?.total !== ids.length || !stored || typeof stored !== "object" || Object.keys(stored).length !== answers.size);
+  if (outdated) save();
 
   return {
     get: (id: string): Answer | undefined => answers.get(id),

@@ -398,10 +398,10 @@ const SECTIONS = [
     id: "m-softmax",
     title: { tr: "Softmax ve çapraz entropi", en: "Softmax and cross-entropy" },
     blocks: [
-      { eq: R`p_k = \operatorname{softmax}(\mathbf{z})_k = \frac{e^{z_k}}{\sum_{j=1}^{K} e^{z_j}} \qquad L = -\sum_{k=1}^{K} y_k \log p_k = -\log p_c` },
+      { eq: R`p_k = \operatorname{softmax}(\mathbf{z})_k = \frac{e^{z_k}}{\sum_{j=0}^{K-1} e^{z_j}} \qquad L = -\sum_{k=0}^{K-1} y_k \log p_k = -\log p_c` },
       { p: {
-        tr: R`\(\mathbf{z}\): FC2'nin 10 [[logit|logiti]]; \(c\): doğru sınıf; \(\mathbf{y}\): doğru sınıfta 1, diğerlerinde 0 olan "one-hot" vektör; \(\log\): MLP bölümündeki \(\ln\), yani doğal logaritma. Bütün logitler eşitken \(p_k = 1/10\) ve \(L = \log 10 \approx 2{,}303\). Eğitimin başında logitler küçük ve birbirine yakın olduğu için kayıp bu değere yakın çıkar; çok farklıysa (örneğin 5) başlangıçta bir şeyler yanlıştır.`,
-        en: R`\(\mathbf{z}\): the 10 [[logit|logits]] of FC2; \(c\): the correct class; \(\mathbf{y}\): the "one-hot" vector, 1 at the correct class and 0 elsewhere; \(\log\): chapter 2's \(\ln\), the natural logarithm. With all logits equal, \(p_k = 1/10\) and \(L = \log 10 \approx 2.303\). At the start of training the logits are small and close to each other, so the loss comes out close to this value; if it is very different (say 5), something is wrong with the setup.`,
+        tr: R`\(K = 10\): sınıf sayısı (sınıflar 0–9); \(\mathbf{z}\): FC2'nin 10 [[logit|logiti]]; \(c\): doğru sınıf; \(\mathbf{y}\): doğru sınıfta 1, diğerlerinde 0 olan "one-hot" vektör; \(\log\): MLP bölümündeki \(\ln\), yani doğal logaritma. Bütün logitler eşitken \(p_k = 1/10\) ve \(L = \log 10 \approx 2{,}303\). Eğitimin başında logitler küçük ve birbirine yakın olduğu için kayıp bu değere yakın çıkar; çok farklıysa (örneğin 5) başlangıçta bir şeyler yanlıştır.`,
+        en: R`\(K = 10\): the number of classes (classes 0–9); \(\mathbf{z}\): the 10 [[logit|logits]] of FC2; \(c\): the correct class; \(\mathbf{y}\): the "one-hot" vector, 1 at the correct class and 0 elsewhere; \(\log\): chapter 2's \(\ln\), the natural logarithm. With all logits equal, \(p_k = 1/10\) and \(L = \log 10 \approx 2.303\). At the start of training the logits are small and close to each other, so the loss comes out close to this value; if it is very different (say 5), something is wrong with the setup.`,
       } },
       { callout: "info", title: { tr: "MLP bölümüyle bağlantı: iki sınıfta softmax = sigmoid", en: "The link to chapter 2: with two classes, softmax = sigmoid" }, text: {
         tr: R`\(K = 2\) iken \(p_1 = \dfrac{e^{z_1}}{e^{z_0}+e^{z_1}} = \dfrac{1}{1+e^{-(z_1-z_0)}} = \sigma(z_1 - z_0)\): softmax sigmoid'e, çok sınıflı çapraz entropi de <a href="#" data-go="math:mm-loss" data-chapter="mlp">MLP bölümündeki</a> ikili çapraz entropiye iner. Aşağıda bulacağımız \(p_k - y_k\) gradyanı, oradaki \(\hat y - y\)'nin 10 sınıflı hâlidir.`,
@@ -453,8 +453,8 @@ const SECTIONS = [
     title: { tr: "Geri yayılım: hepsini birleştirmek", en: "Backpropagation: putting it together" },
     blocks: [
       { p: {
-        tr: R`Model, katmanların art arda uygulanmasıdır: \(L = \ell\bigl(f_K(\cdots f_2(f_1(x;\theta_1);\theta_2)\cdots;\theta_K)\bigr)\). Zincir kuralı, kaybın her parametreye göre türevini sondan başa doğru, katman katman hesaplamayı sağlar ([[backprop|geri yayılım]]). \(\delta_k\), \(k\). katmanın çıktısına göre gradyan olsun:`,
-        en: R`The model is a chain of layers: \(L = \ell\bigl(f_K(\cdots f_2(f_1(x;\theta_1);\theta_2)\cdots;\theta_K)\bigr)\). The chain rule computes the derivative of the loss with respect to every parameter from the end to the start, layer by layer ([[backprop|backpropagation]]). Let \(\delta_k\) be the gradient with respect to the output of layer \(k\):`,
+        tr: R`Model, katmanların art arda uygulanmasıdır: \(L = \ell\bigl(f_K(\cdots f_2(f_1(x;\theta_1);\theta_2)\cdots;\theta_K)\bigr)\); burada \(K\), 8. kısımdaki gibi sınıf sayısı değil, katman sayısıdır. Zincir kuralı, kaybın her parametreye göre türevini sondan başa doğru, katman katman hesaplamayı sağlar ([[backprop|geri yayılım]]). \(\delta_k\), \(k\). katmanın çıktısına göre gradyan olsun:`,
+        en: R`The model is a chain of layers: \(L = \ell\bigl(f_K(\cdots f_2(f_1(x;\theta_1);\theta_2)\cdots;\theta_K)\bigr)\); here \(K\) is the number of layers, not the number of classes as in section 8. The chain rule computes the derivative of the loss with respect to every parameter from the end to the start, layer by layer ([[backprop|backpropagation]]). Let \(\delta_k\) be the gradient with respect to the output of layer \(k\):`,
       } },
       { eq: R`\delta_{k-1} = \left(\frac{\partial f_k}{\partial x_k}\right)^{\!\top}\delta_k \qquad \frac{\partial L}{\partial \theta_k} = \left(\frac{\partial f_k}{\partial \theta_k}\right)^{\!\top}\delta_k` },
       { p: {

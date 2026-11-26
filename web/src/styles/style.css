@@ -1290,6 +1290,14 @@ h2 > .info-btn { vertical-align: 2px; }
   .tabs { order: 3; flex: 1 1 100%; }
   .tabs button { flex: 1 1 auto; padding: 7px 8px; }
 }
+/* The same steps when the bar would wrap at a wider window (core.js, fitTopbar; only above 1040px) */
+.topbar.fit-1 .brand-sub, .topbar.fit-1 .badge-long { display: none; }
+.topbar.fit-2 #model-badge { display: none; }
+.topbar.fit-3 { padding: 10px 16px; gap: 10px 12px; }
+.topbar.fit-3 .brand { flex: 1 1 auto; min-width: 0; }
+.topbar.fit-3 .badges { margin-left: auto; justify-content: flex-end; }
+.topbar.fit-3 .tabs { order: 3; flex: 1 1 100%; }
+.topbar.fit-3 .tabs button { flex: 1 1 auto; padding: 7px 8px; }
 @media (max-width: 720px) {
   .topbar { padding: 8px 12px; gap: 8px; transition: transform 0.25s ease; }
   /* Keyboard focus brings the bar back at once, so the page does not jump to a control hidden above it */
@@ -1349,7 +1357,18 @@ h2 > .info-btn { vertical-align: 2px; }
   padding: 8px; border: 1px solid var(--border); border-radius: 12px;
   background: var(--surface); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
 }
-.chm-head { padding: 4px 8px 8px; font-size: 11.5px; font-weight: 650; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.chm-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 4px 8px 8px; font-size: 11.5px; font-weight: 650; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.chm-home { padding: 2px 6px; margin: -2px -6px; border-radius: 6px; font-size: 12.5px; font-weight: 550; letter-spacing: 0; text-transform: none; color: var(--accent-strong); text-decoration: none; white-space: nowrap; }
+.chm-home:hover { background: var(--surface-2); text-decoration: underline; }
+.chm-home:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+/* The house at the far left of every chapter's top bar: back to the start page */
+.home-link {
+  flex: none; display: grid; place-items: center; width: 32px; height: 32px; margin-right: -4px;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); color: var(--text-2);
+}
+.home-link svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.home-link:hover { color: var(--text); border-color: var(--axis); }
+.home-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .chm-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; position: relative; }
 .chm-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px; border-radius: 8px; color: var(--text); text-decoration: none; }
 a.chm-item:hover { background: var(--surface-2); }
@@ -1374,6 +1393,15 @@ a.chm-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2p
 @media (max-width: 720px) {
   .brand-btn { gap: 8px; }
   .chapter-menu { left: -4px; }
+  /* On a phone the house takes the logo's place, so the bar is no taller than before */
+  .brand { gap: 10px; }
+  .home-link { width: 30px; height: 30px; }
+  .brand-btn .logo { display: none; }
+}
+@media (max-width: 360px) {
+  /* The title is hidden here too: the logo comes back, and the start page is in the chapter menu */
+  .home-link { display: none; }
+  .brand-btn .logo { display: block; }
 }
 
 /* ---------- Chapter 1: the perceptron ---------- */

@@ -140,8 +140,20 @@ for (const c of CHAPTERS) {
       await expect(menu.locator(".chm-item.soon")).toHaveCount(3);
       await expect(menu.locator(".chm-item.soon").first()).toContainText("coming soon");
       const other = CHAPTERS.find((o) => o.id !== c.id)!;
+      await expect(menu.getByRole("link", { name: "Home page" })).toHaveAttribute("href", "index.html");
       await menu.locator(`a.chm-item[href="${other.id}.html"]`).click();
       await expect(page).toHaveTitle(new RegExp(`· Chapter ${other.number}$`)); // the language is kept
+      void errors;
+    });
+
+    test("the house in the top bar leads back to the start page", async ({ page, errors }) => {
+      await page.setViewportSize({ width: 375, height: 760 }); // also on a phone, where it takes the logo's place
+      await open(page, `${c.id}.html#matematik`);
+      const home = page.getByRole("link", { name: "Ana sayfa" }).first();
+      await expect(home).toBeVisible();
+      await home.click();
+      await expect(page.locator(".lp-chapter").first()).toBeVisible();
+      expect(new URL(page.url()).pathname).toMatch(/\/index\.html$/);
       void errors;
     });
 

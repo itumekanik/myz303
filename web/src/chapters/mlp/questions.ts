@@ -159,8 +159,8 @@ export const PRACTICE: PracticeSection[] = [
         id: "h-xor",
         kind: "predict",
         q: {
-          tr: R`XOR'u aynı öğrenme oranıyla (\(\eta = 2\)) ve 3000 epoch boyunca iki ağla eğitiyoruz: gizli katmansız (2 → 1) ve iki gizli nöronlu (2 → 2 → 1). Hangisi dört noktayı da doğru sınıflar?`,
-          en: R`We train XOR with the same learning rate (\(\eta = 2\)) for 3000 epochs on two networks: without a hidden layer (2 → 1) and with two hidden neurons (2 → 2 → 1). Which one classifies all four points correctly?`,
+          tr: R`XOR'u aynı öğrenme oranıyla (\(\eta = 2\)) ve 3000 epoch boyunca iki ağla eğitiyoruz: gizli katmansız (2 → 1) ve iki gizli nöronlu (2 → 2 → 1). Bu başlangıç ağırlıklarıyla hangisi dört noktayı da doğru sınıflar?`,
+          en: R`We train XOR with the same learning rate (\(\eta = 2\)) for 3000 epochs on two networks: without a hidden layer (2 → 1) and with two hidden neurons (2 → 2 → 1). With these starting weights, which one classifies all four points correctly?`,
         },
         options: [
           { tr: "Yalnızca gizli katmansız ağ", en: "Only the network without a hidden layer" },
@@ -183,8 +183,8 @@ export const PRACTICE: PracticeSection[] = [
         },
         tryIt: { tab: "play" },
         explain: {
-          tr: R`Gizli katmansız ağın sınırı tek bir doğrudur ve XOR'u ayıramaz. Gizli katman noktaları, bir doğrunun ayırabileceği yeni bir gösterime taşır.`,
-          en: R`Without a hidden layer the boundary is a single line, which cannot separate XOR. The hidden layer moves the points into a new representation that a line can separate.`,
+          tr: R`Gizli katmansız ağın sınırı tek bir doğrudur ve XOR'u ayıramaz. Gizli katman noktaları, bir doğrunun ayırabileceği yeni bir gösterime taşır. Gizli katmanlı ağ da bazı başlangıçlarda takılabilir (Teori 2, "Bazen takılır").`,
+          en: R`Without a hidden layer the boundary is a single line, which cannot separate XOR. The hidden layer moves the points into a new representation that a line can separate. The network with a hidden layer can still get stuck from some starts (Theory 2, "Sometimes it gets stuck").`,
         },
       },
       {
@@ -407,16 +407,16 @@ export const PRACTICE: PracticeSection[] = [
           en: R`First find \(\delta_o = \hat y - y\), then multiply by the three factors.`,
         },
         explain: {
-          tr: R`\(\delta_o = 0{,}75 - 1 = -0{,}25\). \(\delta_1 = -0{,}25\cdot 2\cdot 0{,}5\cdot 0{,}5 = -0{,}125\). Sigmoid'in eğimi en fazla 0,25 olduğu için hata geriye giderken küçülür.`,
-          en: R`\(\delta_o = 0.75 - 1 = -0.25\). \(\delta_1 = -0.25\cdot 2\cdot 0.5\cdot 0.5 = -0.125\). The sigmoid's slope is at most 0.25, so the error shrinks as it goes back.`,
+          tr: R`\(\delta_o = 0{,}75 - 1 = -0{,}25\). \(\delta_1 = -0{,}25\cdot 2\cdot 0{,}5\cdot 0{,}5 = -0{,}125\). Sigmoid'in eğimi en fazla 0,25 olduğu için, ağırlıklar büyük değilse hata geriye giderken küçülür.`,
+          en: R`\(\delta_o = 0.75 - 1 = -0.25\). \(\delta_1 = -0.25\cdot 2\cdot 0.5\cdot 0.5 = -0.125\). The sigmoid's slope is at most 0.25, so, if the weights are not large, the error shrinks as it goes back.`,
         },
       },
       {
         id: "bp-sym",
         kind: "predict",
         q: {
-          tr: R`2 → 2 → 1 ağının iki gizli nöronunu tamamen aynı ağırlıklarla başlatıp XOR'u 2000 epoch eğitiyoruz. Ne olur?`,
-          en: R`We start the two hidden neurons of a 2 → 2 → 1 network with exactly the same weights and train XOR for 2000 epochs. What happens?`,
+          tr: R`2 → 2 → 1 ağının iki gizli nöronunu tamamen aynı başlatıyoruz: giren ağırlıkları, biasları ve çıktıya giden ağırlıkları birebir aynı. Sonra XOR'u 2000 epoch eğitiyoruz. Ne olur?`,
+          en: R`We start the two hidden neurons of a 2 → 2 → 1 network exactly alike: the same incoming weights, the same biases and the same weights to the output. Then we train XOR for 2000 epochs. What happens?`,
         },
         options: [
           { tr: "Rastgele başlangıçtaki gibi öğrenir", en: "It learns as it does from a random start" },
@@ -494,8 +494,8 @@ export const PRACTICE: PracticeSection[] = [
         ],
         answer: 2,
         explain: {
-          tr: R`Her ara sonuç bir kez kullanılır, bu yüzden maliyet ağırlık sayısına göre artmaz. Her ağırlığı tek tek oynatmak ise en az ağırlık sayısı kadar ileri hesap ister: SimpleCNN için 582 bin.`,
-          en: R`Every intermediate result is used once, so the cost does not grow with the number of weights. Nudging each weight in turn would take at least as many forward passes as there are weights: 582 thousand for SimpleCNN.`,
+          tr: R`Her ara sonuç bir kez kullanılır, bu yüzden geri hesap, ağ ne kadar büyük olursa olsun, yaklaşık iki ileri hesap tutar. Her ağırlığı tek tek oynatmak ise en az ağırlık sayısı kadar ileri hesap ister: SimpleCNN için 582 bin.`,
+          en: R`Every intermediate result is used once, so the backward pass costs about two forward passes, however large the network is. Nudging each weight in turn would take at least as many forward passes as there are weights: 582 thousand for SimpleCNN.`,
         },
       },
     ],

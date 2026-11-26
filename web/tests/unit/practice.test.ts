@@ -11,7 +11,7 @@ import { unpackWeights, type PackedModel } from "../../src/engines/cnn/weights.t
 import { PRACTICE as MLP_PRACTICE } from "../../src/chapters/mlp/questions.ts";
 import { PRACTICE } from "../../src/chapters/perceptron/questions.ts";
 import { ruleStep, stepFn, trainFromZero, zOf } from "../../src/chapters/perceptron/model.ts";
-import { chapterSummary, createProgress, matches, parseNumber, plainMath } from "../../src/shared/practice.ts";
+import { chapterSummary, createProgress, matches, parseNumber, plainMath, readNumber } from "../../src/shared/practice.ts";
 
 function memoryStore(initial?: string) {
   let data = initial ?? null;
@@ -75,6 +75,20 @@ describe("a typed number (practice.ts)", () => {
   for (const text of ["", " ", "abc", "1,2,3", "1.2.3", "1,2.3", "-", ",", "1e3", "Infinity", "NaN", "0x10", "2 3"]) {
     it(`rejects "${text}"`, () => assert.equal(parseNumber(text), null));
   }
+  const readings: [string, number[]][] = [
+    ["1.024", [1.024, 1024]], // Turkish thousands point, or a decimal point
+    ["1,024", [1.024, 1024]],
+    ["1024", [1024]],
+    ["1.024.000", [1024000]],
+    ["1.024,5", [1024.5]],
+    ["-1,024.5", [-1024.5]],
+    ["0.500", [0.5]], // no thousands group starts with 0
+    ["0,3", [0.3]],
+    ["abc", []],
+    ["1.02.4", []],
+  ];
+  for (const [text, values] of readings)
+    it(`reads "${text}" as ${JSON.stringify(values)}`, () => assert.deepEqual(readNumber(text), values));
   it("accepts a sum's rounding error, not a near miss", () => {
     assert.ok(matches(0.1 + 0.2, 0.3));
     assert.ok(!matches(0.31, 0.3));
@@ -142,6 +156,16 @@ describe("progress (practice.ts)", () => {
       assert.equal(chapterSummary("demo", s), null);
       assert.equal(createProgress("demo", ["a"], s).summary().done, 0);
     }
+  });
+
+  it("brings the start page's count up to date when the questions change", () => {
+    const store = memoryStore(JSON.stringify({ demo: { total: 2, answers: { a: { status: "correct" }, gone: { status: "missed" } } } }));
+    assert.deepEqual(chapterSummary("demo", store), { total: 2, done: 2 }); // looks finished
+    createProgress("demo", ["a", "b", "c"], store); // the chapter opens with its new questions
+    assert.deepEqual(chapterSummary("demo", store), { total: 3, done: 1 });
+    const untouched = memoryStore();
+    createProgress("demo", ["a"], untouched);
+    assert.equal(untouched.read(), null); // nothing is written for a chapter never practised
   });
 
   it("works without storage, and when writing fails", () => {

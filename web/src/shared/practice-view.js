@@ -12,11 +12,12 @@ import { L } from "./i18n.js";
 import { $, CHAPTER, h, locale, scrollMode } from "./core.js";
 import { placeLabel } from "./glossary/terms.js";
 import { createLesson, lessonHTML } from "./lesson.js";
-import { createProgress, matches, parseNumber, plainMath } from "./practice.ts";
+import { createProgress, matches, plainMath, readNumber } from "./practice.ts";
 
 const say = (tr, en) => L({ tr, en });
 const blankDraft = () => ({ pick: null, value: "", tried: false, notice: null, wrongPick: null, busy: false });
-const showNumber = (value) => new Intl.NumberFormat(locale(), { maximumFractionDigits: 6 }).format(value);
+// No thousands separator: the answer shown can be typed back as it is
+const showNumber = (value) => new Intl.NumberFormat(locale(), { maximumFractionDigits: 6, useGrouping: false }).format(value);
 const isPrediction = (q) => q.kind === "predict" || q.kind === "model";
 
 export function createPractice({ main, toc, summary, sections }) {
@@ -32,7 +33,13 @@ export function createPractice({ main, toc, summary, sections }) {
   /** The result to show for a finished question, if it has one. */
   const runFor = (q, saved) => {
     if (q.kind === "predict") return runOf(q);
-    if (q.kind === "model" && saved.run) return { answer: saved.run.answer, result: q.describe(saved.run.values) };
+    if (q.kind === "model" && saved.run) {
+      try {
+        return { answer: saved.run.answer, result: q.describe(saved.run.values) };
+      } catch {
+        return null;   // a damaged saved run (too few numbers): the result is not shown, the tab still works
+      }
+    }
     return null;
   };
   const cards = new Map();    // the card on the page for each question (a language change rebuilds them)
@@ -83,14 +90,14 @@ export function createPractice({ main, toc, summary, sections }) {
   }
 
   /** Saves a finished question and shows its result on the card that is on the page now. */
-  function finish(q, answer, takeFocus = true) {
+  function finish(q, answer, takeFocus = true, { background = false } = {}) {
     const draft = draftOf(q);
     progress.set(q.id, answer);
     draft.notice = null;
     draft.busy = false;
     const card = cards.get(q.id);
     card?.sync();
-    changed();
+    changed({ background });
     if (!card || !takeFocus) return;
     // The button that had the focus is gone: the keyboard continues from the result
     card.feedback.focus({ preventScroll: true });
@@ -167,8 +174,12 @@ export function createPractice({ main, toc, summary, sections }) {
       q.run().then(
         (run) => {
           if (drafts.get(q.id) !== draft) return;   // the progress was reset while it ran
-          const takeFocus = Boolean(cards.get(q.id)?.form.contains(document.activeElement));
-          finish(q, { status: pick === run.answer ? "correct" : "missed", pick, run }, takeFocus);
+          // Back to the result only if the reader is still there: not after scrolling away from it
+          const shown = cards.get(q.id)?.form;
+          const box = shown?.getBoundingClientRect();
+          const inView = Boolean(box) && box.bottom > 0 && box.top < window.innerHeight;
+          const takeFocus = inView && shown.contains(document.activeElement);
+          finish(q, { status: pick === run.answer ? "correct" : "missed", pick, run }, takeFocus, { background: true });
         },
         () => {
           if (drafts.get(q.id) !== draft) return;
@@ -183,9 +194,9 @@ export function createPractice({ main, toc, summary, sections }) {
       event.preventDefault();
       if (progress.get(q.id) || draft.busy) return;
       if (q.kind === "number") {
-        const value = parseNumber(draft.value);
-        if (value === null) draft.notice = "number";
-        else if (matches(value, q.answer, q.tolerance)) return finish(q, { status: "correct", value: draft.value });
+        const values = readNumber(draft.value);
+        if (!values.length) draft.notice = "number";
+        else if (values.some((value) => matches(value, q.answer, q.tolerance))) return finish(q, { status: "correct", value: draft.value });
         else {
           draft.tried = true;
           draft.notice = "wrong";
@@ -289,11 +300,18 @@ export function createPractice({ main, toc, summary, sections }) {
     if (focus) target.focus({ preventScroll: true });
   }
 
-  function changed() {
-    if (confirming) confirming = false;
-    renderSummary();
+  /**
+   * After a question is finished. A model run that ends in the background leaves an open "Delete
+   * all answers?" question and the focus in the summary where they are.
+   */
+  function changed({ background = false } = {}) {
     markSections();
+    if (background && confirming) return;
+    confirming = false;
+    const inSummary = $(summary).contains(document.activeElement);
+    renderSummary(background && inSummary ? (done() ? "reset" : "count") : null);
   }
+  const done = () => progress.summary().done > 0;
 
   const widgets = Object.fromEntries(questions.map((q) => [q.id, () => questionCard(q)]));
   lesson = createLesson({

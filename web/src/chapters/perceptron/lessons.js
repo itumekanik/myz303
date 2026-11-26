@@ -254,7 +254,7 @@ const MATH = [
           { tex: R`\mathbf w \leftarrow \mathbf w - \eta\,\frac{\partial \ell}{\partial \mathbf w} = \mathbf w + \eta\,t\,\mathbf x, \qquad b \leftarrow b + \eta\,t`,
             why: { tr: R`Tek örnekle bir [[sgd|SGD]] adımı: gradyanın tersi yönünde \(\eta\) kadar.`, en: R`One [[sgd|SGD]] step on one example: \(\eta\) times the opposite of the gradient.` } },
           { tex: R`e = y - \hat y = t \quad\Rightarrow\quad \mathbf w \leftarrow \mathbf w + \eta\,e\,\mathbf x`,
-            why: { tr: R`Yanlış sınıflanan bir örnekte \(y = 1, \hat y = 0\) ise \(e = 1 = t\); \(y = 0, \hat y = 1\) ise \(e = -1 = t\). Bu tam olarak perceptron kuralı. (\(z = 0\)'da kaybın bir kırığı vardır ve gradyan tek değildir. \(H(0) = 0\) olduğu için kural orada \(y = 1\) ise adım atar, \(y = 0\) ise atmaz; ikisi de geçerli bir seçimdir.)`, en: R`For a misclassified example, \(y = 1, \hat y = 0\) gives \(e = 1 = t\) and \(y = 0, \hat y = 1\) gives \(e = -1 = t\). This is exactly the perceptron rule. (At \(z = 0\) the loss has a kink and the gradient is not unique. Since \(H(0) = 0\), the rule takes the step there if \(y = 1\) and does nothing if \(y = 0\); both are valid choices.)` } },
+            why: { tr: R`Yanlış sınıflanan bir örnekte \(y = 1, \hat y = 0\) ise \(e = 1 = t\); \(y = 0, \hat y = 1\) ise \(e = -1 = t\). Bu tam olarak perceptron kuralı. (\(z = 0\)'da kaybın bir kırığı vardır ve gradyan tek değildir. \(H(0) = 0\) olduğu için kural orada \(y = 1\) ise adım atar, \(y = 0\) ise atmaz; ikisi de geçerli bir seçimdir. Ama dikkat: \(\mathbf w = \mathbf 0\), \(b = 0\) iken her örnekte \(z = 0\) ve kayıp zaten 0'dır. Sıfırdan başlayan bir perceptronu yürüten şey, \(z = 0\)'ı \(y = 1\) için hata saymamızdır.)`, en: R`For a misclassified example, \(y = 1, \hat y = 0\) gives \(e = 1 = t\) and \(y = 0, \hat y = 1\) gives \(e = -1 = t\). This is exactly the perceptron rule. (At \(z = 0\) the loss has a kink and the gradient is not unique. Since \(H(0) = 0\), the rule takes the step there if \(y = 1\) and does nothing if \(y = 0\); both are valid choices. But note: with \(\mathbf w = \mathbf 0\), \(b = 0\), every example has \(z = 0\) and the loss is already 0. What moves a perceptron that starts from zero is that we count \(z = 0\) as a mistake when \(y = 1\).)` } },
         ],
       } },
       { h: { tr: "Neden basamak fonksiyonunun türevini kullanmıyoruz?", en: "Why not use the derivative of the step function?" } },
@@ -387,7 +387,7 @@ const RUN_OUTPUT = [
   "Mistakes per epoch: [2, 2, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]",
   "Boundary: -0.14*x1 -0.07*x2 +0.10 = 0",
   "Predictions: [1 1 0 0]  targets: [0 1 1 0]  accuracy: 50%",
-  "No convergence in 20 epochs: no straight line separates XOR.",
+  "No convergence in 20 epochs: no straight line separates the data, or it needs more epochs.",
 ];
 
 const TORCH_CODE = `import torch
@@ -400,7 +400,7 @@ y = torch.tensor([0., 0., 0., 1.])           # AND
 layer = nn.Linear(2, 1)                      # z = x @ W.T + b: the same weighted sum
 lr = 0.1
 
-with torch.no_grad():                        # the perceptron rule needs no gradients
+with torch.no_grad():                        # gradient simple enough to write by hand: no autograd
     for epoch in range(20):
         mistakes = 0
         for x_i, y_i in zip(X, y):
@@ -438,8 +438,8 @@ const CODE = [
       } },
       { term: "PowerShell", lines: ["$ .venv\\Scripts\\python.exe Perceptron.py"] },
       { callout: "tip", title: { tr: "Neden PyTorch değil?", en: "Why not PyTorch?" },
-        text: { tr: R`Perceptron kuralı gradyan istemez; tek ihtiyacımız vektörlerle toplama ve çarpma. Her satırın ne yaptığını görmek için düz NumPy en açığı. 7. adımda aynı şeyi PyTorch ile yazıp CNN koduna bağlayacağız.`,
-          en: R`The perceptron rule needs no gradients; all we need is adding and multiplying vectors. Plain NumPy shows most clearly what every line does. In step 7 we write the same with PyTorch and connect it to the CNN code.` } },
+        text: { tr: R`Perceptron kuralının gradyanı elle yazılacak kadar basit; otomatik türeve (autograd) gerek yok, tek ihtiyacımız vektörlerle toplama ve çarpma. Her satırın ne yaptığını görmek için düz NumPy en açığı. 7. adımda aynı şeyi PyTorch ile yazıp CNN koduna bağlayacağız.`,
+          en: R`The perceptron rule's gradient is simple enough to write by hand; no autograd needed, all we need is adding and multiplying vectors. Plain NumPy shows most clearly what every line does. In step 7 we write the same with PyTorch and connect it to the CNN code.` } },
     ],
   },
   {
@@ -549,7 +549,7 @@ const CODE = [
         en: R`The exercises go from easy to hard. For each one, predict the result first, then try it on a copy of <code>Perceptron.py</code>.`,
       } },
       { list: [
-        { tr: R`<b>Seed:</b> <code>seed</code>'i değiştirin (örneğin 1, 2, 3). Bulunan sınır ve epoch sayısı neden değişiyor? (İpucu: seed başlangıç ağırlıklarını belirler; ayıran pek çok doğru vardır ve kural ulaştığı ilk doğruda durur.)`, en: R`<b>Seed:</b> change <code>seed</code> (to 1, 2, 3, for example). Why do the boundary found and the number of epochs change? (Hint: the seed sets the starting weights; many lines separate the data, and the rule stops at the first one it reaches.)` },
+        { tr: R`<b>Seed:</b> <code>seed</code>'i değiştirin (örneğin 1, 2, 3). Bulunan sınır ve epoch sayısı neden değişiyor? (İpucu: seed başlangıç ağırlıklarını belirler; ayıran pek çok doğru vardır ve kural ulaştığı ilk doğruda durur.) Seed 3'te AND 22 epoch ister, bu yüzden eğitim 20. epoch'ta yakınsamadan durur: veri doğrusal ayrılabilir, yalnızca <code>max_epochs</code> küçük kalmıştır.`, en: R`<b>Seed:</b> change <code>seed</code> (to 1, 2, 3, for example). Why do the boundary found and the number of epochs change? (Hint: the seed sets the starting weights; many lines separate the data, and the rule stops at the first one it reaches.) With seed 3, AND needs 22 epochs, so the run stops at epoch 20 without converging: the data is linearly separable, only <code>max_epochs</code> is too small.` },
         { tr: R`<b>Yeni kapı:</b> <code>GATES</code>'e NOR'u (<code>[1, 0, 0, 0]</code>) ekleyin. Çalıştırmadan önce: yakınsamasını bekler misiniz? (İpucu: NOR, OR'un tersidir; Teori'nin 1. kısmında onu hesaplayan \(w_1, w_2, b\)'yi elle bulabiliyor musunuz?)`, en: R`<b>A new gate:</b> add NOR (<code>[1, 0, 0, 0]</code>) to <code>GATES</code>. Before running: do you expect it to converge? (Hint: NOR is the opposite of OR; can you find \(w_1, w_2, b\) that compute it by hand, in section 1 of Theory?)` },
         { tr: R`<b>Öğrenme oranı:</b> <code>learning_rate</code>'i önce 0,01, sonra 1,0 yapın. AND kaç epoch'ta yakınsıyor? Sonra <code>__init__</code>'te ağırlıkları sıfırla başlatın (<code>np.zeros(n_inputs)</code>) ve aynı öğrenme oranlarını yeniden deneyin. Artık AND her öğrenme oranında aynı hataları yapıp aynı epoch'ta yakınsıyor; neden? (İpucu: Matematik sekmesi, 5. kısmın son adımı: sıfırdan başlayınca \(\eta\) ağırlıkları yalnızca ölçekler.)`,
           en: R`<b>Learning rate:</b> set <code>learning_rate</code> to 0.01, then to 1.0. In how many epochs does AND converge? Then start the weights at zero in <code>__init__</code> (<code>np.zeros(n_inputs)</code>) and try the same learning rates again. Now AND makes the same mistakes and converges in the same epoch for every learning rate; why? (Hint: Math tab, the last step of section 5: starting from zero, \(\eta\) only scales the weights.)` },

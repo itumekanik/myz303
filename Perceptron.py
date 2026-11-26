@@ -90,4 +90,4 @@ if __name__ == "__main__":
         if history[-1] == 0:
             print(f"Converged after {len(history)} epochs.\n")
         else:
-            print(f"No convergence in {max_epochs} epochs: no straight line separates XOR.\n")
+            print(f"No convergence in {max_epochs} epochs: no straight line separates the data, or it needs more epochs.\n")

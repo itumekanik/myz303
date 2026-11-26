@@ -92,8 +92,8 @@ export const GLOSSARY = {
     name: { tr: "Basamak fonksiyonu", en: "Step function" },
     aka: ["heaviside", "eşik fonksiyonu", "threshold function", "H(z)"],
     def: {
-      tr: "Girdisi pozitifse 1, değilse 0 veren [[activation|aktivasyon fonksiyonu]]: \\(H(z) = 1\\) (\\(z > 0\\)), \\(H(z) = 0\\) (\\(z \\le 0\\)). [[perceptron|Perceptronun]] kararını verir. Eğimi her yerde 0 olduğundan [[gradient|gradyan]] taşımaz; bu yüzden çok katmanlı ağlarda sigmoid ya da [[relu|ReLU]] kullanılır.",
-      en: "The [[activation|activation function]] that gives 1 if its input is positive and 0 otherwise: \\(H(z) = 1\\) (\\(z > 0\\)), \\(H(z) = 0\\) (\\(z \\le 0\\)). It makes the [[perceptron|perceptron]]'s decision. Its slope is 0 everywhere, so it carries no [[gradient|gradient]]; that is why multilayer networks use the sigmoid or [[relu|ReLU]].",
+      tr: "Girdisi pozitifse 1, değilse 0 veren [[activation|aktivasyon fonksiyonu]]: \\(H(z) = 1\\) (\\(z > 0\\)), \\(H(z) = 0\\) (\\(z \\le 0\\)). [[perceptron|Perceptronun]] kararını verir. Eğimi \\(z = 0\\) dışında her yerde 0'dır (orada tanımsızdır); bu yüzden [[gradient|gradyan]] taşımaz; bu yüzden çok katmanlı ağlarda sigmoid ya da [[relu|ReLU]] kullanılır.",
+      en: "The [[activation|activation function]] that gives 1 if its input is positive and 0 otherwise: \\(H(z) = 1\\) (\\(z > 0\\)), \\(H(z) = 0\\) (\\(z \\le 0\\)). It makes the [[perceptron|perceptron]]'s decision. Its slope is 0 everywhere except at \\(z = 0\\), where it is undefined, so it carries no [[gradient|gradient]]; that is why multilayer networks use the sigmoid or [[relu|ReLU]].",
     },
     link: [{ chapter: "perceptron", tab: "theory", section: "p-neuron" }, { chapter: "perceptron", tab: "math", section: "pm-gd" }],
   },
@@ -154,8 +154,8 @@ export const GLOSSARY = {
     name: { tr: "Marj", en: "Margin" },
     aka: ["boşluk", "gap", "gamma", "γ", "aralık"],
     def: {
-      tr: "Bir [[decision-boundary|karar sınırı]] ile ona en yakın örnek arasındaki uzaklık. Marj büyükse sınıflar birbirinden belirgin biçimde ayrıdır. Perceptronun yaptığı düzeltme sayısı en fazla \\((R/\\gamma)^2\\)'dir (\\(\\gamma\\) marj, \\(R\\) en uzak örneğin orijine uzaklığı; kesin tanımlar perceptron bölümünün Matematik sekmesinde): marj küçüldükçe öğrenme uzar.",
-      en: "The distance between a [[decision-boundary|decision boundary]] and the example closest to it. A large margin means the classes are clearly apart. The number of corrections the perceptron makes is at most \\((R/\\gamma)^2\\) (\\(\\gamma\\) the margin, \\(R\\) the distance of the farthest example from the origin; the perceptron chapter's Math tab defines both exactly): the smaller the margin, the longer learning takes.",
+      tr: "Bir [[decision-boundary|karar sınırı]] ile ona en yakın örnek arasındaki uzaklık. Marj büyükse sınıflar birbirinden belirgin biçimde ayrıdır. Perceptronun yaptığı düzeltme sayısı en fazla \\((R/\\gamma)^2\\)'dir (\\(\\gamma\\) marj, \\(R\\) en uzak örneğin, bias için eklenen 1 bileşeniyle, orijine uzaklığı; sınır ağırlıklar sıfırdan başlayınca geçerlidir; kesin tanımlar perceptron bölümünün Matematik sekmesinde): marj küçüldükçe öğrenme uzar.",
+      en: "The distance between a [[decision-boundary|decision boundary]] and the example closest to it. A large margin means the classes are clearly apart. The number of corrections the perceptron makes is at most \\((R/\\gamma)^2\\) (\\(\\gamma\\) the margin, \\(R\\) the distance of the farthest example from the origin, with the extra 1 for the bias; the bound holds when the weights start at zero; the perceptron chapter's Math tab defines both exactly): the smaller the margin, the longer learning takes.",
     },
     link: [{ chapter: "perceptron", tab: "theory", section: "p-converge" }, { chapter: "perceptron", tab: "math", section: "pm-converge" }],
   },
@@ -188,10 +188,10 @@ export const GLOSSARY = {
   mlp: {
     group: "mlp",
     name: { tr: "Çok katmanlı ağ (MLP)", en: "Multilayer perceptron (MLP)" },
-    aka: ["mlp", "multilayer perceptron", "çok katmanlı perceptron", "ileri beslemeli ağ", "feedforward network", "dense network", "yoğun ağ"],
+    aka: ["mlp", "multilayer perceptron", "çok katmanlı perceptron", "çok katmanlı algılayıcı", "çka", "ysa", "yapay sinir ağı", "ann", "artificial neural network", "ileri beslemeli ağ", "feedforward network", "dense network", "yoğun ağ"],
     def: {
-      tr: "Nöronların katmanlar hâlinde dizildiği ve her katmanın bir öncekinin bütün çıktılarına bağlandığı ([[fully-connected|tam bağlı]]) ağ: girdi → bir ya da daha fazla [[hidden-layer|gizli katman]] → çıktı. Katmanlar arasında doğrusal olmayan bir [[activation|aktivasyon]] vardır; ağırlıklar [[backprop|geri yayılım]] ve [[gradient-descent|gradyan inişiyle]] öğrenilir. Adındaki \"perceptron\" tarihseldir: nöronları basamak yerine sigmoid, tanh ya da ReLU kullanır.",
-      en: "A network whose neurons are arranged in layers, each layer connected to all the outputs of the previous one ([[fully-connected|fully connected]]): input → one or more [[hidden-layer|hidden layers]] → output. A nonlinear [[activation|activation]] sits between the layers; the weights are learned with [[backprop|backpropagation]] and [[gradient-descent|gradient descent]]. The \"perceptron\" in its name is historical: its neurons use a sigmoid, tanh or ReLU instead of the step.",
+      tr: "Nöronların katmanlar hâlinde dizildiği ve her katmanın bir öncekinin bütün çıktılarına bağlandığı ([[fully-connected|tam bağlı]]) ağ: girdi → bir ya da daha fazla [[hidden-layer|gizli katman]] → çıktı. Katmanlar arasında doğrusal olmayan bir [[activation|aktivasyon]] vardır; ağırlıklar [[backprop|geri yayılım]] ve [[gradient-descent|gradyan inişiyle]] öğrenilir. Adındaki \"perceptron\" tarihseldir: nöronları basamak yerine sigmoid, tanh ya da ReLU kullanır. Türkçe kaynaklarda çok katmanlı algılayıcı (ÇKA) da denir; derslerde çoğu zaman kısaca YSA (yapay sinir ağı, ANN) diye anılan klasik ağdır. YSA ise bütün ailenin adıdır: CNN de RNN de birer YSA'dır.",
+      en: "A network whose neurons are arranged in layers, each layer connected to all the outputs of the previous one ([[fully-connected|fully connected]]): input → one or more [[hidden-layer|hidden layers]] → output. A nonlinear [[activation|activation]] sits between the layers; the weights are learned with [[backprop|backpropagation]] and [[gradient-descent|gradient descent]]. The \"perceptron\" in its name is historical: its neurons use a sigmoid, tanh or ReLU instead of the step. It is the classic network that courses often simply call an ANN (artificial neural network); ANN is the name of the whole family, though: CNNs and RNNs are ANNs too.",
     },
     model: {
       tr: "SimpleCNN'in sonundaki FC1 ve FC2 katmanları bir MLP'dir: evrişim katmanlarının çıkardığı 1024 özellikten 10 sınıfa karar verir.",
@@ -238,8 +238,8 @@ export const GLOSSARY = {
     name: { tr: "Kaybolan gradyan", en: "Vanishing gradient" },
     aka: ["vanishing gradient", "sönen gradyan", "doyma", "saturation", "exploding gradient", "patlayan gradyan"],
     def: {
-      tr: "Derin bir ağda hata sinyalinin geriye giderken her katmanda bir aktivasyon türevi ve ağırlıklarla çarpılıp giderek küçülmesi; ilk katmanlar neredeyse hiç öğrenmez. [[sigmoid|Sigmoid]]'in türevi en fazla 0,25 olduğu için 10 katmanda sinyal milyonda birine iner. [[relu|ReLU]], dikkatli seçilmiş başlangıç ağırlıkları ve [[batchnorm|batch normalization]] bu sorunu azaltır. Tersi, sinyalin katman katman büyümesi, patlayan gradyandır.",
-      en: "In a deep network, the error signal is multiplied by an activation derivative and weights at every layer on its way back and keeps shrinking; the first layers barely learn. The [[sigmoid|sigmoid]]'s derivative is at most 0.25, so over 10 layers the signal falls to a millionth. [[relu|ReLU]], carefully chosen initial weights and [[batchnorm|batch normalization]] reduce the problem. The opposite, a signal that grows layer by layer, is the exploding gradient.",
+      tr: "Derin bir ağda hata sinyalinin geriye giderken her katmanda bir aktivasyon türevi ve ağırlıklarla çarpılıp giderek küçülmesi; ilk katmanlar neredeyse hiç öğrenmez. [[sigmoid|Sigmoid]]'in türevi en fazla 0,25 olduğu için 10 katmanda türev çarpanlarının çarpımı en fazla milyonda birdir; ağırlıklar büyük değilse sinyal de o kadar küçülür. [[relu|ReLU]], dikkatli seçilmiş başlangıç ağırlıkları ve [[batchnorm|batch normalization]] bu sorunu azaltır. Tersi, sinyalin katman katman büyümesi, patlayan gradyandır.",
+      en: "In a deep network, the error signal is multiplied by an activation derivative and weights at every layer on its way back and keeps shrinking; the first layers barely learn. The [[sigmoid|sigmoid]]'s derivative is at most 0.25, so over 10 layers the product of the derivative factors is at most a millionth; unless the weights are large, the signal shrinks as much. [[relu|ReLU]], carefully chosen initial weights and [[batchnorm|batch normalization]] reduce the problem. The opposite, a signal that grows layer by layer, is the exploding gradient.",
     },
     model: {
       tr: "SimpleCNN bu yüzden ReLU ve BatchNorm kullanır.",
@@ -252,8 +252,8 @@ export const GLOSSARY = {
     name: { tr: "Yerel minimum", en: "Local minimum" },
     aka: ["local minimum", "yerel en küçük", "plato", "plateau", "takılmak", "stuck"],
     def: {
-      tr: "Kaybın, yakınındaki bütün noktalardakinden küçük olduğu ama en küçük değerin (global minimum) olmadığı bir nokta. Orada gradyan sıfırdır ve [[gradient-descent|gradyan inişi]] durur. Küçük ağlarda (örneğin XOR için 2 gizli nöron) eğitim bazen böyle bir yere ya da düz bir bölgeye (plato) takılır; farklı bir rastgele başlangıç ya da daha fazla nöron genelde çözer. Büyük ağlarda kötü yerel minimumlar daha az sorun olur.",
-      en: "A point where the loss is smaller than at every nearby point but is not the smallest value (the global minimum). The gradient is zero there and [[gradient-descent|gradient descent]] stops. In small networks (2 hidden neurons for XOR, for example) training sometimes gets stuck at such a place or on a flat region (a plateau); a different random start or more neurons usually fixes it. In large networks bad local minima are less of a problem.",
+      tr: "Kaybın, yakınındaki bütün noktalardakinden küçük olduğu ama en küçük değerin (global minimum) olmadığı bir nokta. Orada gradyan sıfırdır ve [[gradient-descent|gradyan inişi]] durur. Küçük ağlarda eğitim bazen böyle bir yere ya da düz bir bölgeye (plato) takılır; XOR için 2 gizli nöronlu ağda görülen takılma, nöronların doyduğu çok düz bir bölgedir; farklı bir rastgele başlangıç ya da daha fazla nöron genelde çözer. Büyük ağlarda kötü yerel minimumlar daha az sorun olur.",
+      en: "A point where the loss is smaller than at every nearby point but is not the smallest value (the global minimum). The gradient is zero there and [[gradient-descent|gradient descent]] stops. In small networks training sometimes gets stuck at such a place or on a flat region (a plateau); the stuck runs of the XOR network with 2 hidden neurons sit in a very flat region where the neurons saturate; a different random start or more neurons usually fixes it. In large networks bad local minima are less of a problem.",
     },
     link: { chapter: "mlp", tab: "theory", section: "ml-hidden" },
   },
@@ -382,7 +382,7 @@ export const GLOSSARY = {
   backprop: {
     group: "train",
     name: { tr: "Geri yayılım (backpropagation)", en: "Backpropagation" },
-    aka: ["backward", "backprop", "zincir kuralı", "chain rule", "loss.backward", "geri besleme"],
+    aka: ["backward", "backprop", "zincir kuralı", "chain rule", "loss.backward"],
     def: {
       tr: "Tüm [[gradient|gradyanları]] verimli hesaplayan yöntem. Kayıptan başlayıp katmanlar boyunca geriye doğru ilerler; türev, zincir kuralıyla her katmandan bir öncekine aktarılır. Böylece yüz binlerce ağırlığın gradyanı, bir [[forward-pass|ileri yayılımla]] aynı mertebede bir maliyetle bulunur.",
       en: "The method that computes all [[gradient|gradients]] efficiently. It starts at the loss and moves backward through the layers, passing the derivative from each layer to the one before it with the chain rule. That gives the gradients of hundreds of thousands of weights at a cost of the same order as a [[forward-pass|forward pass]].",
@@ -471,8 +471,8 @@ export const GLOSSARY = {
     name: { tr: "Hareketli ortalama", en: "Moving average" },
     aka: ["EMA", "üstel hareketli ortalama", "exponential moving average", "yumuşatma", "smoothing", "ortalama", "average"],
     def: {
-      tr: "Gürültülü bir dizinin genel eğilimini görmek için her noktada son değerlerin ortalamasını almak. Burada kullanılan <b>üstel</b> hareketli ortalamada her yeni değer ortalamaya küçük bir payla katılır, eski değerlerin etkisi giderek azalır: <span class=\"g-formula\">\\(m \\leftarrow 0{,}95\\, m + 0{,}05\\, x\\)</span>",
-      en: "Averaging the most recent values at each point to see the overall trend of a noisy series. In the <b>exponential</b> moving average used here, each new value enters with a small share and older values fade away gradually: <span class=\"g-formula\">\\(m \\leftarrow 0.95\\, m + 0.05\\, x\\)</span>",
+      tr: "Gürültülü bir dizinin genel eğilimini görmek için her noktada son değerlerin ortalamasını almak. Burada kullanılan <b>üstel</b> hareketli ortalamada her yeni değer ortalamaya küçük bir payla katılır, eski değerlerin etkisi giderek azalır: <span class=\"g-formula\">\\(m \\leftarrow 0{,}95\\, m + 0{,}05\\, x\\)</span> BatchNorm'un sakladığı ortalama ve varyans da böyle güncellenir; orada katsayılar 0,9 ve 0,1'dir.",
+      en: "Averaging the most recent values at each point to see the overall trend of a noisy series. In the <b>exponential</b> moving average used here, each new value enters with a small share and older values fade away gradually: <span class=\"g-formula\">\\(m \\leftarrow 0.95\\, m + 0.05\\, x\\)</span> BatchNorm's stored mean and variance are updated the same way, with factors 0.9 and 0.1.",
     },
     model: {
       tr: "Eğitim sekmesindeki <b>eğitim kaybı</b> kutusu ve batch kaybı grafiğindeki <b>mavi çizgi</b> bu ortalamadır. İlk değerlerdeki sıfıra çekilme düzeltilir (TensorBoard'daki gibi).",
@@ -799,8 +799,8 @@ export const GLOSSARY = {
     name: { tr: "Batch Normalization (BatchNorm)", en: "Batch normalization (BatchNorm)" },
     aka: ["batch norm", "bn", "normalizasyon", "normalization", "normalleştirme", "BatchNorm2d"],
     def: {
-      tr: "Her [[channel|kanalı]], [[batch|batch]] üzerinde ortalaması 0, standart sapması 1 olacak şekilde normalleştirir, sonra öğrenilen bir ölçek (γ) ve kayma (β) uygular. Katmanlara giden değerlerin dağılımını kararlı tutar; eğitim hızlanır ve daha büyük öğrenme oranları kullanılabilir. Eğitimde ve değerlendirmede farklı davranır ([[train-eval|eğitim ve değerlendirme modu]]).",
-      en: "Normalizes each [[channel|channel]] to mean 0 and standard deviation 1 over the [[batch|batch]], then applies a learned scale (γ) and shift (β). It keeps the distribution of the values reaching each layer steady, so training is faster and larger learning rates can be used. It behaves differently in training and in evaluation ([[train-eval|training and evaluation mode]]).",
+      tr: "Her [[channel|kanalı]], [[batch|batch]] üzerinde ortalaması 0, standart sapması 1 olacak şekilde normalleştirir, sonra öğrenilen bir ölçek (γ) ve kayma (β) uygular. Eğitim hızlanır ve daha büyük öğrenme oranları kullanılabilir. Önerenler bunu katmanlara giden değerlerin dağılımını kararlı tutmasına bağladı; Santurkar ve ark. (2018) ise yararın daha çok kayıp yüzeyini düzgünleştirmesinden geldiğini öne sürdü. Eğitimde ve değerlendirmede farklı davranır ([[train-eval|eğitim ve değerlendirme modu]]).",
+      en: "Normalizes each [[channel|channel]] to mean 0 and standard deviation 1 over the [[batch|batch]], then applies a learned scale (γ) and shift (β). Training is faster and larger learning rates can be used. Its authors put this down to keeping the distribution of the values reaching each layer steady; Santurkar et al. (2018) argued that the benefit comes more from smoothing the loss surface. It behaves differently in training and in evaluation ([[train-eval|training and evaluation mode]]).",
     },
     model: {
       tr: "Her evrişimden sonra, ReLU'dan önce: <code>BatchNorm2d(32)</code> ve <code>BatchNorm2d(64)</code>.",

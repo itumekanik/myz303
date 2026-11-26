@@ -346,7 +346,7 @@ export const PRACTICE: PracticeSection[] = [
             },
           };
         },
-        tryIt: { tab: "theory", section: "p-rule" },
+        tryIt: { tab: "math", section: "pm-converge" },
         explain: {
           tr: R`Sıfırdan başlayınca \(\eta\) ağırlıkları yalnızca ölçekler: \(\mathbf w\) ve \(b\) hep aynı oranda büyür, \(z\)'nin işareti değişmez. Bu yüzden iki eğitim aynı hataları yapar.`,
           en: R`Starting from zero, \(\eta\) only scales the weights: \(\mathbf w\) and \(b\) grow by the same factor and the sign of \(z\) does not change. So both runs make the same mistakes.`,

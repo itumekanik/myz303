@@ -275,7 +275,7 @@ export function buildPractice(lab: () => Promise<CnnLab>): PracticeSection[] {
             en: R`ReLU sets negative values to 0 and leaves positive ones as they are.`,
           },
           explain: {
-            tr: R`\(\max(0, -2) + \max(0;\ 0{,}5) + \max(0, 3) = 0 + 0{,}5 + 3 = 3{,}5\). Geriye yalnızca filtrenin güçlü tepki verdiği yerler kalır.`,
+            tr: R`\(\max(0;\ -2) + \max(0;\ 0{,}5) + \max(0;\ 3) = 0 + 0{,}5 + 3 = 3{,}5\). Geriye yalnızca filtrenin güçlü tepki verdiği yerler kalır.`,
             en: R`\(\max(0, -2) + \max(0, 0.5) + \max(0, 3) = 0 + 0.5 + 3 = 3.5\). Only the places where the filter responds strongly remain.`,
           },
         },
@@ -283,8 +283,8 @@ export function buildPractice(lab: () => Promise<CnnLab>): PracticeSection[] {
           id: "ac-why",
           kind: "choice",
           q: {
-            tr: "Evrişim katmanlarının arasına hiç aktivasyon koymazsak ne olur?",
-            en: "What happens if we put no activation between convolution layers?",
+            tr: "Evrişim katmanlarının arasına hiç aktivasyon (ve havuzlama da) koymazsak ne olur?",
+            en: "What happens if we put no activation (and no pooling either) between convolution layers?",
           },
           options: [
             {
@@ -317,8 +317,8 @@ export function buildPractice(lab: () => Promise<CnnLab>): PracticeSection[] {
           ],
           answer: 0,
           explain: {
-            tr: "Doğrusal işlemlerin bileşimi yine doğrusaldır. Derinliğin işe yaraması için katmanlar arasında ReLU gibi doğrusal olmayan bir adım gerekir.",
-            en: "A composition of linear operations is still linear. For depth to help, a non-linear step such as ReLU is needed between the layers.",
+            tr: "Doğrusal işlemlerin bileşimi yine doğrusaldır. Derinliğin işe yaraması için katmanlar arasında ReLU gibi doğrusal olmayan bir adım gerekir. Max pooling da doğrusal değildir: en büyük değeri seçmek bir ağırlıklı toplam değildir.",
+            en: "A composition of linear operations is still linear. For depth to help, a non-linear step such as ReLU is needed between the layers. Max pooling is not linear either: picking the largest value is not a weighted sum.",
           },
         },
       ],
@@ -462,8 +462,8 @@ export function buildPractice(lab: () => Promise<CnnLab>): PracticeSection[] {
           id: "sm-equal",
           kind: "number",
           q: {
-            tr: R`4 sınıflı bir modelin bütün skorları eşit. Çapraz entropi kaybı kaçtır? (İki ondalığa yuvarlayın.)`,
-            en: R`All the scores of a 4-class model are equal. What is the cross-entropy loss? (Round to two decimals.)`,
+            tr: R`4 sınıflı bir modelin bütün skorları eşit. Çapraz entropi kaybı kaçtır? (Kayıptaki log doğal logaritmadır, ln. İki ondalığa yuvarlayın.)`,
+            en: R`All the scores of a 4-class model are equal. What is the cross-entropy loss? (The log in the loss is the natural logarithm, ln. Round to two decimals.)`,
           },
           label: { tr: R`\(L \approx\)`, en: R`\(L \approx\)` },
           answer: 1.39,
@@ -638,8 +638,8 @@ export function buildPractice(lab: () => Promise<CnnLab>): PracticeSection[] {
           }),
           tryIt: { tab: "infer" },
           explain: {
-            tr: R`Mürekkepli piksellerin yarısından fazlası yer değiştirdi, ama filtreler aynı desenleri yeni konumda da bulur ve max pooling küçük kaymalara dayanıklılık sağlar. MLP bölümündeki kaydırma deneyiyle karşılaştırın.`,
-            en: R`More than half of the inked pixels moved, but the filters find the same patterns at the new position and max pooling adds robustness to small shifts. Compare it with the shifting experiment in the MLP chapter.`,
+            tr: R`Mürekkepli piksellerin yarısından fazlası yer değiştirdi, ama filtreler aynı desenleri yeni konumda da bulur ve max pooling küçük kaymalara dayanıklılık sağlar. Bu dayanıklılık birkaç pikselle sınırlıdır: 4 piksel kaydırınca test setinin tamamında CNN'in doğruluğu da yaklaşık %82'ye düşer. MLP bölümündeki kaydırma deneyiyle karşılaştırın.`,
+            en: R`More than half of the inked pixels moved, but the filters find the same patterns at the new position and max pooling adds robustness to small shifts. That robustness only lasts a few pixels: shifted by 4 pixels, the CNN too drops to about 82% on the whole test set. Compare it with the shifting experiment in the MLP chapter.`,
           },
         },
         {

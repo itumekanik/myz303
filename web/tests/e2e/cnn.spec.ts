@@ -124,6 +124,30 @@ test.describe("chapter 3: the Practice tab", () => {
     void errors;
   });
 
+  test("1024 written with a thousands point counts, and the answer shown can be typed back", async ({ page, errors }) => {
+    await open(page, "cnn.html#alistirma/px-pool");
+    const flat = question(page, "pl-flat");
+    await flat.locator("input").fill("1.024");
+    await flat.locator("input").press("Enter");
+    await expect(flat).toHaveAttribute("data-state", "correct");
+    await flat.getByRole("button", { name: /Yeniden/ }).click();
+    await flat.locator("input").fill("1000");
+    await flat.locator("input").press("Enter");
+    await flat.getByRole("button", { name: /Cevabı göster/ }).click();
+    await expect(flat.locator(".px-verdict")).toHaveText("Doğru cevap: 1024");
+    void errors;
+  });
+
+  test("a damaged saved model result does not break the tab", async ({ page, errors }) => {
+    const damaged = { cnn: { total: 20, answers: { "e-black": { status: "correct", pick: 1, run: { answer: 1, values: [] } } } } };
+    await page.addInitScript((saved) => localStorage.setItem("practice-v1", saved), JSON.stringify(damaged));
+    await open(page, "cnn.html#alistirma/px-model");
+    await expect(question(page, "e-black")).toHaveAttribute("data-state", "correct");
+    await expect(page.locator("#px-main .px-q")).toHaveCount(20);
+    await expect(page.locator(".px-count")).toContainText("1 / 20");
+    void errors;
+  });
+
   test("a model file that fails to load can be tried again", async ({ page, baseURL }) => {
     test.skip(!baseURL?.startsWith("http"), "requests can be blocked over http only");
     await page.route("**/data/mnist-test.js", (route) => route.abort());

@@ -687,7 +687,8 @@ export function renderChapters() {
     list.append(h("li", {}, item));
   });
   menu.setAttribute("aria-label", pathName);
-  menu.replaceChildren(h("div", { class: "chm-head", text: pathName }), list, versionLine("chm-version"));
+  const home = h("a", { class: "chm-home", href: "index.html" }, L({ tr: "← Ana sayfa", en: "← Home page" }));
+  menu.replaceChildren(h("div", { class: "chm-head" }, h("span", { text: pathName }), home), list, versionLine("chm-version"));
   const here = CHAPTERS.findIndex((c) => c.id === CHAPTER) + 1;
   button.title = `${pathName} · ${L({ tr: "Bölüm", en: "Chapter" })} ${here}/${CHAPTERS.length}`;
 }
@@ -726,6 +727,38 @@ $(".brand")?.addEventListener("focusout", (event) => {
 });
 document.addEventListener("lang-change", renderChapters);
 renderChapters();
+
+/**
+ * The top bar takes one row on a wide screen. The widths in style.css at which it drops the
+ * subtitle, then the model badge, then puts the tabs on a row of their own suit the usual fonts;
+ * with a wider font, longer badge text or the other language it would wrap earlier and leave the
+ * badges alone on a second row. So above 1040px the same steps are also taken here (classes
+ * fit-1 … fit-3), one at a time, until the bar fits.
+ */
+const FIT_STEPS = ["fit-1", "fit-2", "fit-3"];
+const stacked = window.matchMedia("(max-width: 1040px)");
+function fitTopbar() {
+  const bar = $(".topbar");
+  if (!bar) return;
+  bar.classList.remove(...FIT_STEPS);
+  if (stacked.matches) return;   // the stylesheet's own two-row layout
+  const wraps = () => {
+    const rows = [...bar.children].filter((el) => el.offsetParent !== null).map((el) => el.getBoundingClientRect().top);
+    return Math.max(...rows) - Math.min(...rows) > 20;
+  };
+  for (const step of FIT_STEPS) {
+    if (!wraps()) break;
+    bar.classList.add(step);
+  }
+}
+if ($(".topbar")) {
+  watchSize($(".topbar"), fitTopbar);
+  if ($(".badges")) watchSize($(".badges"), fitTopbar);   // badge text that changes (the CNN page's device)
+  stacked.addEventListener("change", fitTopbar);
+  document.addEventListener("lang-change", fitTopbar);
+  document.fonts?.ready.then(fitTopbar);
+  fitTopbar();
+}
 
 
 // Theme and language switches (switches.ts). Canvases keep their pixels, so repaint them with
