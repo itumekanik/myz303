@@ -23,7 +23,8 @@
   "dependencies": {
     "@tensorflow/tfjs": "4.22.0",
     "@tensorflow/tfjs-backend-webgpu": "4.22.0",
-    "katex": "0.16.47"
+    "katex": "0.16.47",
+    "onnxruntime-web": "1.31.1"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

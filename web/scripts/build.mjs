@@ -11,9 +11,10 @@
  *   import { createBuild } ...        used by scripts/dev.mjs for the watch mode
  */
 import * as esbuild from "esbuild";
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { gzipSync } from "node:zlib";
 import { loadChapters, runtimeList } from "./chapters.mjs";
 import { readRelease } from "./release.mjs";
 
@@ -160,11 +161,31 @@ const VENDOR = {
   "tf-backend-webgpu.min.js": "node_modules/@tensorflow/tfjs-backend-webgpu/dist/tf-backend-webgpu.min.js",
 };
 
-/** Copies public/ (the data files of tools/export_assets.py) and the vendor libraries into the site. */
+/**
+ * ONNX Runtime's WebAssembly binary as a data file (data/ort-wasm.js): a page opened from a file cannot
+ * fetch the .wasm, but it can run a script that holds it. Made from node_modules, so it is not in the
+ * repository; cached next to it because compressing 15 MB takes a moment.
+ */
+const ORT_WASM = "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm";
+
+function ortWasmDataFile() {
+  const cache = join(ROOT, "node_modules/.cache/ort-wasm.js");
+  const source = join(ROOT, ORT_WASM);
+  if (!existsSync(cache) || statSync(cache).mtimeMs < statSync(source).mtimeMs) {
+    const packed = gzipSync(readFileSync(source), { level: 9 }).toString("base64");
+    mkdirSync(dirname(cache), { recursive: true });
+    writeFileSync(cache, `(window.__AI_DATA__ ||= {})["ort-wasm"] = ${JSON.stringify({ gzip: packed })};\n`);
+  }
+  return cache;
+}
+
+/** Copies public/ (the data files of tools/export_assets.py and export_yolo_assets.py) and the vendor libraries into the site. */
 export function copyStatic(outdir = DIST) {
   if (existsSync(join(ROOT, "public"))) cpSync(join(ROOT, "public"), outdir, { recursive: true });
   mkdirSync(join(outdir, "vendor"), { recursive: true });
   for (const [name, from] of Object.entries(VENDOR)) cpSync(join(ROOT, from), join(outdir, "vendor", name));
+  mkdirSync(join(outdir, "data"), { recursive: true });
+  cpSync(ortWasmDataFile(), join(outdir, "data", "ort-wasm.js"));
 }
 
 export async function build({ dev = false, outdir = DIST } = {}) {

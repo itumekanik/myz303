@@ -1,7 +1,7 @@
 # 4. bölüm planı: "Nesne tespiti ve segmentasyon: YOLO"
 
 - **Tarih:** 2026-11-26
-- **Durum:** onaylandı (2026-11-26); ön denemenin ikinci turu sürüyor. Kararlar aşağıda.
+- **Durum:** onaylandı (2026-11-26). 0. aşama (ön deneme) ve 1. aşama (motor) bitti (2026-11-27). Kararlar aşağıda.
 - **Öğretim üyesinin isteği (2026-11-26):** YOLO'nun son sürümüyle, inşaat mühendisliğine uygun bir
   kuş bakışı görüntü örneği. YOLO'nun nasıl çalıştığı ve nasıl eğitildiği, tam bir ders gibi ve
   pedagojik olarak.
@@ -37,8 +37,9 @@
    Alıştırma. CNN bölümüyle aynı yapı.
 6. **İki oturuma bölünebilir:** 1–5. kısımlar tespitin ve maskenin nasıl üretildiğini, 6–8. kısımlar
    eğitimi, ölçmeyi ve mühendislik okumasını anlatır. CNN bölümündeki yeni sırayla aynı fikir.
-7. **Dürüst mesaj:** model 240 görüntüyle eğitildi; doğrulamada maske mAP50 0,62. Siyah çatıları
-   kaçırıyor, Hartum'da bitişik evleri tek blok sayıyor. Bu hatalar bölümde saklanmaz, öğretilir.
+7. **Dürüst mesaj:** modeller 528 kareyle eğitildi. Doğrulamada (131 kare) bina maske AP50 0,69, spor sahası
+   0,30; arazi örtüsünde mIoU 0,46 (bina 0,67, otopark 0,23). OSM etiketleri gürültülü; siyah çatılar kaçıyor,
+   Hartum'da bitişik evler tek blok. Bu hatalar bölümde saklanmaz, öğretilir.
 8. **Ölçü:** Teori 8 kısım ve 8 demo, Matematik 8 kısım, Kodlama 14 adım, Alıştırma yaklaşık 25 soru.
 9. **Açık sorular:** §9'daki sorular yukarıdaki kararlarla cevaplandı.
 
@@ -58,7 +59,7 @@ Bölümün sonunda öğrenci şunları yapabilir:
    görüntü üzerinde gösterir.
 2. İki kutunun IoU'sunu elle hesaplar ve 0,5 eşiğinin ne anlama geldiğini açıklar.
 3. YOLO'nun 640×640 bir görüntü için neden 8400 aday ürettiğini (80² + 40² + 20²) ve her adayın neden
-   37 sayı taşıdığını (4 kutu + 1 sınıf + 32 maske katsayısı) gösterir. ✓
+   38 sayı taşıdığını (4 kutu + 2 sınıf skoru + 32 maske katsayısı) gösterir. ✓
 4. Güven eşiğinin ve NMS'in aday kutuları nasıl azalttığını adım adım izler.
 5. Bir maskenin 32 prototip haritanın doğrusal birleşimiyle nasıl üretildiğini açıklar.
 6. Eğitimin üç kayıp terimini (kutu, sınıf, maske) ve önceden eğitilmiş ağırlıkların neden işe
@@ -75,28 +76,26 @@ eğitim, doğrulama ve test ayrımı ile aşırı uyum; ikili çapraz entropi.
 
 | Konu | Değer |
 | --- | --- |
-| Veri | SpaceNet 2 binalar, dört şehirden 75'er kare: 240 eğitim, 60 doğrulama ✓ |
-| Lisans | CC BY-SA 4.0, kaynak gösterilerek ([spacenet.ai](https://spacenet.ai)) ✓ |
-| Görüntü | 650×650 piksel, 0,3 m/piksel (bir kare ≈ 195 m × 195 m); 16 bit RGB, %2–98 germeyle 8 bit JPG ✓ |
-| Etiketler | 5.498 bina çokgeni, GeoJSON'dan YOLO biçimine benim çevirimle ✓ |
-| Model | YOLO26n-seg (Ultralytics, Ocak 2026), 3.082.751 parametre, COCO'da önceden eğitilmiş ✓ |
-| Eğitim | 50 epoch, imgsz 640, batch 8, RTX 2060: 1007 s, 3,9 GB GPU belleği ✓ |
-| Sonuç | Doğrulamada kutu mAP50 0,626, maske mAP50 0,618, maske mAP50-95 0,330; 50. epoch'ta hâlâ artıyor ✓ |
-| ONNX | 11,1 MB; çıktılar (1, 37, 8400) ve prototipler (1, 32, 160, 160) ✓ |
-| Tarayıcı | ONNX Runtime Web 1.31.1 (WASM, tek iş parçacığı): görüntü başına 0,46–0,57 s; Chromium, Firefox, WebKit, `file://` ✓ |
-| Boyut | WASM 3,8 MB, model 11,1 MB (gzip+base64 olarak 5,1 + 13,1 MB) ✓ |
-| Tutarlılık | PyTorch ve ONNX aynı sayıda bina buluyor; tarayıcı 4 görüntünün 2'sinde ±1 (yeniden boyutlandırma farkı) ✓ |
+| Veri | SpaceNet 2: dört şehirden seçilen 746 kare; boşluk oranı %25'i aşan 87 kare çıkarıldı: 528 eğitim, 131 doğrulama ✓ |
+| Seçim | Kareler, OSM'de spor sahası, su, yeşil alan ve otopark içerenler öne çıkacak biçimde seçildi; indirme ≈ 1,9 GB, diskte 134 MB ✓ |
+| Lisans | SpaceNet CC BY-SA 4.0; OSM etiketleri ODbL; Ultralytics AGPL-3.0 (`web/README.md`) ✓ |
+| Görüntü | 650×650 piksel, ≈ 0,3 m/piksel; 16 bit RGB, %2–98 germeyle 8 bit JPG. Kareler derece cinsinden: bir piksel Vegas'ta 0,24 m (doğu-batı) × 0,30 m (kuzey-güney) ✓ |
+| Etiketler | Örnek: 10.974 bina (SpaceNet), 529 spor sahası (OSM). Anlamsal: yol (OSM çizgileri, türüne göre 5–20 m genişletildi), yeşil, su, otopark (OSM). Görüntüsüz kenarlar "yok say" (255) ✓ |
+| Modeller | YOLO26n-seg (3,08 M parametre, COCO'da önceden eğitilmiş) ve YOLO26n-sem (1,63 M) ✓ |
+| Eğitim | 100 epoch, imgsz 640, batch 4 (8, 6 GB'lık kartı aştı), RTX 2060: seg 78 dk, sem 25 dk, seg sıfırdan 83 dk ✓ |
+| Sonuç (seg) | Maske mAP50 0,50 (bina 0,69, spor sahası 0,30); kutu mAP50 0,54 ✓ |
+| Sıfırdan | Maske mAP50 0,32 (bina 0,53, spor 0,10). 1./10./50. epoch: önceden eğitilmiş 0,20/0,38/0,44, sıfırdan 0,00/0,11/0,26 ✓ |
+| Sonuç (sem) | mIoU 0,46, piksel doğruluğu %71; IoU: bina 0,67, arka plan 0,59, yeşil 0,48, yol 0,43, su 0,40, otopark 0,23 ✓ |
+| Dışa aktarma | float16 kayıpsız (seg 0,497, sem 0,464), yarı boyut. NMS'siz uçtan uca başlık 0,474: ham çıktı + JS'de NMS seçildi ✓ |
+| Sitedeki dosyalar | `yolo-seg.js` 6,8 MB, `yolo-sem.js` 3,9 MB, `yolo-samples.js` 1,9 MB (8 kare), `ort-wasm.js` 5,1 MB ✓ |
+| Tarayıcı | ONNX Runtime Web 1.31.1, tek iş parçacığı: seg 0,44 s, sem 0,24 s; Chromium, Firefox, WebKit, `file://` ✓ |
+| Tutarlılık | JPEG çözme cv2 ile aynı; JS'deki yeniden boyutlandırma cv2 ile bayt bayt aynı (canvas'ınki piksellerin yarısında 20 düzeye kadar farklı); tespitlerin hepsi eşleşiyor, kutu ≤ 0,9 piksel ✓ |
 
-**Bölüm yazılmadan önce ön denemeye eklenecekler:**
+**Ön denemede kalan:** Eğitim sekmesi için 1., 5., 10., 25., 50., 75. ve son epoch'taki ağırlıklar saklandı
+(`runs/*/weights/epoch*.pt`); aynı doğrulama karesinin tahminleri 2. aşamada üretilir.
 
-- Veri: şehir başına 150 kare (indirme ≈ 1,5 GB, TIF'ler silinince ≈ 120 MB). 1 GB sınırı indirmeyi mi,
-  kalan veriyi mi kapsıyor? (§9, soru 3.)
-- 100 epoch ve "sıfırdan eğitim" karşılaştırması: önceden eğitilmiş ağırlığın faydası bir sayıyla
-  gösterilsin. ⟨ölçülecek⟩
-- Eğitim sekmesi için 1., 5., 10., 25. ve son epoch'taki ağırlıklarla aynı doğrulama karesinin tahmini.
-- YOLO26'nın NMS'siz (uçtan uca) çıktısıyla dışa aktarma; böylece sayfada iki yol da gösterilebilir.
-- Modeli float16'ya çevirmek (yaklaşık 5,6 MB): doğruluk kaybı ölçülecek. ⟨ölçülecek⟩
-- Tarayıcı ile Python'un aynı yeniden boyutlandırmayı kullanması (tutarlılık farkını kapatmak için).
+**Öğretilecek yan bulgu:** aynı kare INTER_AREA yerine INTER_LINEAR ile küçültülünce bina sayısı 1 değişiyor.
+Ön işleme ayrıntısı sonucu etkiler; motor bu yüzden Ultralytics'i bayt bayt izliyor.
 
 ## 3. Sekmeler ve sayfa yapısı
 
@@ -132,7 +131,7 @@ neden IoU mesafeden iyi. *Demo:* iki kutuyu sürükle, IoU canlı; doğru etiket
 CNN bölümünden köprü: evrişim katmanları görüntüyü 8, 16 ve 32 kat küçültür; 640 piksellik girişte
 80×80, 40×40 ve 20×20'lik haritalar oluşur. Her hücre bir adaydır: 6400 + 1600 + 400 = 8400 ✓. Her aday
 hücresinden dört kenara uzaklık (çapasız), bir güven skoru ve 32 maske katsayısı tahmin eder
-(37 sayı ✓). Gövde, boyun ve baş: gövde Bölüm 3'teki gibi bir CNN; boyun ölçekleri birleştirir; baş
+(38 sayı: 4 + 2 + 32 ✓). Gövde, boyun ve baş: gövde Bölüm 3'teki gibi bir CNN; boyun ölçekleri birleştirir; baş
 tahmin eder. Küçük ev ince ızgarada, büyük depo kaba ızgarada bulunur. Yeni YOLO'lardaki küçük dikkat
 blokları yalnızca adıyla anılır, Dikkat bölümüne bağlanır. *Demo:* bir ölçek seç, hücrenin üzerine
 gel: hücrenin adayı ve algı alanı görüntüde.
@@ -176,7 +175,7 @@ alanı, maske sınırı bir piksel büyütülüp küçültülünce alanın nası
 
 ## 5. Matematik (8 kısım)
 
-1. **Gösterim ve boyutlar:** 640 → 80/40/20, 8400 aday, 37 kanal, 160×160×32 prototip; YOLO26n-seg'in
+1. **Gösterim ve boyutlar:** 640 → 80/40/20, 8400 aday, 38 kanal, 160×160×32 prototip; YOLO26n-seg'in
    parametre sayısı ✓ ve SimpleCNN'le karşılaştırma (582.218).
 2. **Kutunun kodlanması:** hücre merkezi ve dört uzaklık (l, t, r, b) × stride → (x1, y1, x2, y2).
    Sayılarla örnek.

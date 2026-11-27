@@ -114,6 +114,22 @@ After training a new model with the Python dashboard, refresh them (from the rep
 The script also writes `tests/fixtures/cnn-parity.json`, PyTorch's outputs at every layer for a few
 test images, which the unit tests compare with the TypeScript forward pass.
 
+### The YOLO chapter's data
+
+Two YOLO26n models trained on SpaceNet aerial tiles run in the page with ONNX Runtime Web (WebAssembly,
+one thread). [tools/export_yolo_assets.py](tools/export_yolo_assets.py) writes:
+
+| File | Content | Size |
+|---|---|---|
+| `yolo-seg.js` | instance segmentation (building, sports field): ONNX, float16 weights, float32 inputs and outputs | 6.8 MB |
+| `yolo-sem.js` | semantic segmentation (background, building, road, green, water, parking), the same way | 3.9 MB |
+| `yolo-samples.js` | eight validation tiles (two per city), their true polygons and land-cover masks, metres per pixel | 1.9 MB |
+
+and `tests/fixtures/yolo-parity.json`: OpenCV's resize, Ultralytics' letterbox, NMS, masks and AP on
+small inputs, which `tests/unit/yolo.test.ts` compares with `engines/yolo/`. ONNX Runtime's own
+WebAssembly binary is not in the repository: the build writes it to `data/ort-wasm.js` from
+`node_modules/onnxruntime-web` (5.1 MB).
+
 ## How it works
 
 ```
@@ -127,14 +143,22 @@ src/
                     session.ts   a training run on TensorFlow.js (WebGPU, else WebGL)
                     store.ts     the browser's own model (IndexedDB)
                     data.ts, weights.ts, drawing.ts, tf.ts
+    yolo/         YOLO26n in the browser (chapter 4), matching Ultralytics step by step:
+                    image.ts     letterbox and OpenCV's bilinear resize, byte for byte
+                    detect.ts    the 8400 candidates, confidence filter, NMS
+                    masks.ts     masks from 32 prototypes, area in m²
+                    metrics.ts   matching, precision, recall, AP
+                    model.ts     ONNX Runtime Web: loading and running both models
+    data.ts       loading the data files in public/data/
   shared/         what every chapter page uses: i18n, core (navigation, charts, chapter menu),
                   kit (planes, graphs, controls), lesson (Math and Coding tabs), codeview,
                   glossary/, math (KaTeX), switches (theme, language), page (tabs and hooks)
   styles/         app.css = KaTeX + style.css + landing.css
-public/data/      the CNN chapter's data files (tools/export_assets.py)
+public/data/      the data files of the CNN and YOLO chapters (tools/export_assets.py, export_yolo_assets.py)
 scripts/          build.mjs, dev.mjs, serve.mjs, chapters.mjs (chapter discovery),
                   release.mjs (the version, from CHANGELOG.md)
-tools/            export_assets.py (Python: checkpoint and MNIST → public/data/)
+tools/            export_assets.py (Python: checkpoint and MNIST → public/data/),
+                  export_yolo_assets.py (Python: the YOLO models and tiles → public/data/)
 tests/            unit/ (node:test), e2e/ (Playwright), fixtures/
 ```
 
@@ -175,6 +199,18 @@ panel) goes through `shared/page.ts` hooks, so the module graph has no cycles.
 
 ## Licenses
 
-KaTeX (MIT) is bundled into the stylesheet and the page scripts. TensorFlow.js (Apache 2.0) is
-copied to `vendor/`. MNIST (Yann LeCun, Corinna Cortes, Christopher Burges; CC BY-SA 3.0) is in
-`public/data/` as the original files.
+The repository's own code is MIT. KaTeX (MIT) is bundled into the stylesheet and the page scripts.
+TensorFlow.js (Apache 2.0) is copied to `vendor/`. MNIST (Yann LeCun, Corinna Cortes, Christopher
+Burges; CC BY-SA 3.0) is in `public/data/` as the original files.
+
+The YOLO chapter brings in more licenses:
+
+| Part | License |
+|---|---|
+| ONNX Runtime Web (bundled into the page script; its WebAssembly in `data/ort-wasm.js`) | MIT |
+| SpaceNet 2 imagery and building outlines (the tiles in `yolo-samples.js`, the training data) | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), SpaceNet on AWS |
+| Sports fields, roads, green areas, water and parking (labels made from OpenStreetMap) | [ODbL](https://opendatacommons.org/licenses/odbl/), © OpenStreetMap contributors |
+| Ultralytics YOLO26 (the training code and the pretrained weights the models started from) | [AGPL-3.0](https://www.ultralytics.com/license); Ultralytics counts models trained with it as covered by it |
+
+So the two models in `yolo-seg.js` and `yolo-sem.js` are shared under AGPL-3.0, and the tiles and
+labels under CC BY-SA 4.0 and ODbL, whatever the license of the code around them.
