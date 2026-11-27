@@ -23,7 +23,7 @@ import {
 } from "./page.ts";
 import type { Text } from "../../shared/chapters.ts";
 
-type RunName = "seg-pretrained" | "seg-scratch" | "sem-pretrained";
+export type RunName = "seg-pretrained" | "seg-scratch" | "sem-pretrained";
 
 interface Run {
   epochs: number;
@@ -43,7 +43,7 @@ interface SemShot {
   height: number;
 }
 
-interface RunRecord {
+export interface RunRecord {
   device: string;
   settings: { imgsz: number; batch: number; epochs: number; flipud: number; degrees: number; seed: number };
   images: { train: number; val: number };
@@ -60,13 +60,12 @@ const RUN_NAMES: Record<RunName, Text> = {
 
 const state = {
   record: null as RunRecord | null,
-  tile: null as { image: HTMLImageElement; width: number; height: number; city: string } | null,
+  tile: null as Tile | null,
   loss: "box" as "box" | "seg" | "cls",
   run: "seg-pretrained" as RunName,
   shot: 6,
 };
 let started = false;
-let view: TileView | null = null;
 
 const nf = (v: number, d = 2) => fmtNum(v, d) as string;
 const SERIES = ["var(--series-1)", "var(--series-2)", "var(--series-3)", "var(--critical)"];
@@ -396,67 +395,103 @@ function landCover(r: RunRecord): HTMLElement {
   return out;
 }
 
-async function drawShot(r: RunRecord, note: HTMLElement): Promise<void> {
-  if (!state.tile || !view) return;
-  const { image, width, height } = state.tile;
-  const shot = r.snapshots[state.run][state.shot];
-  if ("objects" in shot) {
-    const masks = shot.objects.map((o) => ({ mask: fillPolygon(o.xy, width, height), rgb: SEG_RGB[o.cls] }));
-    view.show(image, width, height, [
-      { canvas: maskOverlay(Math.max(width, height), masks, 0.45), boxes: shot.objects.map((o) => ({ box: o.box, rgb: SEG_RGB[o.cls] })) },
-    ]);
-    const counts = SEG_CLASSES.map((name, k) => `${shot.objects.filter((o) => o.cls === k).length} ${T(name)}`).join(", ");
-    note.textContent = T({ tr: `${shot.epoch}. epoch: ${counts}.`, en: `Epoch ${shot.epoch}: ${counts}.` });
-  } else {
-    const classes = await unpack(shot.classes);
-    view.show(image, width, height, [{ canvas: classOverlay(classes, shot.width, shot.height) }]);
-    note.textContent = T({ tr: `${shot.epoch}. epoch.`, en: `Epoch ${shot.epoch}.` });
-  }
+export interface Tile {
+  image: HTMLImageElement;
+  width: number;
+  height: number;
+  city: string;
 }
 
-function epochs(r: RunRecord): HTMLElement {
-  view = new TileView(
+/** Which run and which saved epoch a viewer shows. */
+export interface ShotChoice {
+  run: RunName;
+  shot: number;
+}
+
+/**
+ * The record's validation tile predicted with the weights saved after a chosen epoch: the Training tab
+ * shows it, and Theory section 6 shows a smaller copy with its own choice.
+ */
+export function epochViewer(
+  r: RunRecord,
+  tile: Tile,
+  choice: ShotChoice,
+  runs: RunName[],
+): { controls: HTMLElement; canvas: HTMLCanvasElement; note: HTMLElement } {
+  const view = new TileView(
     T({ tr: "Aynı doğrulama karesi, seçilen epoch'taki tahmin", en: "The same validation tile, predicted at the chosen epoch" }),
   );
   const note = h("p", { class: "yo-big", "aria-live": "polite" });
-  const redraw = () => void drawShot(r, note);
-  const runs = segmented(
-    (Object.keys(RUN_NAMES) as RunName[]).map((k) => [k, T(RUN_NAMES[k])]),
-    state.run,
+  const redraw = async () => {
+    const { image, width, height } = tile;
+    const shot = r.snapshots[choice.run][choice.shot];
+    if ("objects" in shot) {
+      const masks = shot.objects.map((o) => ({ mask: fillPolygon(o.xy, width, height), rgb: SEG_RGB[o.cls] }));
+      view.show(image, width, height, [
+        {
+          canvas: maskOverlay(Math.max(width, height), masks, 0.45),
+          boxes: shot.objects.map((o) => ({ box: o.box, rgb: SEG_RGB[o.cls] })),
+        },
+      ]);
+      const counts = SEG_CLASSES.map((name, k) => `${shot.objects.filter((o) => o.cls === k).length} ${T(name)}`).join(", ");
+      note.textContent = T({ tr: `${shot.epoch}. epoch: ${counts}.`, en: `Epoch ${shot.epoch}: ${counts}.` });
+    } else {
+      const classes = await unpack(shot.classes);
+      view.show(image, width, height, [{ canvas: classOverlay(classes, shot.width, shot.height) }]);
+      note.textContent = T({ tr: `${shot.epoch}. epoch.`, en: `Epoch ${shot.epoch}.` });
+    }
+  };
+  const runPick = segmented(
+    runs.map((k) => [k, T(RUN_NAMES[k])]),
+    choice.run,
     (v) => {
-      state.run = v;
-      redraw();
+      choice.run = v;
+      void redraw();
     },
     T({ tr: "Model", en: "Model" }),
   );
   const shots = segmented(
     r.snapshots["seg-pretrained"].map((s, i) => [i, String(s.epoch)]),
-    state.shot,
+    choice.shot,
     (v) => {
-      state.shot = v;
-      redraw();
+      choice.shot = v;
+      void redraw();
     },
     T({ tr: "Epoch", en: "Epoch" }),
   );
   shots.classList.add("digits");
+  const controls = h(
+    "div",
+    { class: "yo-shot-controls" },
+    runPick,
+    h("div", { class: "yo-epochs" }, h("span", { text: T({ tr: "Epoch:", en: "Epoch:" }) }), shots),
+  );
+  void redraw();
+  return { controls, canvas: view.canvas, note };
+}
+
+/** The training record and its validation tile (loaded once). */
+export async function loadRecord(): Promise<{ record: RunRecord; tile: Tile | null }> {
+  const [record, samples] = await Promise.all([loadData<RunRecord>("yolo-run"), loadSamples()]);
+  const s = samples.samples.find((x) => x.name === record.snapshotTile);
+  if (!s) return { record, tile: null };
+  const { image } = await decodeImage(`data:image/jpeg;base64,${s.jpeg}`);
+  return { record, tile: { image, width: s.width, height: s.height, city: s.city } };
+}
+
+function epochs(r: RunRecord): HTMLElement {
   const city = state.tile ? T(CITIES[state.tile.city]) : "";
-  const out = card(
+  const parts = state.tile ? epochViewer(r, state.tile, state, Object.keys(RUN_NAMES) as RunName[]) : null;
+  return card(
     T({ tr: "Aynı kare, epoch epoch", en: "The same tile, epoch by epoch" }),
     T({
       tr: `${city} · ${r.snapshotTile.split("_")[1]}: eğitimde hiç görülmeyen bir doğrulama karesi. Eğitim sırasında kaydedilen ağırlıklarla tahmin edildi (güven eşiği 0,25).`,
       en: `${city} · ${r.snapshotTile.split("_")[1]}: a validation tile never seen in training. Predicted with the weights saved during training (confidence threshold 0.25).`,
     }),
-    h(
-      "div",
-      { class: "yo-shot-controls" },
-      runs,
-      h("div", { class: "yo-epochs" }, h("span", { text: T({ tr: "Epoch:", en: "Epoch:" }) }), shots),
-    ),
-    view.canvas,
-    note,
+    parts?.controls ?? null,
+    parts?.canvas ?? null,
+    parts?.note ?? null,
   );
-  redraw();
-  return out;
 }
 
 function render(): void {
@@ -471,13 +506,9 @@ async function start(): Promise<void> {
   if (started) return;
   started = true;
   try {
-    const [record, samples] = await Promise.all([loadData<RunRecord>("yolo-run"), loadSamples()]);
+    const { record, tile } = await loadRecord();
     state.record = record;
-    const s = samples.samples.find((x) => x.name === record.snapshotTile);
-    if (s) {
-      const { image } = await decodeImage(`data:image/jpeg;base64,${s.jpeg}`);
-      state.tile = { image, width: s.width, height: s.height, city: s.city };
-    }
+    state.tile = tile;
   } catch (e) {
     ($("#yt-root") as HTMLElement).replaceChildren(h("p", { class: "banner", role: "alert", text: (e as Error).message }));
     return;

@@ -623,6 +623,16 @@ export const PLACE_TITLES = {
   "pc-run": { tr: "Çalıştırmak ve sonucu okumak", en: "Running it and reading the result" },
   "pc-torch": { tr: "Aynısı PyTorch ile", en: "The same in PyTorch" },
   "pc-exercises": { tr: "Alıştırmalar", en: "Exercises" },
+  // Chapter 4: Theory sections of yolo.html (the glossary links to them from every page)
+  "y-intro": { tr: "Nesne tespiti ve segmentasyon: YOLO nasıl çalışır?", en: "Object detection and segmentation: how does YOLO work?" },
+  "y-tasks": { tr: "Ne ve nerede? Dört görev", en: "What and where? Four tasks" },
+  "y-iou": { tr: "Kutu ve IoU", en: "Boxes and IoU" },
+  "y-grid": { tr: "Tek bakışta: üç ölçekte ızgara", en: "One look: a grid at three scales" },
+  "y-nms": { tr: "Çok fazla aday: güven eşiği ve NMS", en: "Too many candidates: the confidence threshold and NMS" },
+  "y-masks": { tr: "Maskeler: prototipler ve katsayılar", en: "Masks: prototypes and coefficients" },
+  "y-train": { tr: "Nasıl eğitilir?", en: "How is it trained?" },
+  "y-metrics": { tr: "Ne kadar iyi? Kesinlik, duyarlılık, mAP", en: "How good? Precision, recall, mAP" },
+  "y-read": { tr: "Mühendis sonucu nasıl okur?", en: "How does an engineer read the result?" },
   // Chapter 2: Theory, Math and Coding sections of mlp.html
   "ml-intro": { tr: "Çok katmanlı ağ: gizli katmanlar ve geri yayılım", en: "The multilayer network: hidden layers and backpropagation" },
   "ml-act": { tr: "Basamaktan yumuşak eşiğe: aktivasyonlar", en: "From the step to a soft threshold: activations" },

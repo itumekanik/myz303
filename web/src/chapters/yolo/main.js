@@ -4,6 +4,7 @@
  */
 import "../../shared/core.js";
 import "./page.ts";
+import "./theory.ts";
 import "./detect.ts";
 import "./training.ts";
 import "../../shared/glossary/panel.js";

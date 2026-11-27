@@ -23,6 +23,7 @@ export const GLOSSARY_GROUPS = [
   { key: "data", title: { tr: "Veri ve değerlendirme", en: "Data and evaluation" } },
   { key: "layers", title: { tr: "Model ve katmanlar", en: "The model and its layers" } },
   { key: "run", title: { tr: "Modeli çalıştırmak", en: "Running the model" } },
+  { key: "detect", title: { tr: "Nesne tespiti ve segmentasyon", en: "Object detection and segmentation" } },
 ];
 
 /*
@@ -939,6 +940,166 @@ export const GLOSSARY = {
       en: "The top bar shows which device training runs on. <code>SimpleCNN.py</code> uses the graphics card through CUDA<span data-engine=\"browser\">; on the CNN chapter's page TensorFlow.js uses it through the browser's WebGPU (otherwise WebGL)</span><span data-engine=\"server\">, and so does the Python dashboard (<code>dashboard.py</code>)</span>.",
     },
     link: { tab: "code", section: "c-setup-train" },
+  },
+  // ------------------------------------------------------------------ detection and segmentation (chapter 4)
+  "object-detection": {
+    group: "detect",
+    name: { tr: "Nesne tespiti", en: "Object detection" },
+    aka: ["detection", "tespit", "yolo", "algılama"],
+    def: {
+      tr: "Bir görüntüdeki her nesneyi bir [[bounding-box|kutu]], bir sınıf ve bir [[confidence-score|güven skoruyla]] bulma görevi. Sınıflandırmadan farkı, nesnelerin kaç tane ve nerede olduğunu da söylemesidir. YOLO bunu görüntüye tek bir kez bakarak yapar.",
+      en: "The task of finding every object in an image with a [[bounding-box|box]], a class and a [[confidence-score|confidence score]]. Unlike classification, it also says how many objects there are and where. YOLO does it by looking at the image once.",
+    },
+    model: {
+      tr: "YOLO26n-seg binaları ve spor sahalarını bulur; her birine bir kutu ve bir maske verir.",
+      en: "YOLO26n-seg finds buildings and sports fields and gives each a box and a mask.",
+    },
+    modelLabel: { tr: "Bu bölümün modelinde", en: "In this chapter's model" },
+    see: ["instance-segmentation", "semantic-segmentation"],
+    link: { chapter: "yolo", tab: "theory", section: "y-tasks" },
+  },
+  "bounding-box": {
+    group: "detect",
+    name: { tr: "Sınırlayıcı kutu", en: "Bounding box" },
+    aka: ["kutu", "box", "bbox", "xyxy", "xywh"],
+    def: {
+      tr: "Bir nesneyi içine alan, kenarları görüntünün kenarlarına paralel dikdörtgen. Dört sayıdır: köşelerle \\((x_1, y_1, x_2, y_2)\\) ya da merkez ve boyutla \\((c_x, c_y, w, h)\\). Tahmin edilen bir kutunun doğruluğu [[iou|IoU]] ile ölçülür.",
+      en: "A rectangle with sides parallel to the image's that encloses an object. It is four numbers: by its corners \\((x_1, y_1, x_2, y_2)\\) or by its centre and size \\((c_x, c_y, w, h)\\). How right a predicted box is, is measured with [[iou|IoU]].",
+    },
+    link: { chapter: "yolo", tab: "theory", section: "y-iou" },
+  },
+  iou: {
+    group: "detect",
+    name: { tr: "IoU (kesişim bölü birleşim)", en: "IoU (intersection over union)" },
+    aka: ["jaccard", "kesişim", "örtüşme", "overlap", "maske iou", "mask iou"],
+    def: {
+      tr: "İki kutunun (ya da iki maskenin) ortak alanının, birlikte kapladıkları alana oranı: \\(|A \\cap B| / |A \\cup B|\\). Tam örtüşmede 1, hiç örtüşmeyince 0'dır. Nesnenin boyutundan bağımsız olduğu için bir tahminin doğru sayılıp sayılmayacağına karar verir (genellikle IoU ≥ 0,5); [[nms|NMS]] de kopyaları IoU ile bulur.",
+      en: "The area two boxes (or two masks) share, divided by the area they cover together: \\(|A \\cap B| / |A \\cup B|\\). It is 1 for an exact match and 0 when they do not overlap. It does not depend on the object's size, so it decides whether a prediction counts as correct (usually IoU ≥ 0.5); [[nms|NMS]] finds copies with IoU too.",
+    },
+    see: ["precision", "average-precision"],
+    link: { chapter: "yolo", tab: "theory", section: "y-iou" },
+  },
+  "confidence-score": {
+    group: "detect",
+    name: { tr: "Güven skoru ve eşiği", en: "Confidence score and threshold" },
+    aka: ["skor", "score", "conf", "güven eşiği", "confidence threshold"],
+    def: {
+      tr: "Bir adayın bir sınıftan bir nesne olduğuna modelin verdiği değer (0 ile 1 arası, [[sigmoid|sigmoid]] çıkışı). Güven eşiğinin altındaki adaylar atılır. Eşik düşerse daha çok nesne bulunur ([[recall|duyarlılık]] artar) ama yanlışlar da çoğalır ([[precision|kesinlik]] düşer).",
+      en: "The value the model gives a candidate for being an object of a class (between 0 and 1, a [[sigmoid|sigmoid]] output). Candidates below the confidence threshold are dropped. A lower threshold finds more objects ([[recall|recall]] goes up) but more mistakes too ([[precision|precision]] goes down).",
+    },
+    model: { tr: "Varsayılan eşik 0,25. Şanghay karesinde 8400 adaydan 107'si bu eşiği geçer.", en: "The default threshold is 0.25. On the Shanghai tile 107 of the 8400 candidates pass it." },
+    modelLabel: { tr: "Bu bölümün modelinde", en: "In this chapter's model" },
+    link: { chapter: "yolo", tab: "theory", section: "y-nms" },
+  },
+  nms: {
+    group: "detect",
+    name: { tr: "NMS (en büyük olmayanları bastırma)", en: "NMS (non-maximum suppression)" },
+    aka: ["non-maximum suppression", "bastırma", "suppression"],
+    def: {
+      tr: "Aynı nesneyi bulan birden fazla adaydan yalnızca en iyisini bırakan adım: adaylar skora göre sıralanır, en yüksek skorlu aday tutulur, aynı sınıftan olup onunla [[iou|IoU]]'su eşiği aşan adaylar silinir ve bu, kalanlarla tekrarlanır. YOLOv10 ve YOLO26 bire bir bir baş eğiterek NMS'e gerek bırakmaz.",
+      en: "The step that keeps only the best of several candidates that found the same object: candidates are sorted by score, the highest is kept, those of the same class overlapping it by an [[iou|IoU]] above the threshold are removed, and this repeats with the rest. YOLOv10 and YOLO26 train a one-to-one head so that NMS is not needed.",
+    },
+    link: { chapter: "yolo", tab: "theory", section: "y-nms" },
+  },
+  "semantic-segmentation": {
+    group: "detect",
+    name: { tr: "Anlamsal segmentasyon", en: "Semantic segmentation" },
+    aka: ["semantic", "piksel sınıflandırma", "arazi örtüsü", "land cover"],
+    def: {
+      tr: "Görüntünün her pikseline bir sınıf verme görevi. Yol, su, yeşil alan gibi sayılamayan yüzeyler için uygundur; ama aynı sınıftan bitişik iki nesneyi ayırmaz (bunun için [[instance-segmentation|örnek segmentasyonu]]). Ölçütü sınıf başına IoU ve onların ortalaması mIoU'dur.",
+      en: "The task of giving every pixel of an image a class. It suits surfaces you cannot count, like roads, water or grass; but it does not separate two touching objects of the same class (that is [[instance-segmentation|instance segmentation]]). It is measured by the IoU of every class and their mean, mIoU.",
+    },
+    model: { tr: "YOLO26n-sem altı sınıf boyar; doğrulamada mIoU 0,46.", en: "YOLO26n-sem paints six classes; on the validation set its mIoU is 0.46." },
+    modelLabel: { tr: "Bu bölümün modelinde", en: "In this chapter's model" },
+    link: { chapter: "yolo", tab: "theory", section: "y-tasks" },
+  },
+  "instance-segmentation": {
+    group: "detect",
+    name: { tr: "Örnek segmentasyonu", en: "Instance segmentation" },
+    aka: ["instance", "maske", "mask", "segmentation"],
+    def: {
+      tr: "Her nesneyi ayrı bir maskeyle bulma görevi: [[object-detection|nesne tespiti]] gibi nesneleri sayar, [[semantic-segmentation|anlamsal segmentasyon]] gibi piksel piksel sınır çizer. Bitişik iki bina ayrı iki maske olur. YOLO'da maskeler [[mask-prototype|prototiplerden]] kurulur.",
+      en: "The task of finding every object with its own mask: it counts objects like [[object-detection|object detection]] and draws outlines pixel by pixel like [[semantic-segmentation|semantic segmentation]]. Two buildings that touch become two masks. In YOLO the masks are built from [[mask-prototype|prototypes]].",
+    },
+    link: { chapter: "yolo", tab: "theory", section: "y-tasks" },
+  },
+  "mask-prototype": {
+    group: "detect",
+    name: { tr: "Maske prototipleri ve katsayıları", en: "Mask prototypes and coefficients" },
+    aka: ["prototip", "prototype", "katsayı", "coefficient", "yolact", "proto"],
+    def: {
+      tr: "YOLACT'tan gelen fikir: ağ her görüntü için ortak birkaç maske haritası (prototip) üretir; her nesne bu prototipler için birer katsayı verir. Nesnenin maskesi \\(\\sigma(\\sum_k c_k P_k)\\) ile hesaplanır ve kutusuyla kırpılır. Böylece her nesne için ayrı bir maske ağı gerekmez.",
+      en: "An idea from YOLACT: for every image the network makes a few shared mask maps (prototypes); every object gives a coefficient for each of them. The object's mask is \\(\\sigma(\\sum_k c_k P_k)\\), cropped by its box. So no separate mask network is needed per object.",
+    },
+    model: { tr: "32 prototip, her biri 160 × 160; bir prototip pikseli bu karelerde 0,8–1,2 m.", en: "32 prototypes, each 160 × 160; one prototype pixel is 0.8–1.2 m on these tiles." },
+    modelLabel: { tr: "Bu bölümün modelinde", en: "In this chapter's model" },
+    link: { chapter: "yolo", tab: "theory", section: "y-masks" },
+  },
+  "label-assignment": {
+    group: "detect",
+    name: { tr: "Etiket ataması", en: "Label assignment" },
+    aka: ["assignment", "atama", "tal", "task aligned", "bire bir", "one-to-one", "one-to-many"],
+    def: {
+      tr: "Eğitimde hangi adayın hangi gerçek nesneden sorumlu olacağına karar verme. Atanan adayların kutusu, sınıfı ve maskesi o nesneye göre düzeltilir; ötekiler \"nesne yok\" demeyi öğrenir. YOLO26 adayın sınıf skoruna ve kutusunun [[iou|IoU]]'suna birlikte bakar; bire-çok başta bir nesneye birkaç, bire bir başta tek aday atar.",
+      en: "Deciding in training which candidate is responsible for which true object. The assigned candidates' box, class and mask are corrected towards that object; the others learn to say \"no object\". YOLO26 looks at a candidate's class score and its box's [[iou|IoU]] together; it assigns several candidates per object in the one-to-many head and a single one in the one-to-one head.",
+    },
+    link: { chapter: "yolo", tab: "theory", section: "y-train" },
+  },
+  "transfer-learning": {
+    group: "detect",
+    name: { tr: "Aktarım öğrenmesi (önceden eğitilmiş ağırlıklar)", en: "Transfer learning (pretrained weights)" },
+    aka: ["pretrained", "önceden eğitilmiş", "fine-tuning", "ince ayar", "coco"],
+    def: {
+      tr: "Başka, genellikle büyük bir veri setinde eğitilmiş ağırlıklardan başlayıp ağı kendi verisiyle eğitmeye devam etmek (ince ayar). İlk katmanların öğrendiği kenar, köşe ve doku bilgisi yeni görevde de işe yarar; az veriyle bile daha hızlı ve daha iyi öğrenilir.",
+      en: "Starting from weights trained on another, usually large dataset and going on training the network on your own data (fine-tuning). The edges, corners and textures the first layers learned help in the new task too; even with little data it learns faster and better.",
+    },
+    model: { tr: "COCO'dan başlayan model maske mAP50 0,50'ye ulaştı, sıfırdan başlayan 0,32'de kaldı (aynı veri, 100 epoch).", en: "The model that started from COCO reached a mask mAP50 of 0.50, the one from scratch stayed at 0.32 (same data, 100 epochs)." },
+    modelLabel: { tr: "Bu bölümün modelinde", en: "In this chapter's model" },
+    link: [{ chapter: "yolo", tab: "theory", section: "y-train" }, { chapter: "yolo", tab: "train" }],
+  },
+  "data-augmentation": {
+    group: "detect",
+    name: { tr: "Veri artırma", en: "Data augmentation" },
+    aka: ["augmentation", "mozaik", "mosaic", "çevirme", "flip", "döndürme", "rotation"],
+    def: {
+      tr: "Eğitim görüntülerini her epoch'ta rastgele değiştirmek (döndürme, çevirme, ölçekleme, renk oynatma, birkaç görüntüyü birleştirme), böylece ağ aynı görüntüyü hiç iki kez aynı görmez. Etiketler de aynı dönüşümle değiştirilir. [[overfitting|Aşırı uyumu]] azaltır; dönüşümler görev için anlamlı olmalıdır.",
+      en: "Changing the training images at random in every epoch (rotating, flipping, scaling, changing colours, joining several images), so the network never sees the same image the same way twice. The labels are transformed the same way. It reduces [[overfitting|overfitting]]; the transformations must make sense for the task.",
+    },
+    model: { tr: "Kuş bakışında \"yukarı\" yok: kareler ±90° döndürüldü, yatay ve dikey çevrildi, dördü bir mozaikte birleştirildi.", en: "A view from above has no \"up\": tiles were rotated by up to ±90°, flipped both ways and joined four at a time in a mosaic." },
+    modelLabel: { tr: "Bu bölümün modelinde", en: "In this chapter's model" },
+    link: { chapter: "yolo", tab: "theory", section: "y-train" },
+  },
+  precision: {
+    group: "detect",
+    name: { tr: "Kesinlik", en: "Precision" },
+    aka: ["precision", "tp", "fp", "yanlış pozitif", "false positive"],
+    def: {
+      tr: "Modelin tespitlerinden ne kadarının doğru olduğu: \\(P = TP / (TP + FP)\\). TP doğru tespit (aynı sınıftan bir gerçek nesneyle yeterli [[iou|IoU]]), FP yanlış tespittir. [[recall|Duyarlılıkla]] birlikte okunur.",
+      en: "How many of the model's detections are right: \\(P = TP / (TP + FP)\\). TP is a correct detection (enough [[iou|IoU]] with a true object of its class), FP a wrong one. It is read together with [[recall|recall]].",
+    },
+    link: { chapter: "yolo", tab: "theory", section: "y-metrics" },
+  },
+  recall: {
+    group: "detect",
+    name: { tr: "Duyarlılık", en: "Recall" },
+    aka: ["recall", "fn", "kaçan", "missed", "false negative", "hassasiyet"],
+    def: {
+      tr: "Gerçek nesnelerden ne kadarının bulunduğu: \\(R = TP / (TP + FN)\\). FN, hiçbir tespitin eşleşmediği (kaçırılan) gerçek nesnedir. [[confidence-score|Güven eşiği]] düştükçe artar; [[precision|kesinlik]] ise genellikle düşer.",
+      en: "How many of the true objects were found: \\(R = TP / (TP + FN)\\). An FN is a true object no detection matched (missed). It rises as the [[confidence-score|confidence threshold]] falls, while [[precision|precision]] usually falls.",
+    },
+    link: { chapter: "yolo", tab: "theory", section: "y-metrics" },
+  },
+  "average-precision": {
+    group: "detect",
+    name: { tr: "AP ve mAP", en: "AP and mAP" },
+    aka: ["map", "map50", "map50-95", "ortalama kesinlik", "average precision", "pr eğrisi", "pr curve"],
+    def: {
+      tr: "AP, bir sınıfın kesinlik-duyarlılık (PR) eğrisinin altındaki alandır: güven eşiği bütün değerlerden geçerken [[precision|kesinliğin]] ve [[recall|duyarlılığın]] birlikte ne kadar iyi kaldığını tek sayıyla özetler. mAP sınıfların AP ortalamasıdır; mAP50'de [[iou|IoU]] eşiği 0,5'tir, mAP50-95'te 0,50'den 0,95'e on eşiğin ortalamasıdır.",
+      en: "AP is the area under a class's precision-recall (PR) curve: it sums up in one number how well [[precision|precision]] and [[recall|recall]] hold together as the confidence threshold sweeps all values. mAP is the mean AP over the classes; mAP50 uses an [[iou|IoU]] threshold of 0.5, mAP50-95 the mean over ten thresholds from 0.50 to 0.95.",
+    },
+    model: { tr: "Doğrulamada maske AP50: bina 0,69, spor sahası 0,30; mAP50 0,50, mAP50-95 0,25.", en: "Mask AP50 on the validation set: building 0.69, sports field 0.30; mAP50 0.50, mAP50-95 0.25." },
+    modelLabel: { tr: "Bu bölümün modelinde", en: "In this chapter's model" },
+    link: [{ chapter: "yolo", tab: "theory", section: "y-metrics" }, { chapter: "yolo", tab: "train" }],
   },
 };
 

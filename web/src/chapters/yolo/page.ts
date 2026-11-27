@@ -13,8 +13,10 @@ import type { Text } from "../../shared/chapters.ts";
 import { loadData, type Packed } from "../../engines/data.ts";
 import type { Letterbox, Rgb } from "../../engines/yolo/image.ts";
 import type { InstanceMask } from "../../engines/yolo/masks.ts";
+import { fillPolygon } from "../../engines/yolo/raster.ts";
 
 Object.assign(TABS, {
+  theory: { tab: "#tab-theory", panel: "#panel-theory", hash: "#teori" },
   detect: { tab: "#tab-detect", panel: "#panel-detect", hash: "#tespit" },
   train: { tab: "#tab-train", panel: "#panel-train", hash: "#egitim" },
 });
@@ -42,6 +44,22 @@ export interface SampleSet {
 }
 
 export const loadSamples = (): Promise<SampleSet> => loadData<SampleSet>("yolo-samples");
+
+/** A true object: its class, its outline in tile pixels and its mask in model-input pixels. */
+export interface Truth {
+  cls: number;
+  xy: number[];
+  mask: InstanceMask;
+}
+
+/** The true polygons of a tile as masks in model-input pixels (where the predicted masks live). */
+export function truthsOf(s: Sample, lb: Letterbox): Truth[] {
+  return s.polygons.map((p) => {
+    const xy = p.xy.map((v, i) => v * (i % 2 ? s.height : s.width));
+    const model = xy.map((v, i) => v * lb.gain + (i % 2 ? lb.top : lb.left));
+    return { cls: p.cls, xy, mask: fillPolygon(model, lb.size, lb.size) };
+  });
+}
 
 export const CITIES: Record<string, Text> = {
   Vegas: { tr: "Las Vegas", en: "Las Vegas" },
@@ -146,7 +164,9 @@ export interface Layer {
   letterbox?: Letterbox;
   /** outlines in tile pixels */
   boxes?: { box: readonly number[]; rgb: readonly number[]; label?: string; dashed?: boolean }[];
-  polygons?: { xy: readonly number[]; rgb: readonly number[]; width?: number; dashed?: boolean }[];
+  polygons?: { xy: readonly number[]; rgb: readonly number[]; width?: number; dashed?: boolean; fill?: number }[];
+  /** free drawing on top; `s` is canvas pixels per tile pixel, `dpr` the device pixel ratio */
+  paint?: (ctx: CanvasRenderingContext2D, s: number, dpr: number) => void;
 }
 
 /** A tile on a square canvas that follows its CSS size, with layers drawn on top. */
@@ -195,6 +215,10 @@ export class TileView {
         ctx.beginPath();
         for (let i = 0; i < p.xy.length; i += 2) ctx[i ? "lineTo" : "moveTo"](p.xy[i] * s, p.xy[i + 1] * s);
         ctx.closePath();
+        if (p.fill) {
+          ctx.fillStyle = css(p.rgb, p.fill);
+          ctx.fill();
+        }
         ctx.setLineDash(p.dashed ? [4 * dpr, 3 * dpr] : []);
         ctx.lineWidth = (p.width ?? 1.5) * dpr;
         ctx.strokeStyle = css(p.rgb);
@@ -216,6 +240,13 @@ export class TileView {
         }
       }
       ctx.setLineDash([]);
+      layer.paint?.(ctx, s, dpr);
     }
+  }
+
+  /** Where a pointer event is, in tile pixels. */
+  toTile(event: { clientX: number; clientY: number }): { x: number; y: number } {
+    const r = this.canvas.getBoundingClientRect();
+    return { x: ((event.clientX - r.left) / r.width) * this.width, y: ((event.clientY - r.top) / r.height) * this.height };
   }
 }

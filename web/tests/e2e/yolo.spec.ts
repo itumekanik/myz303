@@ -6,9 +6,50 @@ import { expect, open, overflows, test } from "./fixtures";
  * and 4 sports fields), so these tests also check that every browser finds what Python finds.
  */
 test.describe("chapter 4: yolo", () => {
-  test("detection: both models run in the browser and find what Python finds", async ({ page, errors }) => {
+  test("theory: eight sections and the demos without the model open at once", async ({ page, errors }) => {
+    await open(page, "yolo.html");
+    await expect(page.locator("#tab-theory")).toHaveAttribute("aria-selected", "true");
+    for (const id of ["y-intro", "y-tasks", "y-iou", "y-grid", "y-nms", "y-masks", "y-train", "y-metrics", "y-read", "y-recap"])
+      await expect(page.locator(`#${id}`)).toBeVisible();
+    await expect(page.locator("#panel-theory .katex").first()).toBeVisible();
+    await expect(page.locator(".katex-error")).toHaveCount(0);
+    // the four tasks, from the true labels
+    await page.locator("#y-tasks .seg button").nth(0).click();
+    await expect(page.locator("#y-tasks .yo-chip.on")).toHaveCount(5);
+    await page.locator("#y-tasks .seg button").nth(3).click();
+    await expect(page.locator("#y-tasks .yo-caption")).toContainText("19 nesne");
+    // IoU of the true box and the prediction box, moved with a slider
+    await expect(page.locator("#y-iou .pc-msg")).toContainText("IoU < 0,5");
+    // the models are not loaded until asked for
+    await expect(page.locator("#y-grid .yo-gate button")).toBeVisible();
+    await expect(page.locator(".gl-term[data-term=nms]").first()).toBeVisible();
+    void errors;
+  });
+
+  test("theory: the real model runs once and every demo uses it", async ({ page, errors }) => {
     test.setTimeout(120_000);
     await open(page, "yolo.html");
+    await page.locator("#y-nms .yo-gate button").click();
+    const nms = page.locator("#y-nms .yo-big");
+    await expect(nms).toContainText("107 aday", { timeout: 90_000 });
+    await expect(nms).toContainText("15 nesne");
+    await page.getByRole("button", { name: "Bir adım" }).click();
+    await expect(nms).toContainText("Adım 1/15");
+    await page.getByRole("button", { name: "Sona git" }).click();
+    await expect(nms).toContainText("Adım 15/15");
+    // the other demos started by themselves
+    await expect(page.locator("#y-grid .yo-caption")).toContainText("40×40: 64 bina, 6 saha", { timeout: 60_000 });
+    await expect(page.locator("#y-masks .yo-proto")).toHaveCount(32);
+    await expect(page.locator("#y-metrics .yo-big")).toContainText("51 tespit", { timeout: 60_000 });
+    await expect(page.locator("#y-metrics .yo-big")).toContainText("AP50");
+    await page.locator("#y-read .yo-slider input").fill("1");
+    await expect(page.locator("#y-read .yo-big")).toContainText("dışarı");
+    void errors;
+  });
+
+  test("detection: both models run in the browser and find what Python finds", async ({ page, errors }) => {
+    test.setTimeout(120_000);
+    await open(page, "yolo.html#tespit");
     await expect(page).toHaveTitle("YOLO · Bölüm 4");
     await expect(page.locator("#tab-detect")).toHaveAttribute("aria-selected", "true");
     const pipeline = page.locator("#yd-pipeline");
@@ -19,7 +60,7 @@ test.describe("chapter 4: yolo", () => {
     await expect(found).toHaveText(/bulunan\s*11\s*4/);
 
     // a lower threshold keeps more candidates; NMS removes the duplicates
-    await page.locator(".yo-slider input").first().fill("0.05");
+    await page.locator("#yd-root .yo-slider input").first().fill("0.05");
     await expect(pipeline).not.toContainText("107 güven eşiğini");
 
     // against the true labels: correct, wrong and missed
@@ -55,12 +96,12 @@ test.describe("chapter 4: yolo", () => {
     const charts = page.locator("#yt-root .chart svg");
     await expect(charts).toHaveCount(4);
     for (let k = 0; k < 4; k++) expect(await charts.nth(k).locator("path.series-line").count()).toBeGreaterThan(0);
-    await expect(page.locator(".yo-table").first()).toContainText("0,69"); // building mask AP50, pretrained
+    await expect(page.locator("#yt-root .yo-table").first()).toContainText("0,69"); // building mask AP50, pretrained
     const note = page.locator(".yo-training .yo-big").first();
     await expect(note).toContainText("100. epoch");
-    await page.getByRole("button", { name: "1", exact: true }).click();
+    await page.locator("#yt-root").getByRole("button", { name: "1", exact: true }).click();
     await expect(note).toContainText("1. epoch");
-    await page.getByRole("button", { name: "Sıfırdan (rastgele ağırlıklar)" }).click();
+    await page.locator("#yt-root").getByRole("button", { name: "Sıfırdan (rastgele ağırlıklar)" }).click();
     await expect(note).toContainText("0 bina, 0 spor sahası"); // random weights find nothing after one epoch
     void errors;
   });
@@ -68,7 +109,7 @@ test.describe("chapter 4: yolo", () => {
   test("fits a phone", async ({ page, errors }) => {
     test.setTimeout(120_000);
     await page.setViewportSize({ width: 375, height: 800 });
-    await open(page, "yolo.html");
+    await open(page, "yolo.html#tespit");
     await expect(page.locator("#yd-pipeline")).toContainText("8.400", { timeout: 90_000 });
     expect(await overflows(page)).toBe(false);
     await page.locator("#tab-train").click();

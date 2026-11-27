@@ -14,7 +14,7 @@ import { toImageBox } from "../../engines/yolo/image.ts";
 import { areaSquareMetres, instanceMask, type InstanceMask } from "../../engines/yolo/masks.ts";
 import { matchPredictions } from "../../engines/yolo/metrics.ts";
 import { loadModel, runLandCover, runSegmentation, type LandCoverResult, type SegmentationOutput } from "../../engines/yolo/model.ts";
-import { fillPolygon, maskIou, unionArea } from "../../engines/yolo/raster.ts";
+import { maskIou, unionArea } from "../../engines/yolo/raster.ts";
 import {
   CITIES,
   MATCH_RGB,
@@ -32,6 +32,8 @@ import {
   type Layer,
   type Sample,
   type SampleSet,
+  type Truth,
+  truthsOf,
 } from "./page.ts";
 import type { Rgb } from "../../engines/yolo/image.ts";
 import type { Text } from "../../shared/chapters.ts";
@@ -46,13 +48,6 @@ interface Shown extends Candidate {
   imageBox: [number, number, number, number];
   /** index of the matched true object, -1 if none (only with a validation tile) */
   truth: number;
-}
-
-interface Truth {
-  cls: number;
-  mask: InstanceMask;
-  /** polygon in tile pixels, for drawing */
-  xy: number[];
 }
 
 /** What the page knows about the image on screen. */
@@ -136,7 +131,7 @@ async function analyse(current: Current): Promise<void> {
     current.instances = instances;
     current.land = land;
     state.ms = { network: instances.ms.network, land: land.ms.network };
-    if (current.sample) current.truths = truthsOf(current.sample, instances);
+    if (current.sample) current.truths = truthsOf(current.sample, instances.letterbox);
   } catch (e) {
     state.error = `${T({ tr: "Model çalıştırılamadı:", en: "The model could not run:" })} ${(e as Error).message}`;
   } finally {
@@ -144,16 +139,6 @@ async function analyse(current: Current): Promise<void> {
     state.status = "";
     render();
   }
-}
-
-/** The true polygons as masks in model-input pixels (where the predicted masks live). */
-function truthsOf(s: Sample, r: SegmentationOutput): Truth[] {
-  const lb = r.letterbox;
-  return s.polygons.map((p) => {
-    const xy = p.xy.map((v, i) => v * (i % 2 ? s.height : s.width));
-    const model = xy.map((v, i) => v * lb.gain + (i % 2 ? lb.top : lb.left));
-    return { cls: p.cls, xy, mask: fillPolygon(model, lb.size, lb.size) };
-  });
 }
 
 /** Confidence filter, NMS and masks again, from the network output kept in memory. */

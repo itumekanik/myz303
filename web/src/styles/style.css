@@ -1732,12 +1732,43 @@ a.pc-next.link:focus-visible { outline: 2px solid var(--accent); outline-offset:
 .yo-shot-controls { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 12px; }
 .yo-epochs { display: flex; align-items: center; gap: 8px; color: var(--text-2); font-size: 13px; }
 .yo-training .yo-tile { max-width: 640px; }
+/* Theory demos (theory-demos.ts) */
+.yo-demo .yo-tile { max-width: 560px; }
+.yo-demo-body { display: grid; gap: 10px; min-width: 0; }
+.yo-gate { display: grid; gap: 8px; justify-items: start; padding: 14px; border: 1px dashed var(--axis); border-radius: 10px; background: var(--surface-2); }
+.yo-gate .sub { margin: 0; }
+.yo-drag { touch-action: none; cursor: grab; }
+.yo-drag:active { cursor: grabbing; }
+.yo-chips { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 13px; color: var(--text-2); }
+.yo-chips:empty { display: none; }
+.yo-chip { padding: 3px 9px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
+.yo-chip.on { color: var(--good-text); font-weight: 600; }
+.yo-caption { margin: 0; }
+.yo-readout { display: grid; gap: 6px; font-size: 13.5px; color: var(--text-2); line-height: 1.5; }
+.yo-readout p { margin: 0; }
+.yo-readout .formula { margin: 0; }
+.yo-slider-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px 18px; align-items: end; }
+.yo-protos { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; max-width: 560px; }
+.yo-proto { display: grid; gap: 2px; padding: 2px; border: 2px solid transparent; border-radius: 6px; background: none; color: var(--text-2); font: 10px var(--mono); cursor: pointer; }
+.yo-proto canvas { width: 100%; aspect-ratio: 1; image-rendering: pixelated; border-radius: 3px; }
+.yo-proto[aria-pressed="true"] { border-color: var(--accent); color: var(--text); }
+.yo-proto:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.yo-mix-row { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; align-items: center; }
+.yo-mix { width: 120px; height: 120px; image-rendering: pixelated; border-radius: 6px; }
+.yo-pr-row { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 12px; align-items: start; }
+.yo-pr svg { width: 100%; height: auto; overflow: visible; }
+.yo-pr .yo-pr-line { fill: none; stroke: var(--series-1); stroke-width: 2; }
+.yo-pr .yo-pr-area { fill: var(--accent-soft); stroke: none; }
+.yo-pr .yo-pr-point { fill: var(--series-2); stroke: var(--surface); stroke-width: 2; }
+.yo-compare td, .yo-compare th { white-space: normal; text-align: left; }
 @media (max-width: 1100px) {
   .yo-main { grid-template-columns: minmax(0, 1fr); }
   .yo-side { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .yo-thumbs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 @media (max-width: 720px) {
+  .yo-pr-row { grid-template-columns: minmax(0, 1fr); }
+  .yo-protos { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .yo-side { grid-template-columns: minmax(0, 1fr); }
   .yo-picker .card-head { flex-wrap: wrap; }
 }
