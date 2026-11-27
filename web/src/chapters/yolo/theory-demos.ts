@@ -159,7 +159,7 @@ function segmented<V extends string | number>(options: [V, string][], current: V
   return box;
 }
 
-function range(
+export function range(
   label: string,
   min: number,
   max: number,

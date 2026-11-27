@@ -19,7 +19,7 @@
       "properties": {
         "title": { "$ref": "#/$defs/text", "description": "Browser tab title, before ' · Bölüm N'." },
         "brand": { "$ref": "#/$defs/text", "description": "Title in the top bar, when it differs from the chapter title." },
-        "tabs": { "type": "array", "items": { "enum": ["train", "infer", "detect", "theory", "play", "math", "code", "practice"] }, "minItems": 1 }
+        "tabs": { "type": "array", "items": { "enum": ["train", "infer", "detect", "outputs", "theory", "play", "math", "code", "practice"] }, "minItems": 1 }
       }
     }
   },

@@ -26,6 +26,7 @@ const TAB_LABELS = {
   train: "Eğitim",
   infer: "Çıkarım",
   detect: "Tespit",
+  outputs: "Çıktılar",
   theory: "Teori",
   play: 'Deneme<span class="tab-long"> alanı</span>', // phones show the short name
   math: "Matematik",

@@ -1072,7 +1072,7 @@ export const GLOSSARY = {
   precision: {
     group: "detect",
     name: { tr: "Kesinlik", en: "Precision" },
-    aka: ["precision", "tp", "fp", "yanlış pozitif", "false positive"],
+    aka: ["precision", "isabetlilik"],
     def: {
       tr: "Modelin tespitlerinden ne kadarının doğru olduğu: \\(P = TP / (TP + FP)\\). TP doğru tespit (aynı sınıftan bir gerçek nesneyle yeterli [[iou|IoU]]), FP yanlış tespittir. [[recall|Duyarlılıkla]] birlikte okunur.",
       en: "How many of the model's detections are right: \\(P = TP / (TP + FP)\\). TP is a correct detection (enough [[iou|IoU]] with a true object of its class), FP a wrong one. It is read together with [[recall|recall]].",
@@ -1082,7 +1082,7 @@ export const GLOSSARY = {
   recall: {
     group: "detect",
     name: { tr: "Duyarlılık", en: "Recall" },
-    aka: ["recall", "fn", "kaçan", "missed", "false negative", "hassasiyet"],
+    aka: ["recall", "hassasiyet", "sensitivity"],
     def: {
       tr: "Gerçek nesnelerden ne kadarının bulunduğu: \\(R = TP / (TP + FN)\\). FN, hiçbir tespitin eşleşmediği (kaçırılan) gerçek nesnedir. [[confidence-score|Güven eşiği]] düştükçe artar; [[precision|kesinlik]] ise genellikle düşer.",
       en: "How many of the true objects were found: \\(R = TP / (TP + FN)\\). An FN is a true object no detection matched (missed). It rises as the [[confidence-score|confidence threshold]] falls, while [[precision|precision]] usually falls.",
@@ -1100,6 +1100,90 @@ export const GLOSSARY = {
     model: { tr: "Doğrulamada maske AP50: bina 0,69, spor sahası 0,30; mAP50 0,50, mAP50-95 0,25.", en: "Mask AP50 on the validation set: building 0.69, sports field 0.30; mAP50 0.50, mAP50-95 0.25." },
     modelLabel: { tr: "Bu bölümün modelinde", en: "In this chapter's model" },
     link: [{ chapter: "yolo", tab: "theory", section: "y-metrics" }, { chapter: "yolo", tab: "train" }, { chapter: "yolo", tab: "math", section: "ym-ap" }],
+  },
+  "confusion-matrix": {
+    group: "detect",
+    name: { tr: "Karışıklık matrisi", en: "Confusion matrix" },
+    aka: ["confusion matrix", "hata matrisi", "karmaşıklık matrisi", "confusion_matrix.png"],
+    def: {
+      tr: "Tahminleri gerçekle karşılaştıran tablo: her hücre, \"gerçekte şu sınıf, model bu sınıf dedi\" durumlarının sayısıdır. Köşegen doğruları, köşegen dışı karışmaları gösterir. İki sınıfta dört hücresi vardır: [[true-positive|TP]], [[false-positive|FP]], [[false-negative|FN]], [[true-negative|TN]]. Ultralytics satırlara tahmini, sütunlara gerçeği yazar; tespitte bir \"arka plan\" satırı ve sütunu ekler.",
+      en: "A table that compares the predictions with the truth: each cell counts the cases \"really this class, the model said that class\". The diagonal shows the correct ones, the rest the confusions. With two classes it has four cells: [[true-positive|TP]], [[false-positive|FP]], [[false-negative|FN]], [[true-negative|TN]]. Ultralytics puts the prediction in the rows and the truth in the columns; in detection it adds a \"background\" row and column.",
+    },
+    model: { tr: "confusion_matrix.png güven eşiği 0,001 ile çizilir: arka plan sütunundaki binlerce FP bundandır; eşik 0,25'te çok azalır.", en: "confusion_matrix.png is drawn at confidence threshold 0.001: that is where the thousands of FPs in the background column come from; at 0.25 they shrink a lot." },
+    modelLabel: { tr: "Bu bölümün modelinde", en: "In this chapter's model" },
+    link: [{ chapter: "yolo", tab: "outputs", section: "yr-cm-intro" }, { chapter: "yolo", tab: "outputs", section: "yr-cm-real" }],
+  },
+  "true-positive": {
+    group: "detect",
+    name: { tr: "Doğru pozitif (TP)", en: "True positive (TP)" },
+    aka: ["tp", "true positive", "doğru tespit", "isabet"],
+    def: {
+      tr: "Modelin \"var\" dediği ve gerçekten olan durum. Tespitte: aynı sınıftan bir gerçek nesneyle [[iou|IoU]]'su eşiği (genellikle 0,5) geçen kutu. [[confusion-matrix|Karışıklık matrisinin]] köşegenindedir.",
+      en: "A case the model calls \"yes\" that really is. In detection: a box whose [[iou|IoU]] with a true object of its class passes the threshold (usually 0.5). It sits on the diagonal of the [[confusion-matrix|confusion matrix]].",
+    },
+    link: { chapter: "yolo", tab: "outputs", section: "yr-cm-intro" },
+  },
+  "false-positive": {
+    group: "detect",
+    name: { tr: "Yanlış pozitif (FP)", en: "False positive (FP)" },
+    aka: ["fp", "false positive", "yanlış alarm", "false alarm", "yanlış tespit", "tip i hata", "type i error"],
+    def: {
+      tr: "Modelin \"var\" dediği ama olmayan durum: yanlış alarm. Tespitte: hiçbir gerçek nesneyle yeterince örtüşmeyen kutu, aynı nesneye konmuş ikinci kutu ya da yanlış sınıflı kutu. Çoğalırsa [[precision|kesinlik]] düşer.",
+      en: "A case the model calls \"yes\" that is not: a false alarm. In detection: a box that overlaps no true object enough, a second box on the same object, or a box with the wrong class. More of them lower [[precision|precision]].",
+    },
+    link: [{ chapter: "yolo", tab: "outputs", section: "yr-cm-intro" }, { chapter: "yolo", tab: "outputs", section: "yr-cm-toy" }],
+  },
+  "false-negative": {
+    group: "detect",
+    name: { tr: "Yanlış negatif (FN)", en: "False negative (FN)" },
+    aka: ["fn", "false negative", "kaçan", "kaçırılan", "missed", "tip ii hata", "type ii error"],
+    def: {
+      tr: "Gerçekte olan ama modelin bulamadığı durum: gözden kaçan nesne. Çoğalırsa [[recall|duyarlılık]] düşer. Hasar taraması gibi işlerde en pahalı hatadır; güven eşiğini düşürmek azaltır.",
+      en: "A case that really is but the model misses: an object overlooked. More of them lower [[recall|recall]]. In jobs like damage surveys it is the most expensive mistake; lowering the confidence threshold reduces it.",
+    },
+    link: [{ chapter: "yolo", tab: "outputs", section: "yr-cm-intro" }, { chapter: "yolo", tab: "outputs", section: "yr-cm-toy" }],
+  },
+  "true-negative": {
+    group: "detect",
+    name: { tr: "Doğru negatif (TN)", en: "True negative (TN)" },
+    aka: ["tn", "true negative"],
+    def: {
+      tr: "Modelin \"yok\" dediği ve gerçekten olmayan durum. Sınıflandırmada ve piksel piksel segmentasyonda sayılır; nesne tespitinde sayılamaz (bir görüntüde kaç \"boş yer\" vardır?), bu yüzden tespitte [[accuracy|doğruluk]] ve [[specificity|özgüllük]] kullanılmaz.",
+      en: "A case the model calls \"no\" that really is not. It is counted in classification and in pixel-by-pixel segmentation; in object detection it cannot be counted (how many \"empty places\" does an image have?), so detection does not use [[accuracy|accuracy]] or [[specificity|specificity]].",
+    },
+    link: [{ chapter: "yolo", tab: "outputs", section: "yr-cm-toy" }, { chapter: "yolo", tab: "outputs", section: "yr-cm-sem" }],
+  },
+  "f1-score": {
+    group: "detect",
+    name: { tr: "F1 skoru", en: "F1 score" },
+    aka: ["f1", "f-score", "f ölçüsü", "harmonik ortalama", "harmonic mean"],
+    def: {
+      tr: "[[precision|Kesinlik]] ile [[recall|duyarlılığın]] harmonik ortalaması: \\(F_1 = 2PR/(P + R)\\). Biri küçükse F1 de küçük kalır (P = 0,9, R = 0,1 ise F1 = 0,18). Ultralytics, konsolda ve tabloda P ile R'yi ortalama F1'in en yüksek olduğu güven eşiğinde yazar.",
+      en: "The harmonic mean of [[precision|precision]] and [[recall|recall]]: \\(F_1 = 2PR/(P + R)\\). If either is small, F1 stays small (P = 0.9, R = 0.1 gives F1 = 0.18). Ultralytics writes P and R in the console and the table at the confidence threshold where the mean F1 is highest.",
+    },
+    link: [{ chapter: "yolo", tab: "outputs", section: "yr-curves" }, { chapter: "yolo", tab: "outputs", section: "yr-cm-intro" }],
+  },
+  specificity: {
+    group: "detect",
+    name: { tr: "Özgüllük", en: "Specificity" },
+    aka: ["specificity", "true negative rate", "tnr", "seçicilik"],
+    def: {
+      tr: "Gerçek negatiflerin ne kadarının \"yok\" dendiği: \\(TN / (TN + FP)\\). Tıpta ve hasar taramasında [[recall|duyarlılıkla]] birlikte verilir. [[true-negative|TN]] gerektirdiği için nesne tespitinde hesaplanamaz.",
+      en: "How many of the true negatives were called \"no\": \\(TN / (TN + FP)\\). In medicine and damage surveys it is given together with [[recall|recall]]. Since it needs [[true-negative|TN]], it cannot be computed in object detection.",
+    },
+    link: { chapter: "yolo", tab: "outputs", section: "yr-cm-intro" },
+  },
+  "class-imbalance": {
+    group: "detect",
+    name: { tr: "Sınıf dengesizliği", en: "Class imbalance" },
+    aka: ["imbalance", "dengesiz veri", "imbalanced data", "azınlık sınıfı", "minority class", "cls_pw"],
+    def: {
+      tr: "Bir sınıfın örneklerinin ötekilerden çok daha az olması. Model az gördüğü sınıfı kötü öğrenir ve [[accuracy|doğruluk]] yanıltıcı olur. Çareler: daha çok örnek toplamak, azınlık sınıfını içeren örnekleri çoğaltmak, kayıpta ona ağırlık vermek.",
+      en: "One class having far fewer examples than the others. The model learns the rare class badly and [[accuracy|accuracy]] misleads. Remedies: collect more examples, repeat the examples with the rare class, weight it in the loss.",
+    },
+    model: { tr: "Eğitimde 10.974 bina, 529 spor sahası (yaklaşık 21'e 1); saha AP50'si 0,30.", en: "Training has 10,974 buildings and 529 sports fields (about 21 to 1); the field's AP50 is 0.30." },
+    modelLabel: { tr: "Bu bölümün modelinde", en: "In this chapter's model" },
+    link: { chapter: "yolo", tab: "outputs", section: "yr-labels" },
   },
 };
 

@@ -919,6 +919,367 @@ export function buildPractice(lab: () => Promise<YoloLab>): PracticeSection[] {
       ],
     },
     {
+      id: "yx-outputs",
+      title: { tr: "Eğitim çıktılarını okumak", en: "Reading the training outputs" },
+      intro: {
+        tr: R`Karışıklık matrisinde satırlar tahmin, sütunlar gerçektir (Ultralytics'in düzeni). \(F_1 = 2PR/(P+R)\); doğruluk \(= (TP+TN)/\text{hepsi}\).`,
+        en: R`In the confusion matrix rows are the prediction, columns the truth (Ultralytics' layout). \(F_1 = 2PR/(P+R)\); accuracy \(= (TP+TN)/\text{all}\).`,
+      },
+      read: { tab: "outputs", section: "yr-cm-intro" },
+      questions: [
+        {
+          id: "o-accuracy",
+          kind: "number",
+          q: {
+            tr: "Deprem sonrası taramada 100 bina var. Model: TP = 7, FP = 6, FN = 3, TN = 84. Doğruluk kaçtır?",
+            en: "A post-earthquake survey covers 100 buildings. The model: TP = 7, FP = 6, FN = 3, TN = 84. What is the accuracy?",
+          },
+          label: { tr: "doğruluk =", en: "accuracy =" },
+          answer: 0.91,
+          tolerance: 0.005,
+          compute: () => (7 + 84) / 100,
+          hint: {
+            tr: "Doğru olan iki hücreyi (TP ve TN) toplayıp bütün binalara bölün.",
+            en: "Add the two correct cells (TP and TN) and divide by all buildings.",
+          },
+          mistakes: [
+            {
+              value: 0.07,
+              why: {
+                tr: 'Yalnızca TP\'yi saydınız; doğru "sağlam" kararları (TN) da doğrudur.',
+                en: 'You counted only TP; the correct "sound" calls (TN) are right too.',
+              },
+            },
+            {
+              value: 0.7,
+              why: {
+                tr: "Bu duyarlılık: TP / (TP + FN). Doğruluk bütün binalara bakar.",
+                en: "That is the recall: TP / (TP + FN). Accuracy looks at all buildings.",
+              },
+            },
+          ],
+          explain: {
+            tr: R`\((7 + 84)/100 = 0{,}91\). Yüksek görünüyor; ama bir sonraki soru bu sayının neden yanıltabileceğini gösteriyor.`,
+            en: R`\((7 + 84)/100 = 0.91\). It looks high; the next question shows why this number can mislead.`,
+          },
+        },
+        {
+          id: "o-trap",
+          kind: "choice",
+          q: {
+            tr: 'Aynı 100 binadan 10\'u hasarlı. Bir "model" hiçbir şeye bakmadan hepsine "sağlam" diyor. Hangisi doğru?',
+            en: '10 of the same 100 buildings are damaged. A "model" calls them all "sound" without looking. Which is true?',
+          },
+          options: [
+            {
+              text: { tr: "Doğruluğu %90; iyi bir model", en: "Its accuracy is 90%; a good model" },
+              why: {
+                tr: "Doğruluk gerçekten %90 ama model tek bir hasarlı binayı bile bulmuyor. Dengesiz veride doğruluk yanıltır.",
+                en: "The accuracy is indeed 90%, but the model finds not a single damaged building. On imbalanced data, accuracy misleads.",
+              },
+            },
+            {
+              text: {
+                tr: "Doğruluğu %90, duyarlılığı 0: hiçbir hasarlı binayı bulmuyor",
+                en: "Its accuracy is 90% and its recall 0: it finds no damaged building",
+              },
+            },
+            {
+              text: { tr: "Kesinliği 1", en: "Its precision is 1" },
+              why: {
+                tr: 'Model hiç "hasarlı" demediği için TP + FP = 0: kesinlik tanımsızdır (0/0).',
+                en: 'The model never says "damaged", so TP + FP = 0: precision is undefined (0/0).',
+              },
+            },
+            {
+              text: { tr: "Özgüllüğü 0", en: "Its specificity is 0" },
+              why: {
+                tr: 'Tersine: 90 sağlam binanın hepsine "sağlam" dedi, özgüllük TN / (TN + FP) = 90/90 = 1.',
+                en: 'The opposite: it called all 90 sound buildings "sound"; specificity TN / (TN + FP) = 90/90 = 1.',
+              },
+            },
+          ],
+          answer: 1,
+          explain: {
+            tr: R`TP = 0, FN = 10, FP = 0, TN = 90. Doğruluk \(90/100\), duyarlılık \(0/10 = 0\). Bir önceki modelden (%91) neredeyse farksız bir doğruluk, ama işe yaramaz bir model.`,
+            en: R`TP = 0, FN = 10, FP = 0, TN = 90. Accuracy \(90/100\), recall \(0/10 = 0\). An accuracy hardly different from the previous model's (91%), but a useless model.`,
+          },
+        },
+        {
+          id: "o-f1",
+          kind: "number",
+          q: {
+            tr: "Bir modelin kesinliği 0,9, duyarlılığı 0,1. F1 kaçtır?",
+            en: "A model has precision 0.9 and recall 0.1. What is its F1?",
+          },
+          label: { tr: R`\(F_1 =\)`, en: R`\(F_1 =\)` },
+          answer: 0.18,
+          tolerance: 0.005,
+          compute: () => (2 * 0.9 * 0.1) / (0.9 + 0.1),
+          hint: { tr: R`\(F_1 = 2PR/(P + R)\).`, en: R`\(F_1 = 2PR/(P + R)\).` },
+          mistakes: [
+            {
+              value: 0.5,
+              why: {
+                tr: "Aritmetik ortalamayı aldınız. F1 harmonik ortalamadır: küçük olana yakın durur.",
+                en: "You took the arithmetic mean. F1 is the harmonic mean: it stays close to the smaller one.",
+              },
+            },
+            {
+              value: 0.09,
+              why: { tr: "2 katsayısını unuttunuz: \\(2PR/(P+R)\\).", en: "You forgot the factor 2: \\(2PR/(P+R)\\)." },
+            },
+          ],
+          explain: {
+            tr: R`\(2 \cdot 0{,}9 \cdot 0{,}1 / (0{,}9 + 0{,}1) = 0{,}18\). Kesinlik ne kadar yüksek olursa olsun, duyarlılık küçükse F1 küçük kalır.`,
+            en: R`\(2 \cdot 0.9 \cdot 0.1 / (0.9 + 0.1) = 0.18\). However high the precision, a small recall keeps F1 small.`,
+          },
+        },
+        {
+          id: "o-corner",
+          kind: "choice",
+          q: {
+            tr: "YOLO'nun confusion_matrix.png dosyasında arka plan satırı ile arka plan sütununun kesiştiği hücre neden boştur?",
+            en: "In YOLO's confusion_matrix.png, why is the cell where the background row and column meet empty?",
+          },
+          options: [
+            {
+              text: { tr: "Model arka planı hiç tahmin etmez", en: "The model never predicts background" },
+              why: {
+                tr: "Arka plan satırı doludur: orası kaçırılan nesnelerdir (FN). Boş olan yalnızca köşe hücresi.",
+                en: "The background row is not empty: it holds the missed objects (FN). Only the corner cell is empty.",
+              },
+            },
+            {
+              text: { tr: "Eşik 0,001 olduğu için", en: "Because the threshold is 0.001" },
+              why: {
+                tr: "Eşik FP sayısını değiştirir, köşe hücresini değil; o hücre her eşikte boştur.",
+                en: "The threshold changes the number of FPs, not the corner cell; that cell is empty at every threshold.",
+              },
+            },
+            {
+              text: {
+                tr: 'O hücre TN olurdu, ama bir görüntüdeki "boş yerler" sayılamaz',
+                en: 'That cell would be TN, but the "empty places" of an image cannot be counted',
+              },
+            },
+            {
+              text: { tr: "Doğrulama karelerinin hepsinde nesne olduğu için", en: "Because every validation tile has objects" },
+              why: {
+                tr: "Doğrulamada nesnesiz 13 kare var; yine de köşe boştur. Neden sayılamadığıdır.",
+                en: "Validation has 13 tiles without objects; the corner is empty all the same. It is about what cannot be counted.",
+              },
+            },
+          ],
+          answer: 2,
+          explain: {
+            tr: 'Tespitte bir "pozitif" bir kutudur; olmayan kutular sayılamaz. Bu yüzden tespitte TN, doğruluk ve özgüllük kullanılmaz; kesinlik ve duyarlılık TN\'siz hesaplanır.',
+            en: 'In detection a "positive" is a box; boxes that were never drawn cannot be counted. So detection uses no TN, accuracy or specificity; precision and recall need no TN.',
+          },
+        },
+        {
+          id: "o-real-precision",
+          kind: "number",
+          q: {
+            tr: 'Bizim modelin matrisinde, eşik 0,25\'te "bina" satırı: 1520 (gerçek bina), 8 (gerçek saha), 687 (arka plan). Binaların kesinliği kaçtır?',
+            en: "In our model's matrix at threshold 0.25, the \"building\" row is: 1520 (true building), 8 (true field), 687 (background). What is the buildings' precision?",
+          },
+          label: { tr: R`\(P =\)`, en: R`\(P =\)` },
+          answer: 0.686,
+          tolerance: 0.005,
+          compute: () => 1520 / (1520 + 8 + 687),
+          hint: {
+            tr: 'Satır, modelin "bina" dediği her şeydir. Doğru olanı (köşegen) satırın toplamına bölün.',
+            en: "The row is everything the model called a building. Divide the correct part (the diagonal) by the row's total.",
+          },
+          mistakes: [
+            {
+              value: 0.653,
+              why: {
+                tr: "Bu duyarlılık: 1520'yi 2329 gerçek binaya böldünüz. Kesinlik satıra, duyarlılık sütuna bakar.",
+                en: "That is the recall: you divided 1520 by the 2329 true buildings. Precision reads the row, recall the column.",
+              },
+            },
+          ],
+          explain: {
+            tr: R`\(1520/(1520 + 8 + 687) = 1520/2215 \approx 0{,}686\). Ultralytics'in tablosundaki 0,72 biraz farklıdır: o, eşik 0,26'da ve sınıfa göre eşleştirmeyle ölçülür.`,
+            en: R`\(1520/(1520 + 8 + 687) = 1520/2215 \approx 0.686\). The 0.72 in Ultralytics' table differs a little: it is measured at threshold 0.26 with class-aware matching.`,
+          },
+        },
+        {
+          id: "o-real-recall",
+          kind: "number",
+          q: {
+            tr: 'Aynı matriste "bina" sütunu: 1520 (bina dendi), 2 (saha dendi), 807 (arka plan: bulunamadı). Binaların duyarlılığı kaçtır?',
+            en: 'In the same matrix the "building" column is: 1520 (called building), 2 (called field), 807 (background: not found). What is the buildings\' recall?',
+          },
+          label: { tr: R`\(R =\)`, en: R`\(R =\)` },
+          answer: 0.653,
+          tolerance: 0.005,
+          compute: () => 1520 / (1520 + 2 + 807),
+          hint: {
+            tr: "Sütun, gerçekte bina olan her şeydir. Doğru bulunanı sütunun toplamına bölün.",
+            en: "The column is everything that really is a building. Divide the part found correctly by the column's total.",
+          },
+          mistakes: [
+            {
+              value: 0.686,
+              why: { tr: "Bu kesinlik (satır). Duyarlılık sütuna bakar.", en: "That is the precision (the row). Recall reads the column." },
+            },
+          ],
+          explain: {
+            tr: R`\(1520/(1520 + 2 + 807) = 1520/2329 \approx 0{,}653\): her üç binadan ikisi bulundu. Sütunun toplamı doğrulamadaki bina sayısıdır (2329).`,
+            en: R`\(1520/(1520 + 2 + 807) = 1520/2329 \approx 0.653\): two in three buildings were found. The column's total is the number of buildings in validation (2329).`,
+          },
+        },
+        {
+          id: "o-thousands",
+          kind: "choice",
+          q: {
+            tr: "Eğitim bitince yazılan confusion_matrix.png'de bina satırının arka plan hücresinde 24.000'den fazla FP var. En olası açıklama?",
+            en: "The confusion_matrix.png written at the end of training has more than 24,000 FPs in the building row's background cell. The most likely reason?",
+          },
+          options: [
+            {
+              text: { tr: "Model çok kötü; yeniden eğitilmeli", en: "The model is very bad; retrain it" },
+              why: {
+                tr: "Aynı modelin mAP50'si 0,50 ve eşik 0,25'te yalnızca 687 FP'si var. Sayı modelden değil eşikten geliyor.",
+                en: "The same model has a mAP50 of 0.50 and only 687 FPs at threshold 0.25. The number comes from the threshold, not the model.",
+              },
+            },
+            {
+              text: {
+                tr: "Matris, doğrulamanın güven eşiği olan 0,001 ile dolduruldu",
+                en: "The matrix was filled at validation's confidence threshold, 0.001",
+              },
+            },
+            {
+              text: { tr: "NMS çalışmadı", en: "NMS did not run" },
+              why: {
+                tr: "NMS çalıştı (IoU 0,7). Kalan kutuların çoğunun skoru 0,25'in altında; 0,001 eşiği hepsini sayar.",
+                en: "NMS ran (IoU 0.7). Most of the boxes left score below 0.25; a threshold of 0.001 counts them all.",
+              },
+            },
+            {
+              text: { tr: "IoU eşiği çok yüksek", en: "The IoU threshold is too high" },
+              why: {
+                tr: "0,5 olağan eşiktir ve mAP50 ile aynıdır. FP'lerin çoğu hiçbir nesneye yakın değil.",
+                en: "0.5 is the usual threshold, the same as mAP50's. Most FPs are near no object at all.",
+              },
+            },
+          ],
+          answer: 1,
+          explain: {
+            tr: R`mAP bütün PR eğrisinden hesaplandığı için doğrulama en düşük skorlu tespitleri de tutar ve matris bu eşikle dolar. Kullanacağınız eşikte matrisi görmek için doğrulamayı o eşikle tekrarlayın: <code>yolo val model=best.pt conf=0.25</code>.`,
+            en: R`Since mAP is computed from the whole PR curve, validation keeps even the lowest-scoring detections, and the matrix fills at that threshold. To see the matrix at the threshold you will use, repeat the validation at it: <code>yolo val model=best.pt conf=0.25</code>.`,
+          },
+        },
+        {
+          id: "o-normalized",
+          kind: "choice",
+          q: {
+            tr: "confusion_matrix_normalized.png'de her sütun 1'e toplanacak biçimde bölünür. Köşegendeki bir sayı neyi gösterir?",
+            en: "In confusion_matrix_normalized.png every column is divided so it adds up to 1. What does a number on the diagonal show?",
+          },
+          options: [
+            { text: { tr: "O sınıfın duyarlılığını", en: "That class's recall" } },
+            {
+              text: { tr: "O sınıfın kesinliğini", en: "That class's precision" },
+              why: {
+                tr: "Kesinlik için satıra bölmek gerekirdi (modelin o sınıf dediği her şey).",
+                en: "Precision would need dividing by the row (everything the model called that class).",
+              },
+            },
+            {
+              text: { tr: "O sınıfın AP'sini", en: "That class's AP" },
+              why: {
+                tr: "AP bütün eşiklerin üzerinden hesaplanır; matris tek bir eşiktedir.",
+                en: "AP is computed over all thresholds; the matrix is at one threshold.",
+              },
+            },
+            {
+              text: { tr: "Modelin doğruluğunu", en: "The model's accuracy" },
+              why: { tr: "Tespitte TN olmadığı için doğruluk hesaplanamaz.", en: "Without TN, detection cannot compute accuracy." },
+            },
+          ],
+          answer: 0,
+          explain: {
+            tr: "Sütun, gerçekte o sınıftan olan her şeydir; köşegen bunun doğru bulunan payıdır: TP / (TP + FN), yani duyarlılık.",
+            en: "A column is everything that really is that class; the diagonal is the share found correctly: TP / (TP + FN), the recall.",
+          },
+        },
+        {
+          id: "o-overfit",
+          kind: "choice",
+          q: {
+            tr: "Bir eğitimin results.png'sinde eğitim kaybı sonuna kadar iniyor, doğrulama kaybı ise 60. epoch'tan sonra yükseliyor. Ne olmuştur, ne yapılır?",
+            en: "In a run's results.png the training loss falls to the end, while the validation loss rises after epoch 60. What happened, and what to do?",
+          },
+          options: [
+            {
+              text: { tr: "Model öğrenmeyi sürdürüyor; last.pt kullanılır", en: "The model keeps learning; use last.pt" },
+              why: {
+                tr: "Doğrulama kaybının yükselmesi, eğitim karelerinin ezberlendiğini gösterir; son epoch en iyisi değildir.",
+                en: "A rising validation loss shows the training tiles are being memorised; the last epoch is not the best.",
+              },
+            },
+            {
+              text: { tr: "Öğrenme oranı çok küçük; büyütülür", en: "The learning rate is too small; raise it" },
+              why: {
+                tr: "Küçük öğrenme oranı iki kaybı birlikte yavaşlatır; ayrışma ezberlemenin işaretidir.",
+                en: "A small learning rate slows both losses together; their parting is the sign of memorising.",
+              },
+            },
+            {
+              text: { tr: "Doğrulama verisi bozuk", en: "The validation data is broken" },
+              why: {
+                tr: "Bozuk doğrulama verisi baştan yüksek bir kayıp verirdi; 60 epoch boyunca birlikte inmezlerdi.",
+                en: "Broken validation data would give a high loss from the start; the two would not fall together for 60 epochs.",
+              },
+            },
+            {
+              text: {
+                tr: "Ezberleme (aşırı uyum) başlamış; best.pt kullanılır, erken durdurma ya da daha çok veri düşünülür",
+                en: "Memorising (overfitting) has started; use best.pt and consider early stopping or more data",
+              },
+            },
+          ],
+          answer: 3,
+          explain: {
+            tr: "Eğitim kaybı inerken doğrulama kaybının yükselmesi, modelin genellemek yerine eğitim örneklerini ezberlediğini gösterir. best.pt doğrulamada en iyi epoch'u zaten saklar; patience ile erken durdurma boşa geçen epoch'ları keser.",
+            en: "A validation loss that rises while the training loss falls shows the model memorising the training examples instead of generalising. best.pt already keeps the best epoch on validation; early stopping with patience cuts the wasted epochs.",
+          },
+        },
+        {
+          id: "o-sem-iou",
+          kind: "number",
+          q: {
+            tr: 'Arazi örtüsü matrisinde "yol" sınıfı (milyon piksel): TP = 3,33, satırın geri kalanı (FP) = 1,92, sütunun geri kalanı (FN) = 2,57. Yolun IoU\'su kaçtır?',
+            en: 'In the land-cover matrix, the class "road" (million pixels): TP = 3.33, the rest of its row (FP) = 1.92, the rest of its column (FN) = 2.57. What is the road\'s IoU?',
+          },
+          label: { tr: "IoU =", en: "IoU =" },
+          answer: 0.426,
+          tolerance: 0.005,
+          compute: () => 3.33 / (3.33 + 1.92 + 2.57),
+          hint: { tr: R`\(\text{IoU} = TP/(TP + FP + FN)\).`, en: R`\(\text{IoU} = TP/(TP + FP + FN)\).` },
+          mistakes: [
+            {
+              value: 3.33 / (3.33 + 1.92),
+              why: { tr: "Bu kesinlik: FN'yi unuttunuz.", en: "That is the precision: you left out FN." },
+            },
+            {
+              value: 3.33 / (3.33 + 2.57),
+              why: { tr: "Bu duyarlılık: FP'yi unuttunuz.", en: "That is the recall: you left out FP." },
+            },
+          ],
+          explain: {
+            tr: R`\(3{,}33/(3{,}33 + 1{,}92 + 2{,}57) = 3{,}33/7{,}82 \approx 0{,}426\). Kesişim TP'dir; birleşim, \"yol\" denen ve gerçekte yol olan piksellerin hepsidir (TP + FP + FN). Bu, Eğitim sekmesindeki yol IoU'sudur.`,
+            en: R`\(3.33/(3.33 + 1.92 + 2.57) = 3.33/7.82 \approx 0.426\). The intersection is TP; the union is every pixel called road or really road (TP + FP + FN). This is the road IoU of the Training tab.`,
+          },
+        },
+      ],
+    },
+    {
       id: "yx-model",
       title: { tr: "Eğitilmiş modelle deneyler", en: "Experiments with the trained model" },
       intro: {

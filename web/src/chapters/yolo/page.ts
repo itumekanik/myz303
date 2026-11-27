@@ -19,6 +19,7 @@ Object.assign(TABS, {
   theory: { tab: "#tab-theory", panel: "#panel-theory", hash: "#teori" },
   detect: { tab: "#tab-detect", panel: "#panel-detect", hash: "#tespit" },
   train: { tab: "#tab-train", panel: "#panel-train", hash: "#egitim" },
+  outputs: { tab: "#tab-outputs", panel: "#panel-outputs", hash: "#ciktilar" },
   math: { tab: "#tab-math", panel: "#panel-math", hash: "#matematik" },
   code: { tab: "#tab-code", panel: "#panel-code", hash: "#kodlama" },
   practice: { tab: "#tab-practice", panel: "#panel-practice", hash: "#alistirma" },

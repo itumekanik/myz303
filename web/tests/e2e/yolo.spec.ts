@@ -107,6 +107,60 @@ test.describe("chapter 4: yolo", () => {
     void errors;
   });
 
+  test("outputs: the files of the run, and the confusion matrix in four steps", async ({ page, errors }) => {
+    test.setTimeout(90_000);
+    await open(page, "yolo.html#ciktilar");
+    await expect(page.locator("#tab-outputs")).toHaveAttribute("aria-selected", "true");
+    for (const id of [
+      "yr-intro",
+      "yr-folder",
+      "yr-console",
+      "yr-results",
+      "yr-labels",
+      "yr-batches",
+      "yr-cm-intro",
+      "yr-cm-toy",
+      "yr-cm-real",
+      "yr-cm-sem",
+      "yr-curves",
+      "yr-recap",
+    ])
+      await expect(page.locator(`#${id}`)).toBeVisible();
+    await expect(page.locator(".katex-error")).toHaveCount(0);
+    // 1. the damage survey: calling everything "sound" is still 90% accurate
+    const survey = page.locator("#yr-cm-intro");
+    await expect(survey.locator(".yr-stats")).toContainText("%91");
+    await survey.getByRole("button", { name: 'Hepsine "sağlam" de' }).click();
+    await expect(survey.locator(".yr-stats")).toContainText("%90");
+    await expect(survey.locator(".yo-big")).toContainText("duyarlılık 0");
+    // 2. the toy tile, matched the way Ultralytics does it: 5 buildings found, 3 boxes for nothing, 3 missed
+    const toy = page.locator("#yr-cm-toy");
+    await expect(toy.locator(".yr-cell").nth(0)).toHaveText("5");
+    await expect(toy.locator(".yr-cell").nth(2)).toHaveText("3");
+    await expect(toy.locator(".yr-cell").nth(6)).toHaveText("3");
+    await expect(toy.locator(".yr-cell").nth(8)).toHaveText("–");
+    await expect(toy.locator(".yr-toy-list li")).toHaveCount(3);
+    // 3. our matrix: at 0.001 as confusion_matrix.png, then at 0.25
+    const real = page.locator("#yr-cm-real");
+    await expect(real.locator(".yr-cell").nth(2)).toHaveText("24.461", { timeout: 60_000 });
+    await real.locator(".yo-slider input").fill("25");
+    await expect(real.locator(".yr-cell").nth(0)).toHaveText("1.520");
+    await expect(real.locator(".yr-cell").nth(2)).toHaveText("687");
+    await expect(real.locator(".yr-ex")).toHaveCount(6);
+    await real.locator(".yr-cell").nth(6).click();
+    await expect(real.locator("p.yo-caption").first()).toContainText("807 örnek");
+    // 4. land cover: one class against the rest has a TN
+    await expect(page.locator("#yr-cm-sem .yr-four")).toContainText("TN");
+    // the console, results.csv and the curves come from the run's own files
+    await expect(page.locator("#yr-console .yr-term").first()).toContainText("100/100");
+    await expect(page.locator("#yr-results .yo-caption").first()).toContainText("epoch 88");
+    await expect(page.locator("#yr-curves .chart svg path.series-line")).toHaveCount(3);
+    // a file of the folder leads to its section
+    await page.locator("#yr-folder").getByRole("link", { name: "8. kısım →" }).click();
+    await expect(page.locator("#yr-cm-real")).toBeInViewport();
+    void errors;
+  });
+
   test("math: eight sections, derivations and widgets that compute", async ({ page, errors }) => {
     await open(page, "yolo.html#matematik");
     await expect(page.locator("#ym-toc li")).toHaveCount(8);
@@ -170,8 +224,8 @@ test.describe("chapter 4: yolo", () => {
   test("practice: a typical wrong number gets its own feedback, and an experiment runs the real model", async ({ page, errors }) => {
     test.setTimeout(120_000);
     await open(page, "yolo.html#alistirma");
-    await expect(page.locator("#px-toc li")).toHaveCount(9);
-    await expect(page.locator(".px-count")).toContainText("0 / 27");
+    await expect(page.locator("#px-toc li")).toHaveCount(10);
+    await expect(page.locator(".px-count")).toContainText("0 / 37");
     const iou = page.locator('[data-q="i-value"]');
     const input = iou.locator("input");
     await input.fill("0,25");
@@ -204,7 +258,7 @@ test.describe("chapter 4: yolo", () => {
     await page.locator("#tab-train").click();
     await expect(page.locator(".yo-facts")).toBeVisible();
     expect(await overflows(page)).toBe(false);
-    for (const tab of ["theory", "math", "code", "practice"]) {
+    for (const tab of ["theory", "outputs", "math", "code", "practice"]) {
       await page.locator(`#tab-${tab}`).click();
       await page.waitForTimeout(300);
       expect(await overflows(page), tab).toBe(false);

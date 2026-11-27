@@ -99,6 +99,7 @@ Object.assign(STATIC_EN, {
   "tab.train": "Training",
   "tab.infer": "Inference",
   "tab.detect": "Detection",
+  "tab.outputs": "Outputs",
   "tab.theory": "Theory",
   "tab.math": "Math",
   "tab.code": "Coding",

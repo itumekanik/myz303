@@ -126,6 +126,7 @@ one thread). [tools/export_yolo_assets.py](tools/export_yolo_assets.py) writes:
 | `yolo-sem.js` | semantic segmentation (background, building, road, green, water, parking), the same way | 3.9 MB |
 | `yolo-samples.js` | eight validation tiles (two per city), their true polygons and land-cover masks, metres per pixel | 1.9 MB |
 | `yolo-run.js` | the three training runs (curves per epoch, scores per class) and one tile predicted after 1, 5, 10, 25, 50, 75 and 100 epochs | 0.3 MB |
+| `yolo-outputs.js` | the Outputs tab: the files of the instance model's run, its console lines, results.csv, label statistics, four batch pictures, the confusion matrix at 96 thresholds with example crops, the P/R/F1/PR curves and the land-cover pixel matrix | 1.5 MB |
 
 and `tests/fixtures/yolo-parity.json`: OpenCV's resize, Ultralytics' letterbox, NMS, masks and AP on
 small inputs, which `tests/unit/yolo.test.ts` compares with `engines/yolo/`. ONNX Runtime's own

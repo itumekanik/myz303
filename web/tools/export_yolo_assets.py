@@ -2,7 +2,7 @@
 Exports what the YOLO chapter of the static site needs, as JavaScript data files a page loads with a
 <script> tag (which also works when the page is opened from a file, where fetch() is not allowed).
 
-    python web/tools/export_yolo_assets.py <source> [--fixture-only]      (from the repository root)
+    python web/tools/export_yolo_assets.py <source> [--fixture-only | --outputs-only]      (from the repository root)
 
 <source> is the folder the chapter's Python files worked in (the repository root if you ran them there):
 data/yolo/{seg,sem,tiles} from YOLO_SpaceNet_data.py, and runs/yolo/{seg-pretrained,seg-scratch,sem-pretrained}
@@ -17,6 +17,11 @@ Writes web/public/data/:
     yolo-samples.js   validation tiles (JPEG as they are), their true polygons and land-cover masks, metres per pixel
     yolo-run.js       the three training runs (results.csv curves, final scores per class) and one val tile
                       predicted after 1, 5, 10, 25, 50, 75 and 100 epochs (runs/*/weights/epoch*.pt)
+    yolo-outputs.js   what the Outputs tab reads about runs/…/seg-pretrained: its files, results.csv, label statistics,
+                      the first and last training batches, a val batch, the confusion matrix at thresholds 0.001 and
+                      0.01 … 0.95 (rebuilt with Ultralytics' ConfusionMatrix) with example crops per cell, the P, R, F1
+                      and PR curves, the land-cover model's confusion matrix, and the console lines of training if the
+                      console was saved to <source>/train_seg.log (paths in it are made relative)
 
 and web/tests/fixtures/yolo-parity.json: what Ultralytics and OpenCV give on small inputs (resize, letterbox,
 NMS, masks, AP), which the unit tests compare with the TypeScript engine (src/engines/yolo/).
@@ -217,6 +222,234 @@ def run_record(source: Path) -> dict:
     }
 
 
+MATRIX_CONFS = [0.001] + [round(0.01 * k, 2) for k in range(1, 96)]  # Ultralytics' val threshold, then 0.01 … 0.95
+EXAMPLE_CONF, EXAMPLES_PER_CELL, CROP_SIDE = 0.25, 6, 128
+CURVE_POINTS = 101
+
+
+def jpeg(image: np.ndarray, side: int, quality: int) -> str:
+    """An image (BGR) shrunk to at most `side` pixels and encoded as JPEG, base64."""
+    scale = min(1.0, side / max(image.shape[:2]))
+    if scale < 1:
+        image = cv2.resize(image, (round(image.shape[1] * scale), round(image.shape[0] * scale)), interpolation=cv2.INTER_AREA)
+    return b64(cv2.imencode(".jpg", image, [cv2.IMWRITE_JPEG_QUALITY, quality])[1].tobytes())
+
+
+def capture_val(weights: Path, data: Path) -> tuple:
+    """Validates like the end of training (conf 0.001) and keeps what reaches Ultralytics' ConfusionMatrix: per image
+    the detections (boxes in tile pixels, score, class) and the true boxes, so the matrix can be rebuilt at any
+    threshold."""
+    import tempfile
+
+    from ultralytics import YOLO
+    from ultralytics.utils.metrics import ConfusionMatrix
+
+    records, original = [], ConfusionMatrix.process_batch
+
+    def keep(self, detections, batch, conf=0.25, iou_thres=0.5):
+        records.append(({k: detections[k].detach().cpu().clone() for k in ("bboxes", "conf", "cls")},
+                        {"cls": batch["cls"].detach().cpu().clone(), "bboxes": batch["bboxes"].detach().cpu().clone(),
+                         "im_file": batch["im_file"]}))
+        return original(self, detections, batch, conf, iou_thres)
+
+    ConfusionMatrix.process_batch = keep
+    try:
+        with tempfile.TemporaryDirectory() as tmp:  # plots=True: only then does the validator fill the matrix
+            m = YOLO(str(weights)).val(data=str(data), imgsz=640, batch=8, plots=True, workers=0, verbose=False,
+                                       project=tmp, name="val")
+    finally:
+        ConfusionMatrix.process_batch = original
+    return m, records
+
+
+def matrix_at(records: list, conf: float, nc: int) -> np.ndarray:
+    from ultralytics.utils.metrics import ConfusionMatrix
+
+    cm = ConfusionMatrix(names={k: str(k) for k in range(nc)})
+    for d, b in records:
+        cm.process_batch(d, b, conf=conf)
+    return cm.matrix.astype(int)
+
+
+def matches_at(d: dict, b: dict, conf: float, iou_thres: float = 0.5) -> list[tuple]:
+    """(predicted class or -1, true class or -1, detection index or -1, truth index or -1) per entry of the matrix,
+    with ConfusionMatrix.process_batch's greedy, class-agnostic matching (box IoU > 0.5, highest score first)."""
+    from ultralytics.utils.metrics import box_iou
+
+    keep = (d["conf"] > conf).nonzero().flatten().tolist()
+    gt_cls = b["cls"].int().flatten().tolist()
+    out, matched = [], set()
+    if keep and gt_cls:
+        iou = box_iou(b["bboxes"], d["bboxes"][keep]).numpy()
+        gt_match = np.full(len(gt_cls), -1)
+        scores = d["conf"][keep].numpy()
+        candidates = np.flatnonzero((iou > iou_thres).any(0))
+        for j in candidates[np.argsort(-scores[candidates], kind="stable")]:
+            g = iou[:, j].argmax()
+            if iou[g, j] > iou_thres:
+                gt_match[g] = j
+                iou[g] = 0
+        matched = set(gt_match[gt_match >= 0].tolist())
+        for g, gc in enumerate(gt_cls):
+            j = gt_match[g]
+            out.append((int(d["cls"][keep[j]]) if j >= 0 else -1, gc, keep[j] if j >= 0 else -1, g))
+    else:
+        out += [(-1, gc, -1, g) for g, gc in enumerate(gt_cls)]
+    out += [(int(d["cls"][i]), -1, i, -1) for j, i in enumerate(keep) if j not in matched]
+    return out
+
+
+def cell_examples(records: list, nc: int) -> dict:
+    """Up to six crops per cell of the matrix at EXAMPLE_CONF, from different tiles: the detection's box, the true box,
+    or both, around the object with a margin."""
+    rng = np.random.default_rng(0)
+    cells: dict[str, list] = {}
+    for k, (d, b) in enumerate(records):
+        for pc, tc, di, gi in matches_at(d, b, EXAMPLE_CONF):
+            cells.setdefault(f"{nc if pc < 0 else pc},{nc if tc < 0 else tc}", []).append((k, di, gi))
+    out = {}
+    for cell, entries in sorted(cells.items()):
+        order = rng.permutation(len(entries))
+        chosen, tiles = [], set()
+        for i in order:  # one per tile first, then any
+            if entries[i][0] not in tiles:
+                chosen.append(entries[i])
+                tiles.add(entries[i][0])
+            if len(chosen) == EXAMPLES_PER_CELL:
+                break
+        items = []
+        for k, di, gi in chosen:
+            d, b = records[k]
+            image = cv2.imread(b["im_file"])
+            pred = d["bboxes"][di].tolist() if di >= 0 else None
+            truth = b["bboxes"][gi].tolist() if gi >= 0 else None
+            boxes = [x for x in (pred, truth) if x]
+            x1, y1 = min(x[0] for x in boxes), min(x[1] for x in boxes)
+            x2, y2 = max(x[2] for x in boxes), max(x[3] for x in boxes)
+            side = max(x2 - x1, y2 - y1, 40) + 24  # a square around both boxes, at least 40 px plus a margin
+            cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
+            h, w = image.shape[:2]
+            left = int(max(0, min(w - side, cx - side / 2)))
+            top = int(max(0, min(h - side, cy - side / 2)))
+            crop = image[top:top + int(side), left:left + int(side)]
+            scale = CROP_SIDE / max(crop.shape[:2])
+            move = lambda box: [round((box[0] - left) * scale, 1), round((box[1] - top) * scale, 1),  # noqa: E731
+                                round((box[2] - left) * scale, 1), round((box[3] - top) * scale, 1)] if box else None
+            items.append({"tile": Path(b["im_file"]).stem, "jpeg": jpeg(crop, CROP_SIDE, 80),
+                          "size": [round(crop.shape[1] * scale), round(crop.shape[0] * scale)],
+                          "pred": move(pred), "truth": move(truth),
+                          "score": round(float(d["conf"][di]), 3) if di >= 0 else None})
+        out[cell] = {"count": len(entries), "items": items}
+    return out
+
+
+def thin(x) -> list:
+    """A 1000-point Ultralytics curve as 101 points."""
+    x = np.asarray(x, dtype=float)
+    idx = np.round(np.linspace(0, x.shape[-1] - 1, CURVE_POINTS)).astype(int)
+    return np.round(x[..., idx], 4).tolist()
+
+
+def console_lines(log: Path) -> dict | None:
+    """Lines of the training console (YOLO's own output saved to a file), without colour codes, progress redraws or the
+    folder the run was in."""
+    import re
+
+    if not log.exists():
+        return None
+    text = log.read_text(encoding="utf-8", errors="replace").replace("\r", "\n")
+    text = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", text)
+    lines = [ln.rstrip() for ln in text.split("\n") if ln.strip()]
+    clean = lambda s: re.sub(r"[A-Za-z]:/(?:[^/ ]+/)*?(?=(?:data|runs)/)", "", s.replace("\\", "/"))  # noqa: E731
+    find = lambda pattern, start=0: next(i for i in range(start, len(lines)) if re.search(pattern, lines[i]))  # noqa: E731
+    head = find(r"^\s+Epoch\s+GPU_mem")
+    out = {
+        "start": [clean(lines[find(p)].strip()) for p in (r"^train: Scanning", r"^val: Scanning", r"^optimizer: AdamW")],
+        "header": lines[head],
+        "progress": clean(lines[find(r"^\s+1/\d+ .* 10/\d+ ")]),
+        "epochs": [],
+    }
+    for epoch in (1, 2, 50, 100):
+        i = find(rf"^\s+{epoch}/\d+ .*100% ")
+        val = find(r"^\s+all\s+\d+", i)
+        out["epochs"].append({"epoch": epoch, "train": lines[i], "valHeader": lines[val - 1].split(":")[0], "val": lines[val]})
+    end = find(r"epochs completed in")
+    out["end"] = [clean(lines[i].strip()) for i in range(end, find(r"^Validating ", end) + 1)]
+    final = find(r"^\s+all\s+\d+", end)
+    out["final"] = [lines[final - 1].split(":")[0], lines[final]]
+    return out
+
+
+def label_stats(source: Path) -> dict:
+    """What labels.jpg plots: objects per class and every training box (centre and size, divided by the tile size)."""
+    rows = []
+    for p in sorted((data_dir(source) / "seg" / "labels" / "train").glob("*.txt")):
+        for line in p.read_text().splitlines():
+            v = line.split()
+            xy = np.asarray(v[1:], dtype=float).reshape(-1, 2)
+            (x1, y1), (x2, y2) = xy.min(0), xy.max(0)
+            rows.append([int(v[0]), (x1 + x2) / 2, (y1 + y2) / 2, x2 - x1, y2 - y1])
+    rows = np.asarray(rows)
+    q = np.clip(np.round(rows[:, 1:] * 255), 0, 255).astype(np.uint8)
+    packed = np.concatenate([rows[:, :1].astype(np.uint8), q], axis=1)  # class, cx, cy, w, h (× 255)
+    return {"counts": np.bincount(rows[:, 0].astype(int), minlength=len(SEG_NAMES)).tolist(), "boxes": gz(packed)}
+
+
+def outputs_record(source: Path) -> dict:
+    """What the Outputs tab reads: the files of runs/seg-pretrained, the console, results.csv, label statistics, sample
+    batches, confusion matrices at many thresholds with example crops, the P/R/F1 curves, and the land-cover matrix."""
+    import csv
+    import tempfile
+
+    from ultralytics import YOLO
+
+    run = runs_dir(source) / "seg-pretrained"
+    m, records = capture_val(run / "weights" / "best.pt", data_dir(source) / "seg" / "data.yaml")
+    nc = len(SEG_NAMES)
+    matrices = [matrix_at(records, c, nc).ravel().tolist() for c in MATRIX_CONFS]
+    print(f"  matrix at 0.001: {matrices[0]}, at 0.25: {matrices[MATRIX_CONFS.index(0.25)]}")
+    images = [sum(1 for _, b in records if (b["cls"].int() == c).any()) for c in range(nc)]
+    curves = {}
+    for key, result in (("B", m.box), ("M", m.seg)):
+        found = dict(zip(m.curves, m.curves_results))
+        pr, f1c, pc, rc = (found[f"{n}({key})"] for n in ("Precision-Recall", "F1-Confidence", "Precision-Confidence", "Recall-Confidence"))
+        f1 = np.asarray(f1c[1]).mean(0)
+        best = int(f1.argmax())
+        curves[key] = {
+            "confidence": thin(f1c[0]), "precision": thin(pc[1]), "recall": thin(rc[1]), "f1": thin(f1c[1]),
+            "prRecall": thin(pr[0]), "prPrecision": thin(pr[1]),
+            "bestF1": {"confidence": round(float(np.asarray(f1c[0])[best]), 3), "f1": round(float(f1[best]), 4)},
+            "table": {"precision": [round(float(v), 4) for v in result.p], "recall": [round(float(v), 4) for v in result.r],
+                      "ap50": [round(float(v), 4) for v in result.ap50], "ap50_95": [round(float(v), 4) for v in result.ap]},
+        }
+    with tempfile.TemporaryDirectory() as tmp:
+        s = YOLO(str(runs_dir(source) / "sem-pretrained" / "weights" / "best.pt")).val(
+            data=str(data_dir(source) / "sem" / "data.yaml"), imgsz=640, batch=4, plots=True, workers=0, verbose=False,
+            project=tmp, name="val")
+    sem = np.asarray(s.confusion_matrix.matrix).round().astype(np.int64)  # predicted × true pixels
+    rows = list(csv.DictReader((run / "results.csv").open()))
+    results = {c: [round(float(r[c]), 5) for r in rows] for c in rows[0] if c != "epoch"}
+    batches = sorted(run.glob("train_batch*.jpg"), key=lambda p: int(p.stem[11:]))
+    late = next(p for p in batches if int(p.stem[11:]) > 2)  # the first batch plotted when mosaic stops (close_mosaic)
+    files = sorted(str(p.relative_to(run)).replace("\\", "/") for p in run.rglob("*") if p.is_file() and p.suffix != ".onnx")
+    return {
+        "files": [{"path": f, "bytes": (run / f).stat().st_size} for f in files],
+        "console": console_lines(source / "train_seg.log"),
+        "results": results,
+        "labels": label_stats(source),
+        "batches": {
+            "first": {"name": batches[0].name, "jpeg": jpeg(cv2.imread(str(batches[0])), 960, 72)},
+            "last": {"name": late.name, "jpeg": jpeg(cv2.imread(str(late)), 960, 72)},
+            "valLabels": {"name": "val_batch0_labels.jpg", "jpeg": jpeg(cv2.imread(str(run / "val_batch0_labels.jpg")), 960, 72)},
+            "valPred": {"name": "val_batch0_pred.jpg", "jpeg": jpeg(cv2.imread(str(run / "val_batch0_pred.jpg")), 960, 72)},
+        },
+        "matrix": {"names": SEG_NAMES, "confs": MATRIX_CONFS, "counts": matrices, "images": images,
+                   "tiles": len(records), "exampleConf": EXAMPLE_CONF, "examples": cell_examples(records, nc)},
+        "curves": curves,
+        "semMatrix": {"names": SEM_NAMES, "counts": sem.tolist()},
+    }
+
+
 def resize_cases() -> list[dict]:
     """cv2.resize INTER_LINEAR on small random images: shrinking, enlarging, almost 1:1, different ratios."""
     rng = np.random.default_rng(0)
@@ -307,6 +540,7 @@ def write_assets(source: Path, picked: list[str]) -> None:
         "segNames": SEG_NAMES, "semNames": SEM_NAMES, "samples": samples(source, picked),
     })
     write_data("yolo-run", run_record(source))
+    write_data("yolo-outputs", outputs_record(source))
 
 
 def main() -> None:
@@ -314,6 +548,10 @@ def main() -> None:
     if len(args) != 1:
         sys.exit(__doc__)
     source = Path(args[0]).resolve()
+    if "--outputs-only" in sys.argv:  # only the Outputs tab's file (yolo-outputs.js)
+        OUT.mkdir(parents=True, exist_ok=True)
+        write_data("yolo-outputs", outputs_record(source))
+        return
     picked = pick_samples(source)
     if "--fixture-only" not in sys.argv:  # --fixture-only: the tests' fixture without rewriting the data files
         write_assets(source, picked)

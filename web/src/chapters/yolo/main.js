@@ -7,6 +7,7 @@ import "./page.ts";
 import "./theory.ts";
 import "./detect.ts";
 import "./training.ts";
+import "./outputs.ts";
 import "./mathtab.ts";
 import "./codetab.ts";
 import "./practice.ts";
