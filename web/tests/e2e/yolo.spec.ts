@@ -167,6 +167,34 @@ test.describe("chapter 4: yolo", () => {
     void errors;
   });
 
+  test("practice: a typical wrong number gets its own feedback, and an experiment runs the real model", async ({ page, errors }) => {
+    test.setTimeout(120_000);
+    await open(page, "yolo.html#alistirma");
+    await expect(page.locator("#px-toc li")).toHaveCount(9);
+    await expect(page.locator(".px-count")).toContainText("0 / 27");
+    const iou = page.locator('[data-q="i-value"]');
+    const input = iou.locator("input");
+    await input.fill("0,25");
+    await input.press("Enter");
+    await expect(iou.locator(".px-feedback")).toContainText("iki kez"); // divided by the sum of the areas
+    await input.fill("0,33");
+    await input.press("Enter");
+    await expect(iou).toHaveAttribute("data-state", "correct");
+    // NMS by hand
+    const nms = page.locator('[data-q="n-count"]').locator("input");
+    await nms.fill("2");
+    await nms.press("Enter");
+    await expect(page.locator('[data-q="n-count"]')).toHaveAttribute("data-state", "correct");
+    // an experiment: without colour the model finds no sports field
+    const grey = page.locator('[data-q="e-grey"]');
+    await grey.locator(".px-opt").nth(0).click();
+    await grey.getByRole("button", { name: "Tahmini sına" }).click();
+    await expect(grey.locator(".px-run")).toContainText("gri tonlamada 0 saha", { timeout: 90_000 });
+    await expect(grey).toHaveAttribute("data-state", "missed");
+    await expect(page.locator(".px-count")).toContainText("Doğru: 2");
+    void errors;
+  });
+
   test("fits a phone", async ({ page, errors }) => {
     test.setTimeout(120_000);
     await page.setViewportSize({ width: 375, height: 800 });
@@ -176,6 +204,11 @@ test.describe("chapter 4: yolo", () => {
     await page.locator("#tab-train").click();
     await expect(page.locator(".yo-facts")).toBeVisible();
     expect(await overflows(page)).toBe(false);
+    for (const tab of ["theory", "math", "code", "practice"]) {
+      await page.locator(`#tab-${tab}`).click();
+      await page.waitForTimeout(300);
+      expect(await overflows(page), tab).toBe(false);
+    }
     void errors;
   });
 });

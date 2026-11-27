@@ -9,6 +9,10 @@ import { mnist, type Packed } from "../../src/engines/cnn/data.ts";
 import { forward } from "../../src/engines/cnn/forward.ts";
 import { unpackWeights, type PackedModel } from "../../src/engines/cnn/weights.ts";
 import { PRACTICE as MLP_PRACTICE } from "../../src/chapters/mlp/questions.ts";
+import { buildPractice as buildYoloPractice, type YoloLab } from "../../src/chapters/yolo/questions.ts";
+import { createModel, initRuntime, type PackedYolo } from "../../src/engines/yolo/model.ts";
+import { gunzipSync } from "node:zlib";
+import { fromBase64 } from "../../src/engines/data.ts";
 import { PRACTICE } from "../../src/chapters/perceptron/questions.ts";
 import { ruleStep, stepFn, trainFromZero, zOf } from "../../src/chapters/perceptron/model.ts";
 import { chapterSummary, createProgress, matches, mistakeOf, parseNumber, plainMath, readNumber } from "../../src/shared/practice.ts";
@@ -41,6 +45,25 @@ const cnnLab = (): Promise<CnnLab> => {
   return loadedLab;
 };
 
+/** The YOLO experiments: the instance model in ONNX Runtime (Node) and the Shanghai tile as the browsers decode it. */
+let loadedYolo: Promise<YoloLab> | null = null;
+const yoloLab = (): Promise<YoloLab> => {
+  loadedYolo ??= (async () => {
+    const web = join(dirname(fileURLToPath(import.meta.url)), "../..");
+    await initRuntime(async () => new Uint8Array(readFileSync(join(web, "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm"))));
+    const packed = dataFile<PackedYolo>("yolo-seg");
+    const unzip = (b64: string) => new Uint8Array(gunzipSync(fromBase64(b64)));
+    const model = await createModel(unzip((packed.onnx as { gzip: string }).gzip), packed.names, packed.size);
+    const tile = (
+      JSON.parse(readFileSync(join(web, "tests/fixtures/yolo-parity.json"), "utf8")) as {
+        practiceTile: { width: number; height: number; rgb: { gzip: string } };
+      }
+    ).practiceTile;
+    return { model, tile: { width: tile.width, height: tile.height, data: unzip(tile.rgb.gzip) } };
+  })();
+  return loadedYolo;
+};
+
 const BANKS = [
   { name: "perceptron", sections: PRACTICE, count: 20, theory: ["p-neuron", "p-boundary", "p-rule", "p-converge", "p-xor", undefined] },
   {
@@ -54,6 +77,12 @@ const BANKS = [
     sections: buildPractice(cnnLab),
     count: 25,
     theory: ["t-conv", "t-act", "t-pool", "t-softmax", "t-opt", "t-drop", "t-bn", "m-pool", undefined],
+  },
+  {
+    name: "yolo",
+    sections: buildYoloPractice(yoloLab),
+    count: 27,
+    theory: ["y-tasks", "y-iou", "y-grid", "y-nms", "y-masks", "y-train", "y-metrics", "y-read", undefined],
   },
 ];
 const questions = BANKS.flatMap((b) => b.sections.flatMap((s) => s.questions));

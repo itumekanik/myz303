@@ -270,6 +270,13 @@ def ap_cases() -> list[dict]:
     return cases
 
 
+def practice_tile(source: Path) -> dict:
+    """The decoded pixels of the tile the Practice experiments run on: Node cannot decode a JPEG, and the
+    browsers decode it exactly as OpenCV does, so the tests see what the page sees."""
+    bgr = cv2.imread(str(data_dir(source) / "seg" / "images" / "val" / f"{SNAPSHOT_TILE}.jpg"))
+    return {"name": SNAPSHOT_TILE, "width": bgr.shape[1], "height": bgr.shape[0], "rgb": gz(bgr[..., ::-1])}
+
+
 def iou_cases() -> list[dict]:
     """Ultralytics' bbox_iou (IoU, GIoU, DIoU, CIoU) for overlapping, touching, apart and nested boxes."""
     pairs = [([10, 10, 50, 40], [20, 15, 60, 45]), ([0, 0, 10, 10], [10, 0, 20, 10]), ([0, 0, 10, 10], [30, 5, 40, 25]),
@@ -303,7 +310,8 @@ def main() -> None:
     if "--fixture-only" not in sys.argv:  # --fixture-only: the tests' fixture without rewriting the data files
         write_assets(source, picked)
     FIXTURES.mkdir(parents=True, exist_ok=True)
-    fixture = {"resize": resize_cases(), "letterbox": letterbox_cases(), "model": model_case(source, picked[0]), "ap": ap_cases(), "iou": iou_cases()}
+    fixture = {"resize": resize_cases(), "letterbox": letterbox_cases(), "model": model_case(source, picked[0]), "ap": ap_cases(), "iou": iou_cases(),
+               "practiceTile": practice_tile(source)}
     path = FIXTURES / "yolo-parity.json"
     path.write_text(json.dumps(fixture, separators=(",", ":")) + "\n", encoding="utf-8", newline="\n")
     print(f"web/tests/fixtures/yolo-parity.json  {path.stat().st_size / 1e6:.2f} MB; samples: {', '.join(picked)}")

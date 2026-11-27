@@ -21,6 +21,7 @@ Object.assign(TABS, {
   train: { tab: "#tab-train", panel: "#panel-train", hash: "#egitim" },
   math: { tab: "#tab-math", panel: "#panel-math", hash: "#matematik" },
   code: { tab: "#tab-code", panel: "#panel-code", hash: "#kodlama" },
+  practice: { tab: "#tab-practice", panel: "#panel-practice", hash: "#alistirma" },
 });
 
 export interface Sample {

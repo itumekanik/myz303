@@ -9,5 +9,6 @@ import "./detect.ts";
 import "./training.ts";
 import "./mathtab.ts";
 import "./codetab.ts";
+import "./practice.ts";
 import "../../shared/glossary/panel.js";
 import "../../shared/math.js";

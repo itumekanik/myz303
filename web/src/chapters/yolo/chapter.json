@@ -10,6 +10,6 @@
   "page": {
     "title": { "tr": "YOLO", "en": "YOLO" },
     "brand": { "tr": "Nesne tespiti (YOLO)", "en": "Object detection (YOLO)" },
-    "tabs": ["theory", "detect", "train", "math", "code"]
+    "tabs": ["theory", "detect", "train", "math", "code", "practice"]
   }
 }
