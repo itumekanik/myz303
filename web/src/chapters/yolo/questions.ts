@@ -1280,6 +1280,183 @@ export function buildPractice(lab: () => Promise<YoloLab>): PracticeSection[] {
       ],
     },
     {
+      id: "yx-basics",
+      title: { tr: "Üç sınıf, AP ve mAP elle", en: "Three classes, AP and mAP by hand" },
+      intro: {
+        tr: R`Kedi, köpek, fare: 30 fotoğraf. Satırlar tahmin, sütunlar gerçek. Kedi satırı 7, 2, 1; köpek satırı 2, 9, 0; fare satırı 1, 1, 7.`,
+        en: R`Cat, dog, mouse: 30 photos. Rows are the prediction, columns the truth. The cat row is 7, 2, 1; the dog row 2, 9, 0; the mouse row 1, 1, 7.`,
+      },
+      read: { tab: "outputs", section: "yr-cm-multi" },
+      questions: [
+        {
+          id: "b-dog-precision",
+          kind: "number",
+          q: {
+            tr: "Köpek sınıfının kesinliği kaçtır?",
+            en: "What is the dog class's precision?",
+          },
+          label: { tr: R`\(P =\)`, en: R`\(P =\)` },
+          answer: 0.818,
+          tolerance: 0.005,
+          compute: () => 9 / (2 + 9 + 0),
+          hint: {
+            tr: 'Kesinlik satıra bakar: köpek satırı, modelin "köpek" dediği her şeydir.',
+            en: "Precision reads the row: the dog row is everything the model called a dog.",
+          },
+          mistakes: [
+            {
+              value: 0.75,
+              why: {
+                tr: "Bu duyarlılık: 9'u köpek sütununa (2 + 9 + 1 = 12) böldünüz. Kesinlik satıra böler.",
+                en: "That is the recall: you divided 9 by the dog column (2 + 9 + 1 = 12). Precision divides by the row.",
+              },
+            },
+          ],
+          explain: {
+            tr: R`Köpek satırı 2, 9, 0: model 11 fotoğrafa "köpek" dedi, 9'u doğru. \(P = 9/11 \approx 0{,}818\).`,
+            en: R`The dog row is 2, 9, 0: the model called 11 photos "dog", 9 of them rightly. \(P = 9/11 \approx 0.818\).`,
+          },
+        },
+        {
+          id: "b-mouse-recall",
+          kind: "number",
+          q: {
+            tr: "Fare sınıfının duyarlılığı kaçtır? (Fare sütunu: 1, 0, 7.)",
+            en: "What is the mouse class's recall? (The mouse column: 1, 0, 7.)",
+          },
+          label: { tr: R`\(R =\)`, en: R`\(R =\)` },
+          answer: 0.875,
+          tolerance: 0.005,
+          compute: () => 7 / (1 + 0 + 7),
+          hint: {
+            tr: "Duyarlılık sütuna bakar: fare sütunu, gerçekte fare olan her şeydir.",
+            en: "Recall reads the column: the mouse column is everything that really is a mouse.",
+          },
+          mistakes: [
+            {
+              value: 0.778,
+              why: {
+                tr: "Bu kesinlik: 7'yi fare satırına (1 + 1 + 7 = 9) böldünüz. Duyarlılık sütuna böler.",
+                en: "That is the precision: you divided 7 by the mouse row (1 + 1 + 7 = 9). Recall divides by the column.",
+              },
+            },
+          ],
+          explain: {
+            tr: R`8 farenin 7'si bulundu: \(R = 7/8 = 0{,}875\). Bir fareye "kedi" dendi.`,
+            en: R`7 of the 8 mice were found: \(R = 7/8 = 0.875\). One mouse was called a cat.`,
+          },
+        },
+        {
+          id: "b-cat-tn",
+          kind: "number",
+          q: {
+            tr: "Kedi sınıfı için (bire karşı hepsi) TN kaçtır?",
+            en: "For the cat class (one against the rest), what is TN?",
+          },
+          label: { tr: "TN =", en: "TN =" },
+          answer: 17,
+          compute: () => 30 - 7 - (2 + 1) - (2 + 1),
+          hint: {
+            tr: "TN, kedi satırının ve kedi sütununun dışında kalan dört hücredir.",
+            en: "TN is the four cells outside both the cat row and the cat column.",
+          },
+          mistakes: [
+            {
+              value: 20,
+              why: {
+                tr: "Yalnızca TP'yi ve FP'yi çıkardınız; gerçek kedi olup başka bir şey denen 3 fotoğraf (FN) da TN değildir.",
+                en: "You took away only TP and FP; the 3 real cats called something else (FN) are not TN either.",
+              },
+            },
+            {
+              value: 23,
+              why: {
+                tr: "Yalnızca TP'yi çıkardınız. FP (kedi satırının geri kalanı) ve FN (kedi sütununun geri kalanı) da çıkmalı.",
+                en: "You took away only TP. FP (the rest of the cat row) and FN (the rest of the cat column) go too.",
+              },
+            },
+          ],
+          explain: {
+            tr: R`TP = 7, FP = 2 + 1 = 3, FN = 2 + 1 = 3; TN = 30 − 7 − 3 − 3 = 17 = 9 + 0 + 1 + 7. Bunlar ne gerçekte kedi olan ne de "kedi" denen fotoğraflardır.`,
+            en: R`TP = 7, FP = 2 + 1 = 3, FN = 2 + 1 = 3; TN = 30 − 7 − 3 − 3 = 17 = 9 + 0 + 1 + 7. These are the photos that are neither really cats nor called "cat".`,
+          },
+        },
+        {
+          id: "b-macro",
+          kind: "choice",
+          q: {
+            tr: "28 kedi ve köpek fotoğrafını çok iyi ayıran ama 2 farenin hiçbirini bulamayan bir model için hangi ölçü bu sorunu gösterir?",
+            en: "A model tells 28 cat and dog photos apart very well but finds neither of the 2 mice. Which score shows the problem?",
+          },
+          options: [
+            {
+              text: { tr: "Doğruluk", en: "Accuracy" },
+              why: {
+                tr: "Doğruluk 28/30'a yakın kalır: 2 fare toplamın küçük bir parçasıdır.",
+                en: "The accuracy stays near 28/30: 2 mice are a small part of the total.",
+              },
+            },
+            {
+              text: { tr: "Mikro ortalama F1", en: "Micro-averaged F1" },
+              why: {
+                tr: "Tek etiketli sınıflamada mikro ortalama doğruluğa eşittir; o da sorunu saklar.",
+                en: "With one label per photo the micro average equals the accuracy; it hides the problem too.",
+              },
+            },
+            { text: { tr: "Makro ortalama F1", en: "Macro-averaged F1" } },
+            {
+              text: { tr: "Ağırlıklı ortalama F1", en: "Weighted-average F1" },
+              why: {
+                tr: "Ağırlıklı ortalamada fare sınıfının ağırlığı 2/30'dur; kötü sonucu neredeyse görünmez.",
+                en: "In the weighted average the mouse class weighs 2/30; its poor result is almost invisible.",
+              },
+            },
+          ],
+          answer: 2,
+          explain: {
+            tr: "Makro ortalama her sınıfa eşit ağırlık verir: farenin F1'i 0 olduğu için ortalama üçte bir düşer. YOLO'nun mAP'i de bu yüzden makro bir ortalamadır.",
+            en: "The macro average gives every class the same weight: the mouse's F1 of 0 pulls the mean down by a third. That is also why YOLO's mAP is a macro average.",
+          },
+        },
+        {
+          id: "b-ap",
+          kind: "number",
+          q: {
+            tr: 'Model 8 fotoğrafı "kedi" skoruna göre sıralıyor: ✓ ✓ ✗ ✓ ✗ ✗ ✓ ✗ (✓: gerçekten kedi). Bütün kedilerin sayısı 4. Elle AP kaçtır?',
+            en: 'The model ranks 8 photos by their "cat" score: ✓ ✓ ✗ ✓ ✗ ✗ ✓ ✗ (✓: really a cat). There are 4 cats in all. What is the AP by hand?',
+          },
+          label: { tr: "AP =", en: "AP =" },
+          answer: 0.83,
+          tolerance: 0.005,
+          compute: () => (1 / 1 + 2 / 2 + 3 / 4 + 4 / 7) / 4,
+          hint: {
+            tr: "Her ✓'nin sırasındaki kesinliği (o ana kadarki ✓ sayısı / sıra) bulun, toplayıp 4'e bölün.",
+            en: "Find the precision at the rank of every ✓ (the ✓ so far / the rank), add them up and divide by 4.",
+          },
+          mistakes: [
+            {
+              value: 0.5,
+              why: {
+                tr: "Bu, listenin sonundaki kesinlik (4/8). AP bütün listeyi, her ✓'deki kesinliği ortalar.",
+                en: "That is the precision at the end of the list (4/8). AP averages the precision at every ✓ over the whole list.",
+              },
+            },
+            {
+              value: 0.698,
+              why: {
+                tr: "Sekiz satırın hepsinin kesinliğini ortaladınız. Yalnızca ✓ satırları sayılır.",
+                en: "You averaged the precision of all eight rows. Only the ✓ rows count.",
+              },
+            },
+          ],
+          explain: {
+            tr: R`✓ sıraları 1, 2, 4, 7: kesinlikler \(1/1, 2/2, 3/4, 4/7\). \(\text{AP} = (1 + 1 + 0{,}75 + 0{,}571)/4 \approx 0{,}83\). Ultralytics'in 101 noktalı yöntemi de 0,83 verir.`,
+            en: R`The ✓ ranks are 1, 2, 4, 7: precisions \(1/1, 2/2, 3/4, 4/7\). \(\text{AP} = (1 + 1 + 0.75 + 0.571)/4 \approx 0.83\). Ultralytics' 101-point way also gives 0.83.`,
+          },
+        },
+      ],
+    },
+    {
       id: "yx-model",
       title: { tr: "Eğitilmiş modelle deneyler", en: "Experiments with the trained model" },
       intro: {

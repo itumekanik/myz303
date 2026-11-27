@@ -13,6 +13,7 @@ import { $, h } from "../../shared/core.js";
 import { KIT } from "../../shared/kit.js";
 import type { Text } from "../../shared/chapters.ts";
 import { T } from "./page.ts";
+import { apDemo, petsDemo } from "./outputs-basics.ts";
 import {
   batchesDemo,
   consoleDemo,
@@ -37,7 +38,7 @@ const { html, formula, sectionCard } = KIT as {
 interface Section {
   id: string;
   h: Text;
-  p: (Text | { tex: Text })[];
+  p: (Text | { tex: Text } | { block: Text })[];
   model: Text;
   demo: () => HTMLElement;
   math?: string;
@@ -51,8 +52,8 @@ const INTRO: { h: Text; p: Text[] } = {
       en: R`Ultralytics writes files into a folder throughout training: settings, every epoch's scores, weights, charts, sample images. This tab reads the folder of our run (YOLO26n-seg, buildings and sports fields, 100 epochs) file by file. Most files are written during training; some at the very end, in a last validation with <code>best.pt</code>.`,
     },
     {
-      tr: R`En çok yanlış okunan dosya [[confusion-matrix|karışıklık matrisidir]]. 6–9. kısımlar onu dört adımda kurar: önce günlük hayattan bir örnekle dört temel kavram (TP, FP, FN, TN), sonra tespitteki farkı gösteren küçük bir oyuncak kare, sonra bizim modelin gerçek matrisi, en son arazi örtüsü modelinin piksel matrisi. 1–5. kısımlar eğitim sırasında ve sonrasındaki öteki dosyalardır; 10. kısım eşik seçimiyle bitirir.`,
-      en: R`The file read wrong most often is the [[confusion-matrix|confusion matrix]]. Sections 6–9 build it in four steps: first the four basic ideas (TP, FP, FN, TN) on an everyday example, then a small toy tile that shows what is different in detection, then our model's real matrix, and last the land-cover model's pixel matrix. Sections 1–5 are the other files from during and after training; section 10 ends with choosing a threshold.`,
+      tr: R`En çok yanlış okunan dosya [[confusion-matrix|karışıklık matrisidir]]. 6–11. kısımlar onu adım adım kurar. Önce YOLO'dan bağımsız üç kısım: iki sınıflı bir örnekle dört temel kavram (TP, FP, FN, TN), üç sınıflı bir kedi-köpek-fare sınıflayıcısıyla sınıf başına okuma ve ortalamalar, sıralı listelerle AP ve mAP'in elle hesabı. Sonra tespitteki farkı gösteren küçük bir oyuncak kare, bizim modelin gerçek matrisi ve arazi örtüsü modelinin piksel matrisi. 1–5. kısımlar eğitim sırasında ve sonrasındaki öteki dosyalardır; 12. kısım eşik seçimiyle bitirir.`,
+      en: R`The file read wrong most often is the [[confusion-matrix|confusion matrix]]. Sections 6–11 build it step by step. First three sections that need no YOLO: the four basic ideas (TP, FP, FN, TN) on a two-class example, reading per class and averaging on a three-class cat-dog-mouse classifier, and AP and mAP worked out by hand on ranked lists. Then a small toy tile that shows what is different in detection, our model's real matrix, and the land-cover model's pixel matrix. Sections 1–5 are the other files from during and after training; section 12 ends with choosing a threshold.`,
     },
   ],
 };
@@ -86,8 +87,8 @@ const SECTIONS: Section[] = [
         en: R`While training runs, every epoch shows two lines. The first is the training line: the mean [[loss|losses]] over the epoch's batches (box, mask, class…), the graphics card's memory and progress. The second is the validation line: [[precision|precision]], [[recall|recall]] and [[average-precision|mAP]] measured on the 131 validation tiles when the epoch ends, for boxes (Box) and masks (Mask) separately.`,
       },
       {
-        tr: R`Kayıpların mutlak değeri önemli değil; önemli olan zamanla nasıl değiştiği. Kayıpları kendi aralarında da karşılaştırmayın: her birinin ölçeği ve ağırlığı farklıdır. Doğrulama satırındaki P ve R tek bir güven eşiğinde ölçülür; o eşiği Ultralytics seçer (10. kısım).`,
-        en: R`The losses' absolute values do not matter; how they change over time does. Do not compare the losses with each other either: each has its own scale and weight. The P and R of the validation line are measured at one confidence threshold, which Ultralytics picks (section 10).`,
+        tr: R`Kayıpların mutlak değeri önemli değil; önemli olan zamanla nasıl değiştiği. Kayıpları kendi aralarında da karşılaştırmayın: her birinin ölçeği ve ağırlığı farklıdır. Doğrulama satırındaki P ve R tek bir güven eşiğinde ölçülür; o eşiği Ultralytics seçer (12. kısım).`,
+        en: R`The losses' absolute values do not matter; how they change over time does. Do not compare the losses with each other either: each has its own scale and weight. The P and R of the validation line are measured at one confidence threshold, which Ultralytics picks (section 12).`,
       },
       {
         tr: R`Başlangıç satırları da okunmalı: "528 images, 53 backgrounds, 0 corrupt" eğitim karelerinin 53'ünde hiç nesne olmadığını (yalnızca arka plan: modele "burada bir şey yok" demeyi öğretir) ve bozuk etiket olmadığını söyler. <code>args.yaml</code> bütün ayarları saklar; eğitimi tekrarlamak için gereken tek dosyadır.`,
@@ -201,17 +202,100 @@ const SECTIONS: Section[] = [
         tr: R`[[accuracy|Doğruluk]] dengesiz veride yanıltır: binaların yalnızca 10'u hasarlıysa "hepsi sağlam" diyen işe yaramaz bir model de %90 doğru çıkar. Bu yüzden [[precision|kesinliğe]] ve [[recall|duyarlılığa]] ayrı ayrı bakılır. [[f1-score|F1]] ikisinin harmonik ortalamasıdır: biri küçükse F1 de küçük kalır. Hangisinin daha önemli olduğu işin bedeline bağlıdır: burada bir FN, içinde insan olabilecek hasarlı bir binanın gözden kaçması demek; bir FP ise bir ekibin boşa giden bir saati. Bu iş için yüksek duyarlılık, yani düşük eşik seçilir.`,
         en: R`[[accuracy|Accuracy]] misleads on imbalanced data: if only 10 buildings are damaged, a useless model that says "all sound" is still 90% accurate. That is why [[precision|precision]] and [[recall|recall]] are read separately. [[f1-score|F1]] is their harmonic mean: if either is small, F1 stays small. Which matters more depends on the cost: here an FN means a damaged building, maybe with people inside, is missed; an FP means a team loses an hour. For this job one picks a high recall, i.e. a low threshold.`,
       },
+      {
+        tr: R`Aynı dört kavram, "evet/hayır" diyen her modelde vardır; değişen yalnızca hataların bedelidir:`,
+        en: R`The same four ideas exist in every model that says "yes/no"; only the cost of the mistakes changes:`,
+      },
+      {
+        block: {
+          tr: R`<table class="yo-table yo-compare"><thead><tr><th scope="col">İş (pozitif)</th><th scope="col">FP: yanlış alarm</th><th scope="col">FN: kaçırılan</th><th scope="col">Daha pahalı</th></tr></thead><tbody>
+<tr><th scope="row">Hasar taraması (ağır hasarlı)</th><td>ekip boşuna gider</td><td>hasarlı bina gözden kaçar</td><td>FN</td></tr>
+<tr><th scope="row">Tıbbi test (hasta)</th><td>sağlıklı kişiye ek tetkik</td><td>hastalık atlanır</td><td>çoğunlukla FN</td></tr>
+<tr><th scope="row">Spam filtresi (spam)</th><td>önemli e-posta çöpe gider</td><td>spam gelen kutusuna düşer</td><td>FP</td></tr>
+<tr><th scope="row">Beton yüzeyde çatlak (çatlak var)</th><td>gereksiz yerinde inceleme</td><td>çatlak kaçar</td><td>FN</td></tr>
+</tbody></table>`,
+          en: R`<table class="yo-table yo-compare"><thead><tr><th scope="col">Job (positive)</th><th scope="col">FP: false alarm</th><th scope="col">FN: missed</th><th scope="col">Costs more</th></tr></thead><tbody>
+<tr><th scope="row">Damage survey (badly damaged)</th><td>a team goes for nothing</td><td>a damaged building is missed</td><td>FN</td></tr>
+<tr><th scope="row">Medical test (ill)</th><td>a healthy person gets more tests</td><td>the illness is missed</td><td>usually FN</td></tr>
+<tr><th scope="row">Spam filter (spam)</th><td>an important e-mail goes to junk</td><td>spam reaches the inbox</td><td>FP</td></tr>
+<tr><th scope="row">Crack in a concrete surface (crack)</th><td>a needless site inspection</td><td>a crack is missed</td><td>FN</td></tr>
+</tbody></table>`,
+        },
+      },
     ],
     model: {
-      tr: R`Bu örneğin sayıları uydurmadır. Matrisin mantığı YOLO'da aynıdır; tek fark, bir sonraki kısımda göreceğimiz gibi, tespitte TN'nin sayılamamasıdır.`,
-      en: R`The numbers of this example are made up. The matrix works the same way in YOLO; the one difference, as the next section shows, is that detection cannot count TN.`,
+      tr: R`Bu örneğin sayıları uydurmadır. Matrisin mantığı YOLO'da aynıdır; tek fark, 9. kısımda göreceğimiz gibi, tespitte TN'nin sayılamamasıdır.`,
+      en: R`The numbers of this example are made up. The matrix works the same way in YOLO; the one difference, as section 9 shows, is that detection cannot count TN.`,
     },
     demo: surveyDemo,
     math: "ym-ap",
   },
   {
+    id: "yr-cm-multi",
+    h: { tr: "Karışıklık matrisi II: üç sınıf (kedi, köpek, fare)", en: "Confusion matrix II: three classes (cat, dog, mouse)" },
+    p: [
+      {
+        tr: R`YOLO'dan bağımsız bir örnek: 30 fotoğrafı kedi, köpek ya da fare diye sınıflayan bir model. Her fotoğrafın tek bir gerçek sınıfı ve tek bir tahmini vardır; matris 3 × 3'tür. Köşegen doğru tahminlerdir. Bir <b>satır</b>, modelin o sınıf dediği her şey; bir <b>sütun</b>, gerçekte o sınıf olan her şeydir.`,
+        en: R`An example without YOLO: a model that sorts 30 photos into cat, dog or mouse. Every photo has one true class and one prediction; the matrix is 3 × 3. The diagonal holds the right predictions. A <b>row</b> is everything the model called that class; a <b>column</b> is everything that really is that class.`,
+      },
+      {
+        tr: R`Birden çok sınıfta TP, FP, FN ve TN <b>sınıf başına</b> okunur: bir sınıf seçilir ve soru "bu sınıf mı, değil mi?" olur (bire karşı hepsi). Matris o sınıf için 2 × 2'ye iner. Kedi için: TP köşegendeki 7; FP kedi satırının geri kalanı, 2 + 1 = 3 ("kedi" dendi ama köpek ya da fare); FN kedi sütununun geri kalanı, 2 + 1 = 3 (gerçek kedi, başka bir şey dendi); TN öteki dört hücre, 9 + 0 + 1 + 7 = 17. Dördünün toplamı 30'dur.`,
+        en: R`With several classes, TP, FP, FN and TN are read <b>per class</b>: pick a class and ask "this class or not?" (one against the rest). For that class the matrix shrinks to 2 × 2. For cat: TP is the 7 on the diagonal; FP is the rest of the cat row, 2 + 1 = 3 (called "cat" but a dog or a mouse); FN is the rest of the cat column, 2 + 1 = 3 (really a cat, called something else); TN is the other four cells, 9 + 0 + 1 + 7 = 17. The four add up to 30.`,
+      },
+      {
+        tex: {
+          tr: R`P_{\text{kedi}} = \frac{7}{7+3} = 0{,}70,\qquad R_{\text{kedi}} = \frac{7}{7+3} = 0{,}70`,
+          en: R`P_{\text{cat}} = \frac{7}{7+3} = 0.70,\qquad R_{\text{cat}} = \frac{7}{7+3} = 0.70`,
+        },
+      },
+      {
+        tr: R`Tek bir sayı istenince sınıfların ölçüleri birleştirilir. [[macro-average|Makro ortalama]]: her sınıfın ölçüsü ayrı hesaplanır, sonra eşit ağırlıkla ortalanır; az örnekli sınıf da bir oy taşır. Ağırlıklı ortalama: her sınıf örnek sayısıyla ağırlıklanır. Mikro ortalama: bütün sınıfların TP, FP ve FN'si toplanıp bir kez hesaplanır; her fotoğrafın tek etiketi olduğunda doğruluğa eşittir. Dengesiz veride aralarındaki fark büyür: "Fare az" senaryosunu seçin. YOLO'nun mAP'i bir makro ortalamadır: her sınıfın AP'si eşit ağırlık taşır.`,
+        en: R`When one number is wanted, the classes' scores are combined. The [[macro-average|macro average]] computes each class's score separately, then averages them with equal weight: a class with few examples still gets one vote. The weighted average weights each class by its number of examples. The micro average adds up every class's TP, FP and FN and computes once; when every photo has one label it equals the accuracy. On imbalanced data they part: choose the "Few mice" scenario. YOLO's mAP is a macro average: every class's AP carries the same weight.`,
+      },
+    ],
+    model: {
+      tr: R`Bu hesap her sınıflayıcıda aynıdır: 3. bölümdeki CNN'in on rakamı da bir 10 × 10 matris verir ve aynı biçimde, sınıf sınıf okunur.`,
+      en: R`The arithmetic is the same for every classifier: the CNN of chapter 3, with its ten digits, gives a 10 × 10 matrix read the same way, class by class.`,
+    },
+    demo: petsDemo,
+  },
+  {
+    id: "yr-ap",
+    h: { tr: "AP ve mAP elle: sıralı bir liste", en: "AP and mAP by hand: a ranked list" },
+    p: [
+      {
+        tr: R`Kesinlik ve duyarlılık tek bir eşiğe bağlıdır. [[average-precision|AP]] eşik seçmeden ölçer. Model her fotoğrafa "kedi" skoru verir; fotoğrafları skora göre sıralayıp listeden aşağı inelim. Her adım, eşiği bir sonraki fotoğrafın skoruna indirmek demektir. Her satırda o ana kadar bulunan kedilerle P ve R hesaplanır: \(P = \text{bulunan}/\text{sıra}\), \(R = \text{bulunan}/\text{bütün kediler}\). Bu (R, P) noktaları PR eğrisini çizer.`,
+        en: R`Precision and recall depend on one threshold. [[average-precision|AP]] measures without picking one. The model gives every photo a "cat" score; sort the photos by score and walk down the list. Each step lowers the threshold to the next photo's score. On every row P and R are computed with the cats found so far: \(P = \text{found}/\text{rank}\), \(R = \text{found}/\text{all cats}\). These (R, P) points draw the PR curve.`,
+      },
+      {
+        tr: R`AP, PR eğrisinin altındaki alandır. Elle hesaplamanın kısa yolu: her doğru öğenin (✓) sırasındaki kesinliğin ortalaması; listeye hiç girmeyen pozitifler 0 sayılır.`,
+        en: R`AP is the area under the PR curve. The short way by hand: the mean of the precision at the rank of every right item (✓); positives that never made the list count as 0.`,
+      },
+      {
+        tex: {
+          tr: R`\text{AP} = \frac{1}{N}\sum_{k:\ ✓} P(k) = \frac{1 + 1 + 0{,}75 + 0{,}571}{4} \approx 0{,}83`,
+          en: R`\text{AP} = \frac{1}{N}\sum_{k:\ ✓} P(k) = \frac{1 + 1 + 0.75 + 0.571}{4} \approx 0.83`,
+        },
+      },
+      {
+        tr: R`Burada \(N\) kedi fotoğraflarının sayısıdır (4). Ultralytics ve COCO eğrinin önce "zarfını" alır (her duyarlılıkta, o noktadan sonraki en yüksek kesinlik), sonra 0, 0,01, …, 1 olmak üzere 101 duyarlılık düzeyinde okur; sonuç çok yakındır (0,83). [[average-precision|mAP]] sınıfların AP'lerinin ortalamasıdır: \((0{,}83 + 0{,}77 + 0{,}42)/3 \approx 0{,}67\).`,
+        en: R`Here \(N\) is the number of cat photos (4). Ultralytics and COCO first take the curve's "envelope" (at every recall, the highest precision from there on), then read it at 101 recall levels 0, 0.01, …, 1; the result is very close (0.83). [[average-precision|mAP]] is the mean of the classes' APs: \((0.83 + 0.77 + 0.42)/3 \approx 0.67\).`,
+      },
+      {
+        tr: R`Tespitte tek fark "✓"nin anlamıdır: bir kutu, aynı sınıftan bir gerçek nesneyle [[iou|IoU]]'su eşiği geçiyorsa doğrudur. mAP50 bu eşiği 0,5 alır. mAP50-95 ise AP'yi 0,50, 0,55, …, 0,95 eşikleriyle on kez hesaplayıp ortalar: aynı kutu 0,5'te ✓, 0,8'de ✗ olabilir.`,
+        en: R`In detection the one difference is what "✓" means: a box is right if its [[iou|IoU]] with a true object of its class passes a threshold. mAP50 takes that threshold as 0.5. mAP50-95 computes AP ten times, at 0.50, 0.55, …, 0.95, and averages: the same box can be ✓ at 0.5 and ✗ at 0.8.`,
+      },
+    ],
+    model: {
+      tr: R`Fare listesinde dört fareden biri listeye hiç girmiyor: duyarlılık en fazla 0,75'e çıkar ve o fare AP'ye 0 olarak girer. Bizim YOLO modelinin spor sahası AP'sinin düşük (0,30) olmasının bir nedeni de budur: sahaların çoğu hiçbir eşikte bulunmuyor.`,
+      en: R`In the mouse list one of the four mice never makes it into the list: recall cannot pass 0.75, and that mouse enters the AP as 0. It is also one reason our YOLO model's sports field AP is low (0.30): most fields are not found at any threshold.`,
+    },
+    demo: apDemo,
+    math: "ym-ap",
+  },
+  {
     id: "yr-cm-toy",
-    h: { tr: "Karışıklık matrisi II: tespitte matris", en: "Confusion matrix II: the matrix in detection" },
+    h: { tr: "Karışıklık matrisi III: tespitte matris", en: "Confusion matrix III: the matrix in detection" },
     p: [
       {
         tr: R`Tespitte "pozitif", bir kutudur. Bir kutunun doğru sayılması için bir gerçek nesneyle [[iou|IoU]]'sunun 0,5'i geçmesi gerekir. Ultralytics eşleştirmeyi şöyle yapar: eşiği geçen kutular skora göre sıralanır; her kutu, henüz alınmamış gerçek nesneler arasından en çok örtüştüğünü alır (IoU > 0,5 ise). Eşleştirme <b>sınıfa bakmaz</b>; sınıf ancak sonra, matrisin hangi hücresine yazılacağını belirler.`,
@@ -234,7 +318,7 @@ const SECTIONS: Section[] = [
   },
   {
     id: "yr-cm-real",
-    h: { tr: "Karışıklık matrisi III: bizim modelin matrisi", en: "Confusion matrix III: our model's matrix" },
+    h: { tr: "Karışıklık matrisi IV: bizim modelin matrisi", en: "Confusion matrix IV: our model's matrix" },
     p: [
       {
         tr: R`<code>confusion_matrix.png</code> eğitimin sonunda, <code>best.pt</code> ile 131 doğrulama karesinde çizilir. Burada en sık yapılan okuma hatası şudur: Ultralytics doğrulamayı [[confidence-score|güven eşiği]] <b>0,001</b> ile yapar (mAP'i bütün PR eğrisinden hesaplamak için en düşük skorlu tespitlere de ihtiyaç vardır) ve matris de bu eşikle doldurulur. Skoru 0,001'i geçen her kutu sayıldığı için arka plan sütunu binlerce FP ile dolar. Bu, modelin kullanıldığı eşikteki davranışı değildir.`,
@@ -253,7 +337,7 @@ const SECTIONS: Section[] = [
   },
   {
     id: "yr-cm-sem",
-    h: { tr: "Karışıklık matrisi IV: arazi örtüsü, piksel piksel", en: "Confusion matrix IV: land cover, pixel by pixel" },
+    h: { tr: "Karışıklık matrisi V: arazi örtüsü, piksel piksel", en: "Confusion matrix V: land cover, pixel by pixel" },
     p: [
       {
         tr: R`Anlamsal segmentasyon modelinde matris nesneleri değil <b>pikselleri</b> sayar: her piksel için "gerçekte ne" ve "ne dendi". Burada arka plan da sıradan bir sınıftır, bu yüzden boş hücre yoktur. Altı sınıflı bir matriste TP, FP, FN ve TN sınıf başına okunur: bir sınıf için TP köşegendeki hücre, FP satırının geri kalanı, FN sütununun geri kalanı, TN ise öteki her şeydir. Tespitte sayılamayan TN, burada piksellerle sayılabilir.`,
@@ -344,7 +428,9 @@ function build(): void {
     h("div", { class: "t-intro-text" }, h("h2", { text: T(INTRO.h) }), ...INTRO.p.map((p) => html("p", {}, p))),
   );
   const sections = SECTIONS.map((s, k) => {
-    const paragraphs: Node[] = s.p.map((p) => ("tex" in p ? formula(T(p.tex)) : html("p", {}, p)));
+    const paragraphs: Node[] = s.p.map((p) =>
+      "tex" in p ? formula(T(p.tex)) : "block" in p ? html("div", { class: "yo-table-wrap" }, p.block) : html("p", {}, p),
+    );
     paragraphs.push(html("div", { class: "in-model" }, s.model));
     return sectionCard(s.id, k + 1, s.h, paragraphs, s.demo(), s.math ?? null);
   });

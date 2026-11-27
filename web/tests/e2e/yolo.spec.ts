@@ -119,6 +119,8 @@ test.describe("chapter 4: yolo", () => {
       "yr-labels",
       "yr-batches",
       "yr-cm-intro",
+      "yr-cm-multi",
+      "yr-ap",
       "yr-cm-toy",
       "yr-cm-real",
       "yr-cm-sem",
@@ -133,6 +135,20 @@ test.describe("chapter 4: yolo", () => {
     await survey.getByRole("button", { name: 'Hepsine "sağlam" de' }).click();
     await expect(survey.locator(".yr-stats")).toContainText("%90");
     await expect(survey.locator(".yo-big")).toContainText("duyarlılık 0");
+    // cat, dog, mouse: one class against the rest, 30 photos as cards
+    const pets = page.locator("#yr-cm-multi");
+    await expect(pets.locator(".yr-pet")).toHaveCount(30);
+    await expect(pets.locator(".yr-work")).toContainText("TN = 9 + 0 + 1 + 7 = 17");
+    await pets.getByRole("button", { name: "🐭 fare" }).click();
+    await expect(pets.locator(".yr-work")).toContainText("FN = 1 + 0 = 1");
+    await pets.getByRole("button", { name: "Fare az" }).click();
+    await expect(pets.locator(".yo-big")).toContainText("makro F1 0,60");
+    // AP and mAP by hand, and a ✓ turned into ✗
+    const ap = page.locator("#yr-ap");
+    await expect(ap.locator(".yr-calc")).toContainText("= 0,83");
+    await expect(ap.locator(".yo-total")).toContainText("0,67");
+    await ap.getByRole("button", { name: "2. sıra doğru mu" }).click();
+    await expect(ap.locator(".yr-calc")).toContainText("(1,00 + 0,50 + 0,43) / 3");
     // 2. the toy tile, matched the way Ultralytics does it: 5 buildings found, 3 boxes for nothing, 3 missed
     const toy = page.locator("#yr-cm-toy");
     await expect(toy.locator(".yr-cell").nth(0)).toHaveText("5");
@@ -156,7 +172,7 @@ test.describe("chapter 4: yolo", () => {
     await expect(page.locator("#yr-results .yo-caption").first()).toContainText("epoch 88");
     await expect(page.locator("#yr-curves .chart svg path.series-line")).toHaveCount(3);
     // a file of the folder leads to its section
-    await page.locator("#yr-folder").getByRole("link", { name: "8. kısım →" }).click();
+    await page.locator("#yr-folder").getByRole("link", { name: "10. kısım →" }).click();
     await expect(page.locator("#yr-cm-real")).toBeInViewport();
     void errors;
   });
@@ -224,8 +240,8 @@ test.describe("chapter 4: yolo", () => {
   test("practice: a typical wrong number gets its own feedback, and an experiment runs the real model", async ({ page, errors }) => {
     test.setTimeout(120_000);
     await open(page, "yolo.html#alistirma");
-    await expect(page.locator("#px-toc li")).toHaveCount(10);
-    await expect(page.locator(".px-count")).toContainText("0 / 37");
+    await expect(page.locator("#px-toc li")).toHaveCount(11);
+    await expect(page.locator(".px-count")).toContainText("0 / 42");
     const iou = page.locator('[data-q="i-value"]');
     const input = iou.locator("input");
     await input.fill("0,25");

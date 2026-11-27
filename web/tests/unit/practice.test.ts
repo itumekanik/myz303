@@ -81,8 +81,8 @@ const BANKS = [
   {
     name: "yolo",
     sections: buildYoloPractice(yoloLab),
-    count: 37,
-    theory: ["y-tasks", "y-iou", "y-grid", "y-nms", "y-masks", "y-train", "y-metrics", "y-read", "yr-cm-intro", undefined],
+    count: 42,
+    theory: ["y-tasks", "y-iou", "y-grid", "y-nms", "y-masks", "y-train", "y-metrics", "y-read", "yr-cm-intro", "yr-cm-multi", undefined],
   },
 ];
 const questions = BANKS.flatMap((b) => b.sections.flatMap((s) => s.questions));

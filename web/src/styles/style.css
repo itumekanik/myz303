@@ -1919,3 +1919,47 @@ a.pc-next.link:focus-visible { outline: 2px solid var(--accent); outline-offset:
   .yr-cell { width: 40px; height: 36px; border-radius: 5px; }
   .yr-axis-top { padding-left: 76px; }
 }
+
+/* Outputs tab, sections 7–8: cat, dog, mouse and AP by hand (chapters/yolo/outputs-basics.ts) */
+.yr-role-tp { background: color-mix(in srgb, var(--series-3) 32%, var(--surface)); border-color: var(--series-3); }
+.yr-role-fp { background: color-mix(in srgb, var(--series-2) 30%, var(--surface)); border-color: var(--series-2); }
+.yr-role-fn { background: color-mix(in srgb, var(--critical) 24%, var(--surface)); border-color: var(--critical); }
+.yr-role-tn { background: var(--surface-2); border-color: var(--grid); }
+.yr-cell.yr-role-tp, .yr-cell.yr-role-fp, .yr-cell.yr-role-fn { border-width: 2px; }
+.yo-key i.yr-role-tp, .yo-key i.yr-role-fp, .yo-key i.yr-role-fn, .yo-key i.yr-role-tn { border: 2px solid; }
+.yr-pets { display: grid; gap: 8px; }
+.yr-pet-head { font-size: 12.5px; font-weight: 600; color: var(--text-2); margin-bottom: 3px; }
+.yr-pet-row { display: flex; flex-wrap: wrap; gap: 4px; }
+.yr-pet {
+  position: relative; display: grid; place-items: center; width: 36px; height: 36px; border: 2px solid; border-radius: 7px;
+  transition: opacity 0.15s;
+}
+.yr-pet.dim { opacity: 0.2; }
+.yr-pet-true { font-size: 20px; line-height: 1; }
+.yr-pet-pred {
+  position: absolute; right: -5px; bottom: -5px; display: grid; place-items: center; width: 17px; height: 17px;
+  border-radius: 50%; background: var(--surface); box-shadow: 0 0 0 1px var(--grid); font-size: 10.5px; line-height: 1;
+}
+.yr-pet-matrix .yr-cell { width: 58px; }
+.yr-work { display: grid; gap: 4px; font-size: 13px; color: var(--text-2); }
+.yr-work ul { margin: 0; padding-left: 18px; display: grid; gap: 2px; }
+.yr-work strong { color: var(--text); font-variant-numeric: tabular-nums; }
+.yr-calc {
+  margin: 4px 0 0; padding: 8px 10px; border-radius: 8px; background: var(--surface-2); color: var(--text);
+  font: 12.5px/1.5 var(--mono); overflow-wrap: anywhere;
+}
+.yr-class-table tr.yr-on th, .yr-class-table tr.yr-on td, .yr-rank tr.yr-on th, .yr-rank tr.yr-on td { background: var(--accent-soft); }
+.yr-ap-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 260px); gap: 12px; align-items: start; }
+.yr-rank td, .yr-rank th { text-align: center; }
+.yr-hit {
+  min-width: 34px; padding: 2px 8px; border: 1px solid var(--grid); border-radius: 6px; background: var(--surface-2);
+  color: var(--muted); font: inherit; font-weight: 700; cursor: pointer;
+}
+.yr-hit.on { background: color-mix(in srgb, var(--series-3) 30%, var(--surface)); border-color: var(--series-3); color: var(--text); }
+.yr-hit:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.yr-dot-hit { fill: var(--series-3); stroke: var(--surface); stroke-width: 1.5; }
+.yr-dot-miss { fill: var(--muted); stroke: var(--surface); stroke-width: 1.5; }
+@media (max-width: 720px) {
+  .yr-ap-row { grid-template-columns: minmax(0, 1fr); }
+}
+.yr-class-table tbody th { white-space: normal; min-width: 90px; }

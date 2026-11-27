@@ -221,8 +221,8 @@ const SECTION_NUMBER: Record<string, number> = {
   "yr-results": 3,
   "yr-labels": 4,
   "yr-batches": 5,
-  "yr-cm-real": 8,
-  "yr-curves": 10,
+  "yr-cm-real": 10,
+  "yr-curves": 12,
 };
 
 export function folderDemo(): HTMLElement {

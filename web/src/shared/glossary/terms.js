@@ -1099,7 +1099,7 @@ export const GLOSSARY = {
     },
     model: { tr: "Doğrulamada maske AP50: bina 0,69, spor sahası 0,30; mAP50 0,50, mAP50-95 0,25.", en: "Mask AP50 on the validation set: building 0.69, sports field 0.30; mAP50 0.50, mAP50-95 0.25." },
     modelLabel: { tr: "Bu bölümün modelinde", en: "In this chapter's model" },
-    link: [{ chapter: "yolo", tab: "theory", section: "y-metrics" }, { chapter: "yolo", tab: "train" }, { chapter: "yolo", tab: "math", section: "ym-ap" }],
+    link: [{ chapter: "yolo", tab: "theory", section: "y-metrics" }, { chapter: "yolo", tab: "outputs", section: "yr-ap" }, { chapter: "yolo", tab: "math", section: "ym-ap" }],
   },
   "confusion-matrix": {
     group: "detect",
@@ -1111,7 +1111,7 @@ export const GLOSSARY = {
     },
     model: { tr: "confusion_matrix.png güven eşiği 0,001 ile çizilir: arka plan sütunundaki binlerce FP bundandır; eşik 0,25'te çok azalır.", en: "confusion_matrix.png is drawn at confidence threshold 0.001: that is where the thousands of FPs in the background column come from; at 0.25 they shrink a lot." },
     modelLabel: { tr: "Bu bölümün modelinde", en: "In this chapter's model" },
-    link: [{ chapter: "yolo", tab: "outputs", section: "yr-cm-intro" }, { chapter: "yolo", tab: "outputs", section: "yr-cm-real" }],
+    link: [{ chapter: "yolo", tab: "outputs", section: "yr-cm-intro" }, { chapter: "yolo", tab: "outputs", section: "yr-cm-multi" }, { chapter: "yolo", tab: "outputs", section: "yr-cm-real" }],
   },
   "true-positive": {
     group: "detect",
@@ -1184,6 +1184,16 @@ export const GLOSSARY = {
     model: { tr: "Eğitimde 10.974 bina, 529 spor sahası (yaklaşık 21'e 1); saha AP50'si 0,30.", en: "Training has 10,974 buildings and 529 sports fields (about 21 to 1); the field's AP50 is 0.30." },
     modelLabel: { tr: "Bu bölümün modelinde", en: "In this chapter's model" },
     link: { chapter: "yolo", tab: "outputs", section: "yr-labels" },
+  },
+  "macro-average": {
+    group: "detect",
+    name: { tr: "Makro, mikro ve ağırlıklı ortalama", en: "Macro, micro and weighted average" },
+    aka: ["macro average", "micro average", "weighted average", "makro ortalama", "mikro ortalama", "ağırlıklı ortalama", "macro f1"],
+    def: {
+      tr: "Çok sınıflı bir modelin sınıf başına ölçülerini tek sayıya indirmenin üç yolu. Makro: her sınıfın [[precision|kesinliği]], [[recall|duyarlılığı]] ya da [[f1-score|F1]]'i ayrı hesaplanır, sonra eşit ağırlıkla ortalanır; az örnekli sınıfın kötü sonucu görünür kalır. Ağırlıklı: sınıflar örnek sayılarıyla ağırlıklanır. Mikro: bütün sınıfların TP, FP ve FN'si toplanıp bir kez hesaplanır; her örneğin tek etiketi varsa [[accuracy|doğruluğa]] eşittir. mAP bir makro ortalamadır.",
+      en: "Three ways to bring a multi-class model's per-class scores down to one number. Macro: each class's [[precision|precision]], [[recall|recall]] or [[f1-score|F1]] is computed separately, then averaged with equal weight; a rare class's poor result stays visible. Weighted: the classes are weighted by their number of examples. Micro: every class's TP, FP and FN are added up and computed once; when every example has one label it equals the [[accuracy|accuracy]]. mAP is a macro average.",
+    },
+    link: { chapter: "yolo", tab: "outputs", section: "yr-cm-multi" },
   },
 };
 

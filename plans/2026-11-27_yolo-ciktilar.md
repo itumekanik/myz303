@@ -80,3 +80,13 @@
 - Etiketler: 10.974 bina, 529 saha; binaların %56'sının uzun kenarı karenin onda birinden kısa.
 
 Not: Y6/Y7 (yeniden eğitim) hâlâ açık. Yeniden eğitilince bu sekmenin verisi de aynı araçla yeniden üretilir.
+
+## Ek (2026-11-27, öğretim üyesinin isteği): YOLO'dan bağımsız el örnekleri
+
+- 7. kısım `yr-cm-multi`: kedi, köpek, fare (30 fotoğraf, 3 × 3). Seçilen sınıf için bire karşı hepsi renklendirme
+  (TP yeşil, FP turuncu, FN kırmızı, TN gri), elle TP/FP/FN/TN hesabı, sınıf başına P/R/F1, makro, ağırlıklı ve
+  mikro ortalama; senaryolar: örnek, fare az, hep "köpek".
+- 8. kısım `yr-ap`: sıralı listelerle AP elle (✓ satırlarındaki kesinliğin ortalaması), PR eğrisi ve zarfı,
+  COCO/Ultralytics 101 noktası, mAP = (0,83 + 0,77 + 0,42)/3 ≈ 0,67; ✓/✗ değiştirilebilir.
+- 6. kısma alan bağımsız tablo (hasar taraması, tıbbi test, spam filtresi, beton çatlağı).
+- Alıştırma: `yx-basics`, 5 soru (toplam 42); sözlük: makro/mikro/ağırlıklı ortalama.

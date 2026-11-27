@@ -851,7 +851,7 @@ const MATH = [
           en: R`mAP is the mean of the classes' APs. For mAP50 an IoU ≥ 0.5 is enough to count as correct; mAP50-95 repeats the computation for \(\tau = 0.50, 0.55, \dots, 0.95\) and averages. On our model the building mask AP50 is 0.69 and AP50-95 0.35; for sports fields 0.30 and 0.15. The large gap between the two says the outlines fit roughly but not exactly.`,
         },
       },
-      { links: [{ tab: "theory", section: "y-metrics" }, { tab: "train" }] },
+      { links: [{ tab: "theory", section: "y-metrics" }, { tab: "outputs", section: "yr-ap" }, { tab: "train" }] },
     ],
   },
   {
