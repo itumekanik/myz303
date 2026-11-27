@@ -10,6 +10,28 @@ The site shows the newest version here at the bottom of the start page and of th
 page title, top left). To release one, add a section below with the version and the date, set the
 same version in `web/package.json`, and push to `main`. The build fails if the two differ.
 
+## [1.4.1] - 2026-11-27
+
+### Added
+
+- **YOLO chapter, Outputs tab:** two sections that teach the measures apart from YOLO, by hand.
+  - **The confusion matrix with three classes:** 30 photos of cats, dogs and mice, a 3×3 matrix,
+    and TP, FP, FN and TN for the class you pick, coloured on the photos and in the matrix. Then
+    precision, recall and F1 per class, their macro, weighted and micro averages, and two more
+    models: one that rarely sees a mouse, one that always says "dog".
+  - **AP and mAP by hand:** eight ranked photos per class, with precision and recall after each, the
+    PR curve and its envelope. Any answer can be switched between right and wrong, and AP and mAP
+    are computed again.
+
+  A table shows TP, FP, FN and TN in a medical test, a spam filter and a concrete crack detector.
+  Five new practice questions (42 in all), and a glossary term for the three averages.
+
+### Fixed
+
+- **CNN chapter, training in the browser:** without a usable graphics card TensorFlow.js trains on
+  the CPU, and the page froze for the whole run: the step counter, the log and the Stop button did
+  not respond. The page now stays responsive between batches.
+
 ## [1.4.0] - 2026-11-27
 
 A new chapter 4: object detection and segmentation with YOLO, on satellite images. The chapters
