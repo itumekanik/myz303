@@ -10,6 +10,56 @@ The site shows the newest version here at the bottom of the start page and of th
 page title, top left). To release one, add a section below with the version and the date, set the
 same version in `web/package.json`, and push to `main`. The build fails if the two differ.
 
+## [1.4.0] - 2026-11-27
+
+A new chapter 4: object detection and segmentation with YOLO, on satellite images. The chapters
+still to come (RNN, attention, Transformer) move to 5, 6 and 7.
+
+### Added
+
+- **Chapter 4, YOLO:** two YOLO26n models, trained for the chapter on SpaceNet satellite tiles of
+  Las Vegas, Paris, Shanghai and Khartoum, run in the browser (also from the offline copy). One
+  finds buildings and sports fields with their outlines, the other maps roads, green areas, water
+  and parking. The chapter has seven tabs:
+  - **Theory:** eight sections with live demos: the four tasks, boxes and IoU, the three grids of
+    8400 candidates, the confidence threshold and NMS step by step, masks from prototypes, training,
+    precision, recall and mAP, and areas in m².
+  - **Detection:** a validation tile or your own image, with thresholds you move, building count,
+    footprint area, built-up ratio, a comparison with the true outlines and a land-cover map.
+  - **Training:** the record of our runs, pretrained against from scratch, and the same tile
+    after 1 to 100 epochs.
+  - **Outputs:** how to read what training writes, file by file, and the confusion matrix in four
+    steps: TP, FP, FN and TN on a damage survey, a toy tile, our model's matrix at any threshold
+    with examples for every cell, and the land-cover model's pixel matrix. Then the P, R, F1 and PR
+    curves.
+  - **Math:** box decoding, IoU and its losses, binary cross-entropy, the mask loss, NMS, AP and
+    area errors, with widgets that compute.
+  - **Coding:** two Python files, `YOLO_SpaceNet_data.py` (data and labels) and `YOLO_SpaceNet.py`
+    (training, measuring, export), best run on Google Colab.
+  - **Practice:** 37 questions, five of them experiments on the real model.
+
+  22 new glossary terms. The README lists the licences of the imagery (CC BY-SA 4.0) and of the
+  OpenStreetMap labels (ODbL).
+- **MLP chapter:** a new Theory section on overfitting and the training, validation and test sets,
+  with a network that memorizes 12 noisy points; the playground keeps a quarter of the points for
+  testing.
+- **Practice:** every chapter ends with five "Putting it together" questions, and a typical wrong
+  number (a forgotten bias, the wrong logarithm, …) gets its own explanation.
+- **Coding:** every Coding tab says how to run its Python file, with or without installing Python,
+  and the file downloads from the page.
+
+### Changed
+
+- **CNN chapter:** it opens on its Theory tab, and teaches the smallest CNN first; Dropout and
+  BatchNorm come last.
+- **Top bar:** the home button sits on the right, next to the glossary.
+
+### Known issues
+
+- **YOLO labels:** the chapter's models were trained before two bugs in the label script were found
+  (holes where two land-cover polygons overlap, and OpenStreetMap areas made of several pieces).
+  `YOLO_SpaceNet_data.py` is fixed; the models will be retrained in a later release.
+
 ## [1.3.0] - 2026-11-22
 
 The CNN chapter gets its Practice tab, so all three chapters now have one.
