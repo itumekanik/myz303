@@ -247,8 +247,11 @@ class StopTraining extends Error {}
 const GPU_LOST = /device.*\blost\b|context.*\blost\b|DXGI_ERROR/i;
 
 /**
- * Lets the page run between evaluation batches. Not tf.nextFrame() (requestAnimationFrame): that
- * stops in a hidden tab, and so would the run. Message events are not throttled there either.
+ * Lets the page run between batches. On the GPU, reading results back already hands control to
+ * the page; on the CPU backend every step resolves in microtasks, so without this the page (its
+ * counters and the Stop button) would freeze for the whole run. Not tf.nextFrame()
+ * (requestAnimationFrame): that stops in a hidden tab, and so would the run. Message events are
+ * not throttled there either.
  */
 function breathe(): Promise<void> {
   return new Promise((resolve) => {
@@ -521,6 +524,7 @@ export class TrainingSession {
             this.f.filters = conv1Filters((await kernel.data()) as Float32Array);
             kernel.dispose();
           }
+          await breathe();
         }
         const trainLoss = lossSum / batches,
           trainAcc = (100 * correct) / trainIdx.length;

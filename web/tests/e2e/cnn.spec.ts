@@ -226,16 +226,22 @@ test.describe("chapter 3: the Practice tab", () => {
 test.describe("chapter 3: training in the browser", () => {
   // One project is enough (TensorFlow.js loading from file:// is the harder case); slow without a GPU
   test.skip(({ baseURL }) => !baseURL?.startsWith("file:"), "runs in the file:// project only");
-  test.slow();
+  // CI machines have no GPU, and headless Firefox there has no WebGL either: TensorFlow.js then
+  // trains on the CPU, so the batches are kept small and the time limit is generous
+  test.setTimeout(240_000);
 
   test("a run starts on TensorFlow.js, reports batches and can be stopped", async ({ page, errors }) => {
     await open(page, "cnn.html#egitim");
     await page.fill('input[name="epochs"]', "1");
+    await page.fill('input[name="batch_size"]', "8");
     await page.locator("#btn-start").click();
     // only the new run's log names TensorFlow.js (the bundled PyTorch run is shown before it)
-    await expect(page.locator("#log")).toContainText("TensorFlow.js", { timeout: 60_000 });
+    await expect(page.locator("#log")).toContainText("TensorFlow.js", { timeout: 120_000 });
     await expect(page.locator("#step-count")).toHaveText(/: [1-9]/, { timeout: 120_000 });
-    await page.locator("#btn-stop").click();
+    // On the CPU one batch blocks the page for seconds, and click()'s checks (visible, stable,
+    // scrolled into view, hit target) each wait for a gap between batches: up to a minute in all.
+    // A single click event is enough to test stopping; a person's click is handled after the batch.
+    await page.locator("#btn-stop").dispatchEvent("click");
     await expect(page.locator("#state-pill")).toContainText("Durduruldu", { timeout: 120_000 });
     await expect(page.locator("#log")).toContainText("stopped by the user");
     void errors;
