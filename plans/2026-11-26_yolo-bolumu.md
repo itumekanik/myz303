@@ -1,7 +1,7 @@
 # 4. bölüm planı: "Nesne tespiti ve segmentasyon: YOLO"
 
 - **Tarih:** 2026-11-26
-- **Durum:** onaylandı (2026-11-26). 0. aşama (ön deneme), 1. aşama (motor), 2. aşama (iskelet, Tespit ve Eğitim sekmeleri) ve 3. aşama (Teori, sözlükte 14 terim) bitti (2026-11-27). Kararlar aşağıda.
+- **Durum:** onaylandı (2026-11-26). 0. aşama (ön deneme), 1. aşama (motor), 2. aşama (iskelet, Tespit ve Eğitim sekmeleri), 3. aşama (Teori, sözlükte 14 terim) ve 4. aşama (Matematik) bitti (2026-11-27). Kararlar aşağıda.
 - **Öğretim üyesinin isteği (2026-11-26):** YOLO'nun son sürümüyle, inşaat mühendisliğine uygun bir
   kuş bakışı görüntü örneği. YOLO'nun nasıl çalıştığı ve nasıl eğitildiği, tam bir ders gibi ve
   pedagojik olarak.
@@ -189,7 +189,7 @@ alanı, maske sınırı bir piksel büyütülüp küçültülünce alanın nası
    enterpolasyonu; mAP50-95'in ortalaması.
 8. **Alan ve hata:** GSD, piksel alanı, m²; sınır her yandan bir maske pikseli (160'lık maskede
    650/640 × 0,3 × 4 ≈ 1,22 m) kayarsa 10 m × 10 m'lik bir binanın alanı %43 küçülür ya da %55 büyür ✓.
-   Maske tam çözünürlüğe büyütülünce hata ne kadar azalıyor ⟨ölçülecek⟩.
+   Maske tam çözünürlüğe büyütülünce hata ne kadar azalıyor: doğrulamada eşleşen 1.571 binada ortalama maske IoU, en yakın komşuyla büyütmede 0,742, logitleri bilinear büyütmede 0,751 ✓.
 
 ## 6. Kodlama (14 adım)
 

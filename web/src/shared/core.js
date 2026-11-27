@@ -623,7 +623,7 @@ export const PLACE_TITLES = {
   "pc-run": { tr: "Çalıştırmak ve sonucu okumak", en: "Running it and reading the result" },
   "pc-torch": { tr: "Aynısı PyTorch ile", en: "The same in PyTorch" },
   "pc-exercises": { tr: "Alıştırmalar", en: "Exercises" },
-  // Chapter 4: Theory sections of yolo.html (the glossary links to them from every page)
+  // Chapter 4: Theory and Math sections of yolo.html (the glossary links to them from every page)
   "y-intro": { tr: "Nesne tespiti ve segmentasyon: YOLO nasıl çalışır?", en: "Object detection and segmentation: how does YOLO work?" },
   "y-tasks": { tr: "Ne ve nerede? Dört görev", en: "What and where? Four tasks" },
   "y-iou": { tr: "Kutu ve IoU", en: "Boxes and IoU" },
@@ -633,6 +633,14 @@ export const PLACE_TITLES = {
   "y-train": { tr: "Nasıl eğitilir?", en: "How is it trained?" },
   "y-metrics": { tr: "Ne kadar iyi? Kesinlik, duyarlılık, mAP", en: "How good? Precision, recall, mAP" },
   "y-read": { tr: "Mühendis sonucu nasıl okur?", en: "How does an engineer read the result?" },
+  "ym-notation": { tr: "Gösterim ve boyutlar", en: "Notation and sizes" },
+  "ym-boxes": { tr: "Kutunun kodlanması", en: "How a box is encoded" },
+  "ym-iou": { tr: "IoU ve IoU kayıpları", en: "IoU and the IoU losses" },
+  "ym-cls": { tr: "Sınıf skoru: sigmoid ve ikili çapraz entropi", en: "The class score: sigmoid and binary cross-entropy" },
+  "ym-mask": { tr: "Maske: prototiplerin doğrusal birleşimi", en: "The mask: a linear combination of prototypes" },
+  "ym-nms": { tr: "NMS: algoritma ve maliyeti", en: "NMS: the algorithm and its cost" },
+  "ym-ap": { tr: "Kesinlik, duyarlılık ve AP", en: "Precision, recall and AP" },
+  "ym-area": { tr: "Alan ve hatası", en: "Area and its error" },
   // Chapter 2: Theory, Math and Coding sections of mlp.html
   "ml-intro": { tr: "Çok katmanlı ağ: gizli katmanlar ve geri yayılım", en: "The multilayer network: hidden layers and backpropagation" },
   "ml-act": { tr: "Basamaktan yumuşak eşiğe: aktivasyonlar", en: "From the step to a soft threshold: activations" },

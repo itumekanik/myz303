@@ -966,7 +966,7 @@ export const GLOSSARY = {
       tr: "Bir nesneyi içine alan, kenarları görüntünün kenarlarına paralel dikdörtgen. Dört sayıdır: köşelerle \\((x_1, y_1, x_2, y_2)\\) ya da merkez ve boyutla \\((c_x, c_y, w, h)\\). Tahmin edilen bir kutunun doğruluğu [[iou|IoU]] ile ölçülür.",
       en: "A rectangle with sides parallel to the image's that encloses an object. It is four numbers: by its corners \\((x_1, y_1, x_2, y_2)\\) or by its centre and size \\((c_x, c_y, w, h)\\). How right a predicted box is, is measured with [[iou|IoU]].",
     },
-    link: { chapter: "yolo", tab: "theory", section: "y-iou" },
+    link: [{ chapter: "yolo", tab: "theory", section: "y-iou" }, { chapter: "yolo", tab: "math", section: "ym-boxes" }],
   },
   iou: {
     group: "detect",
@@ -977,7 +977,7 @@ export const GLOSSARY = {
       en: "The area two boxes (or two masks) share, divided by the area they cover together: \\(|A \\cap B| / |A \\cup B|\\). It is 1 for an exact match and 0 when they do not overlap. It does not depend on the object's size, so it decides whether a prediction counts as correct (usually IoU ≥ 0.5); [[nms|NMS]] finds copies with IoU too.",
     },
     see: ["precision", "average-precision"],
-    link: { chapter: "yolo", tab: "theory", section: "y-iou" },
+    link: [{ chapter: "yolo", tab: "theory", section: "y-iou" }, { chapter: "yolo", tab: "math", section: "ym-iou" }],
   },
   "confidence-score": {
     group: "detect",
@@ -989,7 +989,7 @@ export const GLOSSARY = {
     },
     model: { tr: "Varsayılan eşik 0,25. Şanghay karesinde 8400 adaydan 107'si bu eşiği geçer.", en: "The default threshold is 0.25. On the Shanghai tile 107 of the 8400 candidates pass it." },
     modelLabel: { tr: "Bu bölümün modelinde", en: "In this chapter's model" },
-    link: { chapter: "yolo", tab: "theory", section: "y-nms" },
+    link: [{ chapter: "yolo", tab: "theory", section: "y-nms" }, { chapter: "yolo", tab: "math", section: "ym-cls" }],
   },
   nms: {
     group: "detect",
@@ -999,7 +999,7 @@ export const GLOSSARY = {
       tr: "Aynı nesneyi bulan birden fazla adaydan yalnızca en iyisini bırakan adım: adaylar skora göre sıralanır, en yüksek skorlu aday tutulur, aynı sınıftan olup onunla [[iou|IoU]]'su eşiği aşan adaylar silinir ve bu, kalanlarla tekrarlanır. YOLOv10 ve YOLO26 bire bir bir baş eğiterek NMS'e gerek bırakmaz.",
       en: "The step that keeps only the best of several candidates that found the same object: candidates are sorted by score, the highest is kept, those of the same class overlapping it by an [[iou|IoU]] above the threshold are removed, and this repeats with the rest. YOLOv10 and YOLO26 train a one-to-one head so that NMS is not needed.",
     },
-    link: { chapter: "yolo", tab: "theory", section: "y-nms" },
+    link: [{ chapter: "yolo", tab: "theory", section: "y-nms" }, { chapter: "yolo", tab: "math", section: "ym-nms" }],
   },
   "semantic-segmentation": {
     group: "detect",
@@ -1033,7 +1033,7 @@ export const GLOSSARY = {
     },
     model: { tr: "32 prototip, her biri 160 × 160; bir prototip pikseli bu karelerde 0,8–1,2 m.", en: "32 prototypes, each 160 × 160; one prototype pixel is 0.8–1.2 m on these tiles." },
     modelLabel: { tr: "Bu bölümün modelinde", en: "In this chapter's model" },
-    link: { chapter: "yolo", tab: "theory", section: "y-masks" },
+    link: [{ chapter: "yolo", tab: "theory", section: "y-masks" }, { chapter: "yolo", tab: "math", section: "ym-mask" }],
   },
   "label-assignment": {
     group: "detect",
@@ -1077,7 +1077,7 @@ export const GLOSSARY = {
       tr: "Modelin tespitlerinden ne kadarının doğru olduğu: \\(P = TP / (TP + FP)\\). TP doğru tespit (aynı sınıftan bir gerçek nesneyle yeterli [[iou|IoU]]), FP yanlış tespittir. [[recall|Duyarlılıkla]] birlikte okunur.",
       en: "How many of the model's detections are right: \\(P = TP / (TP + FP)\\). TP is a correct detection (enough [[iou|IoU]] with a true object of its class), FP a wrong one. It is read together with [[recall|recall]].",
     },
-    link: { chapter: "yolo", tab: "theory", section: "y-metrics" },
+    link: [{ chapter: "yolo", tab: "theory", section: "y-metrics" }, { chapter: "yolo", tab: "math", section: "ym-ap" }],
   },
   recall: {
     group: "detect",
@@ -1087,7 +1087,7 @@ export const GLOSSARY = {
       tr: "Gerçek nesnelerden ne kadarının bulunduğu: \\(R = TP / (TP + FN)\\). FN, hiçbir tespitin eşleşmediği (kaçırılan) gerçek nesnedir. [[confidence-score|Güven eşiği]] düştükçe artar; [[precision|kesinlik]] ise genellikle düşer.",
       en: "How many of the true objects were found: \\(R = TP / (TP + FN)\\). An FN is a true object no detection matched (missed). It rises as the [[confidence-score|confidence threshold]] falls, while [[precision|precision]] usually falls.",
     },
-    link: { chapter: "yolo", tab: "theory", section: "y-metrics" },
+    link: [{ chapter: "yolo", tab: "theory", section: "y-metrics" }, { chapter: "yolo", tab: "math", section: "ym-ap" }],
   },
   "average-precision": {
     group: "detect",
@@ -1099,7 +1099,7 @@ export const GLOSSARY = {
     },
     model: { tr: "Doğrulamada maske AP50: bina 0,69, spor sahası 0,30; mAP50 0,50, mAP50-95 0,25.", en: "Mask AP50 on the validation set: building 0.69, sports field 0.30; mAP50 0.50, mAP50-95 0.25." },
     modelLabel: { tr: "Bu bölümün modelinde", en: "In this chapter's model" },
-    link: [{ chapter: "yolo", tab: "theory", section: "y-metrics" }, { chapter: "yolo", tab: "train" }],
+    link: [{ chapter: "yolo", tab: "theory", section: "y-metrics" }, { chapter: "yolo", tab: "train" }, { chapter: "yolo", tab: "math", section: "ym-ap" }],
   },
 };
 

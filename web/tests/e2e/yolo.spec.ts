@@ -106,6 +106,37 @@ test.describe("chapter 4: yolo", () => {
     void errors;
   });
 
+  test("math: eight sections, derivations and widgets that compute", async ({ page, errors }) => {
+    await open(page, "yolo.html#matematik");
+    await expect(page.locator("#ym-toc li")).toHaveCount(8);
+    await expect(page.locator("#ym-main .katex").first()).toBeVisible();
+    await expect(page.locator(".katex-error")).toHaveCount(0);
+    // the number of candidates follows the input size: 21 S² / 1024
+    const sizes = page.locator("#ym-notation .m-widget");
+    await expect(sizes).toContainText("8400");
+    await sizes.locator("input[type=range]").fill("512");
+    await expect(sizes).toContainText("5376");
+    // the hand-made PR curve: AP over 101 recall levels
+    const pr = page.locator("#ym-ap .m-widget");
+    await expect(pr).toContainText("0,6865");
+    await pr.locator(".ym-tp").nth(2).click(); // the third detection becomes correct
+    await expect(pr).not.toContainText("0,6865");
+    // gradient descent on the mask coefficients lowers the loss
+    const fit = page.locator("#ym-mask .m-widget");
+    await expect(fit).toContainText("0,6931");
+    await fit.getByRole("button", { name: "50 adım" }).click();
+    await expect(fit).not.toContainText("0,6931");
+    void errors;
+  });
+
+  test("theory → math: a section's link opens its derivation", async ({ page, errors }) => {
+    await open(page, "yolo.html");
+    await page.locator("#y-iou .m-theory-link").click();
+    await expect(page).toHaveURL(/#matematik\/ym-iou$/);
+    await expect(page.locator("#ym-iou")).toBeVisible();
+    void errors;
+  });
+
   test("fits a phone", async ({ page, errors }) => {
     test.setTimeout(120_000);
     await page.setViewportSize({ width: 375, height: 800 });

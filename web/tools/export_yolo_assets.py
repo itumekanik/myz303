@@ -2,7 +2,7 @@
 Exports what the YOLO chapter of the static site needs, as JavaScript data files a page loads with a
 <script> tag (which also works when the page is opened from a file, where fetch() is not allowed).
 
-    python web/tools/export_yolo_assets.py <source>      (from the repository root)
+    python web/tools/export_yolo_assets.py <source> [--fixture-only]      (from the repository root)
 
 <source> is the folder the chapter's Python code worked in: data/seg, data/sem, data/tiles (the val tiles,
 their labels and georeference) and runs/seg-pretrained, runs/sem-pretrained (the trained models, exported
@@ -36,7 +36,7 @@ import onnxruntime as ort
 import torch
 from ultralytics.data.augment import LetterBox
 from ultralytics.utils import ops
-from ultralytics.utils.metrics import compute_ap
+from ultralytics.utils.metrics import bbox_iou, compute_ap
 from ultralytics.utils.nms import non_max_suppression
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -244,22 +244,40 @@ def ap_cases() -> list[dict]:
     return cases
 
 
-def main() -> None:
-    if len(sys.argv) != 2:
-        sys.exit(__doc__)
-    source = Path(sys.argv[1]).resolve()
+def iou_cases() -> list[dict]:
+    """Ultralytics' bbox_iou (IoU, GIoU, DIoU, CIoU) for overlapping, touching, apart and nested boxes."""
+    pairs = [([10, 10, 50, 40], [20, 15, 60, 45]), ([0, 0, 10, 10], [10, 0, 20, 10]), ([0, 0, 10, 10], [30, 5, 40, 25]),
+             ([0, 0, 100, 100], [25, 25, 75, 75]), ([552.1, 312.9, 640.9, 452.6], [548.0, 320.0, 630.0, 460.0])]
+    out = []
+    for a, b in pairs:
+        ta, tb = torch.tensor([a], dtype=torch.float64), torch.tensor([b], dtype=torch.float64)
+        out.append({"a": a, "b": b, **{k: float(bbox_iou(ta, tb, xywh=False, **{flag: True} if flag else {})[0, 0])
+                                         for k, flag in (("iou", None), ("giou", "GIoU"), ("diou", "DIoU"), ("ciou", "CIoU"))}})
+    return out
+
+
+def write_assets(source: Path, picked: list[str]) -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     for name, run, file, names in [("yolo-seg", "seg-pretrained", "seg_web.onnx", SEG_NAMES), ("yolo-sem", "sem-pretrained", "sem_web.onnx", SEM_NAMES)]:
         onnx = (source / "runs" / run / "weights" / file).read_bytes()
         write_data(name, {"names": names, "size": 640, "onnx": gz(onnx)})
-    picked = pick_samples(source)
     write_data("yolo-samples", {
         "source": "SpaceNet 2 (CC BY-SA 4.0); sports fields and land cover: (c) OpenStreetMap contributors (ODbL)",
         "segNames": SEG_NAMES, "semNames": SEM_NAMES, "samples": samples(source, picked),
     })
     write_data("yolo-run", run_record(source))
+
+
+def main() -> None:
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    if len(args) != 1:
+        sys.exit(__doc__)
+    source = Path(args[0]).resolve()
+    picked = pick_samples(source)
+    if "--fixture-only" not in sys.argv:  # --fixture-only: the tests' fixture without rewriting the data files
+        write_assets(source, picked)
     FIXTURES.mkdir(parents=True, exist_ok=True)
-    fixture = {"resize": resize_cases(), "letterbox": letterbox_cases(), "model": model_case(source, picked[0]), "ap": ap_cases()}
+    fixture = {"resize": resize_cases(), "letterbox": letterbox_cases(), "model": model_case(source, picked[0]), "ap": ap_cases(), "iou": iou_cases()}
     path = FIXTURES / "yolo-parity.json"
     path.write_text(json.dumps(fixture, separators=(",", ":")) + "\n", encoding="utf-8", newline="\n")
     print(f"web/tests/fixtures/yolo-parity.json  {path.stat().st_size / 1e6:.2f} MB; samples: {', '.join(picked)}")

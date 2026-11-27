@@ -317,6 +317,17 @@ const ORDER: [string, Section, Record<number, string | Text>, () => HTMLElement]
   ],
 ];
 
+/** The Math tab section behind each Theory section ("∑ The math →"). */
+const MATH_LINKS: Record<string, string> = {
+  "y-iou": "ym-iou",
+  "y-grid": "ym-boxes",
+  "y-nms": "ym-nms",
+  "y-masks": "ym-mask",
+  "y-train": "ym-cls",
+  "y-metrics": "ym-ap",
+  "y-read": "ym-area",
+};
+
 let built = false;
 
 function build(): void {
@@ -348,7 +359,7 @@ function build(): void {
       if (f) paragraphs.push(formula(typeof f === "string" ? f : T(f)));
     });
     paragraphs.push(html("div", { class: "in-model" }, s.model));
-    return sectionCard(id, k + 1, s.h, paragraphs, demo());
+    return sectionCard(id, k + 1, s.h, paragraphs, demo(), MATH_LINKS[id] ?? null);
   });
   const recap = h(
     "div",

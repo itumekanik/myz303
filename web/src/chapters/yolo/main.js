@@ -7,5 +7,6 @@ import "./page.ts";
 import "./theory.ts";
 import "./detect.ts";
 import "./training.ts";
+import "./mathtab.ts";
 import "../../shared/glossary/panel.js";
 import "../../shared/math.js";

@@ -14,7 +14,7 @@ import { fromBase64 } from "../../src/engines/data.ts";
 import { aboveConfidence, anchorOf, boxIou, candidateCount, nms, type Candidate } from "../../src/engines/yolo/detect.ts";
 import { letterbox, letterboxParams, resizeLinear, roundHalfEven, toImageBox } from "../../src/engines/yolo/image.ts";
 import { areaSquareMetres } from "../../src/engines/yolo/masks.ts";
-import { averagePrecision, matchPredictions, precisionRecall } from "../../src/engines/yolo/metrics.ts";
+import { averagePrecision, iouVariants, matchPredictions, precisionRecall } from "../../src/engines/yolo/metrics.ts";
 import { createModel, initRuntime, runInstances, runLandCover, type PackedYolo, type YoloModel } from "../../src/engines/yolo/model.ts";
 import { fillPolygon, maskIou, unionArea } from "../../src/engines/yolo/raster.ts";
 
@@ -47,6 +47,7 @@ interface Fixture {
     landCover: number[];
   };
   ap: { recall: number[]; precision: number[]; ap: number }[];
+  iou: { a: number[]; b: number[]; iou: number; giou: number; diou: number; ciou: number }[];
 }
 
 const fixture = JSON.parse(readFileSync(join(here, "../fixtures/yolo-parity.json"), "utf8")) as Fixture;
@@ -126,6 +127,14 @@ describe("YOLO metrics (engines/yolo/metrics.ts)", () => {
   it("gives Ultralytics' compute_ap", () => {
     for (const c of fixture.ap)
       assert.ok(Math.abs(averagePrecision(c.recall, c.precision) - c.ap) < 1e-12, `${averagePrecision(c.recall, c.precision)} vs ${c.ap}`);
+  });
+
+  it("gives Ultralytics' bbox_iou: IoU, GIoU, DIoU and CIoU", () => {
+    for (const c of fixture.iou) {
+      const v = iouVariants(c.a, c.b);
+      for (const k of ["iou", "giou", "diou", "ciou"] as const)
+        assert.ok(Math.abs(v[k] - c[k]) < 1e-6, `${k} of ${c.a} and ${c.b}: ${v[k]} vs ${c[k]}`);
+    }
   });
 
   it("matches predictions to true objects greedily, best score first", () => {

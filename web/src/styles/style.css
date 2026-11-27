@@ -1758,15 +1758,37 @@ a.pc-next.link:focus-visible { outline: 2px solid var(--accent); outline-offset:
 .yo-pr-row { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 12px; align-items: start; }
 .yo-pr svg { width: 100%; height: auto; overflow: visible; }
 .yo-pr .yo-pr-line { fill: none; stroke: var(--series-1); stroke-width: 2; }
-.yo-pr .yo-pr-area { fill: var(--accent-soft); stroke: none; }
+.yo-pr-area { fill: var(--accent-soft); stroke: none; }
 .yo-pr .yo-pr-point { fill: var(--series-2); stroke: var(--surface); stroke-width: 2; }
 .yo-compare td, .yo-compare th { white-space: normal; text-align: left; }
+/* Math widgets (mathtab.ts) */
+.ym-svg svg { width: 100%; max-width: 420px; height: auto; overflow: visible; }
+.ym-grid { stroke: var(--grid); stroke-width: 1; }
+.ym-cell { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
+.ym-box { fill: none; stroke: var(--series-2); stroke-width: 2; }
+.ym-arrow { stroke: var(--series-1); stroke-width: 1.5; }
+.ym-anchor { fill: var(--series-1); }
+.ym-c1, .ym-c2, .ym-c3 { fill: none; stroke-width: 2; }
+.ym-c1 { stroke: var(--series-1); }
+.ym-c2 { stroke: var(--series-2); }
+.ym-c3 { stroke: var(--series-3); }
+.yo-key i.ym-k1 { background: var(--series-1); }
+.yo-key i.ym-k2 { background: var(--series-2); }
+.yo-key i.ym-k3 { background: var(--series-3); }
+.ym-masks { display: flex; flex-wrap: wrap; gap: 16px; }
+.ym-masks figure { margin: 0; display: grid; gap: 4px; font-size: 12px; color: var(--text-2); }
+.ym-mask { width: 120px; height: 120px; image-rendering: pixelated; border-radius: 6px; }
+.ym-pr { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; align-items: start; }
+.ym-pr svg { width: 100%; height: auto; }
+.ym-tp { min-width: 40px; color: var(--critical-text); }
+.ym-tp.on { color: var(--good-text); }
 @media (max-width: 1100px) {
   .yo-main { grid-template-columns: minmax(0, 1fr); }
   .yo-side { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .yo-thumbs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 @media (max-width: 720px) {
+  .ym-pr { grid-template-columns: minmax(0, 1fr); }
   .yo-pr-row { grid-template-columns: minmax(0, 1fr); }
   .yo-protos { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .yo-side { grid-template-columns: minmax(0, 1fr); }
