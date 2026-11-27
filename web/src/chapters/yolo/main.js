@@ -8,5 +8,6 @@ import "./theory.ts";
 import "./detect.ts";
 import "./training.ts";
 import "./mathtab.ts";
+import "./codetab.ts";
 import "../../shared/glossary/panel.js";
 import "../../shared/math.js";

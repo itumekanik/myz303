@@ -4,10 +4,11 @@ Exports what the YOLO chapter of the static site needs, as JavaScript data files
 
     python web/tools/export_yolo_assets.py <source> [--fixture-only]      (from the repository root)
 
-<source> is the folder the chapter's Python code worked in: data/seg, data/sem, data/tiles (the val tiles,
-their labels and georeference) and runs/seg-pretrained, runs/sem-pretrained (the trained models, exported
-by scripts/export_variants.py as seg_web.onnx and sem_web.onnx: float16 weights, float32 inputs and outputs).
-Needs ultralytics, onnxruntime, opencv-python and numpy.
+<source> is the folder the chapter's Python files worked in (the repository root if you ran them there):
+data/yolo/{seg,sem,tiles} from YOLO_SpaceNet_data.py, and runs/yolo/{seg-pretrained,seg-scratch,sem-pretrained}
+from `YOLO_SpaceNet.py train`, with seg_web.onnx and sem_web.onnx from `YOLO_SpaceNet.py export` (float16
+weights, float32 inputs and outputs). The training folder of the first version (data/seg, runs/seg-pretrained)
+works too. Needs ultralytics, onnxruntime, opencv-python and numpy.
 
 Writes web/public/data/:
 
@@ -50,6 +51,16 @@ CONF, IOU = 0.25, 0.7
 M_PER_DEGREE = 111_320  # metres per degree of latitude (WGS84, mean)
 
 
+def data_dir(source: Path) -> Path:
+    """YOLO_SpaceNet_data.py writes data/yolo/{seg,sem,tiles}; the first spike wrote data/{seg,sem,tiles}."""
+    return source / "data" / "yolo" if (source / "data" / "yolo" / "seg").exists() else source / "data"
+
+
+def runs_dir(source: Path) -> Path:
+    """YOLO_SpaceNet.py trains into runs/yolo/<task>-pretrained; the spike into runs/<task>-pretrained."""
+    return source / "runs" / "yolo" if (source / "runs" / "yolo").exists() else source / "runs"
+
+
 def b64(data) -> str:
     raw = data if isinstance(data, bytes) else np.ascontiguousarray(data).tobytes()
     return base64.b64encode(raw).decode("ascii")
@@ -74,8 +85,8 @@ def metres_per_pixel(meta: dict) -> tuple[float, float]:
 
 def pick_samples(source: Path) -> list[str]:
     """Per city the val tiles that show the most land-cover classes, with a sports field where there is one."""
-    labels = source / "data" / "seg" / "labels" / "val"
-    masks = source / "data" / "sem" / "masks" / "val"
+    labels = data_dir(source) / "seg" / "labels" / "val"
+    masks = data_dir(source) / "sem" / "masks" / "val"
     picked = []
     for city in CITIES:
         def score(p: Path) -> tuple:
@@ -93,17 +104,17 @@ def samples(source: Path, names: list[str]) -> list[dict]:
     out = []
     for name in names:
         city, img = name.split("_", 1)
-        meta = json.loads((source / "data" / "tiles" / f"{name}.json").read_text())
+        meta = json.loads((data_dir(source) / "tiles" / f"{name}.json").read_text())
         polygons = []
-        for line in (source / "data" / "seg" / "labels" / "val" / f"{name}.txt").read_text().splitlines():
+        for line in (data_dir(source) / "seg" / "labels" / "val" / f"{name}.txt").read_text().splitlines():
             v = line.split()
             polygons.append({"cls": int(v[0]), "xy": [round(float(x), 5) for x in v[1:]]})
-        mask = cv2.imread(str(source / "data" / "sem" / "masks" / "val" / f"{name}.png"), cv2.IMREAD_GRAYSCALE)
+        mask = cv2.imread(str(data_dir(source) / "sem" / "masks" / "val" / f"{name}.png"), cv2.IMREAD_GRAYSCALE)
         mx, my = metres_per_pixel(meta)
         out.append({
             "name": name, "city": city, "tile": img, "width": meta["width"], "height": meta["height"],
             "metresPerPixel": [round(mx, 5), round(my, 5)],
-            "jpeg": b64((source / "data" / "seg" / "images" / "val" / f"{name}.jpg").read_bytes()),
+            "jpeg": b64((data_dir(source) / "seg" / "images" / "val" / f"{name}.jpg").read_bytes()),
             "polygons": polygons,
             "landCover": gz(mask),  # uint8 class per pixel, 255 = no image data
         })
@@ -117,8 +128,22 @@ RUNS = {  # what the Training tab shows: run folder → the curves it keeps
                     "metrics/precision(M)", "metrics/recall(M)", "metrics/mAP50(M)", "metrics/mAP50-95(M)", "metrics/mAP50(B)"],
     "sem-pretrained": ["train/ce_loss", "train/dice_loss", "val/ce_loss", "val/dice_loss", "metrics/mIoU", "metrics/pixel_acc"],
 }
-SNAPSHOT_EPOCHS = [1, 5, 10, 25, 50, 75, 100]  # epochN.pt is saved after epoch N + 1; the last one is last.pt
+SNAPSHOT_EPOCHS = [1, 5, 10, 25, 50, 75, 100]  # wished for; epochN.pt is saved after epoch N + 1, the last is last.pt
 SNAPSHOT_TILE = "Shanghai_img209"
+
+
+def snapshot_epochs(source: Path, last: int) -> list[int]:
+    """The epochs whose weights every run kept: the wished ones if there, else up to 7 spread over what was saved
+    (YOLO_SpaceNet.py keeps every 10th epoch: 1, 11, 21, …)."""
+    saved = None
+    for run in RUNS:
+        found = {int(p.stem[5:]) + 1 for p in (runs_dir(source) / run / "weights").glob("epoch*.pt")} | {last}
+        saved = found if saved is None else saved & found
+    wished = [e for e in SNAPSHOT_EPOCHS if e in saved]
+    if len(wished) >= 5:
+        return wished
+    have = sorted(saved)
+    return [have[round(i)] for i in np.linspace(0, len(have) - 1, min(7, len(have)))]
 
 
 def run_record(source: Path) -> dict:
@@ -129,7 +154,7 @@ def run_record(source: Path) -> dict:
 
     runs = {}
     for run, columns in RUNS.items():
-        rows = list(csv.DictReader((source / "runs" / run / "results.csv").open()))
+        rows = list(csv.DictReader((runs_dir(source) / run / "results.csv").open()))
         runs[run] = {
             "epochs": len(rows),
             "seconds": round(float(rows[-1]["time"])),
@@ -137,16 +162,16 @@ def run_record(source: Path) -> dict:
         }
     # final scores per class, measured again on the val set with the best weights
     for run in ("seg-pretrained", "seg-scratch"):
-        m = YOLO(str(source / "runs" / run / "weights" / "best.pt")).val(
-            data=str(source / "data" / "seg" / "data.yaml"), imgsz=640, batch=4, plots=False, verbose=False)
+        m = YOLO(str(runs_dir(source) / run / "weights" / "best.pt")).val(
+            data=str(data_dir(source) / "seg" / "data.yaml"), imgsz=640, batch=4, plots=False, verbose=False)
         runs[run]["final"] = {
             "maskAP50": [round(float(v), 4) for v in m.seg.ap50], "maskAP50_95": [round(float(v), 4) for v in m.seg.ap],
             "boxAP50": [round(float(v), 4) for v in m.box.ap50], "maskMAP50": round(float(m.seg.map50), 4),
             "maskMAP50_95": round(float(m.seg.map), 4), "boxMAP50": round(float(m.box.map50), 4),
             "precision": round(float(m.seg.mp), 4), "recall": round(float(m.seg.mr), 4),
         }
-    m = YOLO(str(source / "runs" / "sem-pretrained" / "weights" / "best.pt")).val(
-        data=str(source / "data" / "sem" / "data.yaml"), imgsz=640, batch=4, plots=False, verbose=False)
+    m = YOLO(str(runs_dir(source) / "sem-pretrained" / "weights" / "best.pt")).val(
+        data=str(data_dir(source) / "sem" / "data.yaml"), imgsz=640, batch=4, plots=False, verbose=False)
     iou = getattr(m, "_per_class_iou", None)  # SemanticMetrics keeps the IoU of every class here
     runs["sem-pretrained"]["final"] = {
         "mIoU": round(float(m.results_dict["metrics/mIoU"]), 4), "pixelAccuracy": round(float(m.results_dict["metrics/pixel_acc"]), 4),
@@ -154,12 +179,13 @@ def run_record(source: Path) -> dict:
     }
 
     # the same val tile after 1, 5, 10, … epochs
-    tile = str(source / "data" / "seg" / "images" / "val" / f"{SNAPSHOT_TILE}.jpg")
+    tile = str(data_dir(source) / "seg" / "images" / "val" / f"{SNAPSHOT_TILE}.jpg")
     snapshots = {}
+    epochs = snapshot_epochs(source, runs["seg-pretrained"]["epochs"])
     for run in RUNS:
         shots = []
-        for epoch in SNAPSHOT_EPOCHS:
-            weights = source / "runs" / run / "weights" / ("last.pt" if epoch == runs[run]["epochs"] else f"epoch{epoch - 1}.pt")
+        for epoch in epochs:
+            weights = runs_dir(source) / run / "weights" / ("last.pt" if epoch == runs[run]["epochs"] else f"epoch{epoch - 1}.pt")
             r = YOLO(str(weights)).predict(tile, imgsz=640, conf=CONF, iou=IOU, verbose=False)[0]
             if run.startswith("sem"):
                 classes = r.semantic_mask.data if hasattr(r, "semantic_mask") else r.masks.data
@@ -174,7 +200,7 @@ def run_record(source: Path) -> dict:
                 shots.append({"epoch": epoch, "objects": objects})
             print(f"  {run} epoch {epoch}: {len(shots[-1].get('objects', []))} objects")
         snapshots[run] = shots
-    count = lambda split: len(list((source / "data" / "seg" / "images" / split).glob("*.jpg")))  # noqa: E731
+    count = lambda split: len(list((data_dir(source) / "seg" / "images" / split).glob("*.jpg")))  # noqa: E731
     return {
         "device": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU",
         "settings": {"imgsz": 640, "batch": 4, "epochs": 100, "flipud": 0.5, "degrees": 90, "seed": 0},
@@ -212,12 +238,12 @@ def letterbox_cases() -> dict:
 
 def model_case(source: Path, sample: str) -> dict:
     """Both models on one tile shrunk to 320 px (small enough for a fixture), with Ultralytics' own post-processing."""
-    bgr = cv2.imread(str(source / "data" / "seg" / "images" / "val" / f"{sample}.jpg"))
+    bgr = cv2.imread(str(data_dir(source) / "seg" / "images" / "val" / f"{sample}.jpg"))
     small = cv2.resize(bgr, (320, 320), interpolation=cv2.INTER_AREA)[..., ::-1].copy()  # RGB
     x = LetterBox(new_shape=(640, 640), auto=False)(image=small)
     x = (x.transpose(2, 0, 1)[None] / 255.0).astype(np.float32)
-    seg = ort.InferenceSession(str(source / "runs" / "seg-pretrained" / "weights" / "seg_web.onnx"), providers=["CPUExecutionProvider"])
-    sem = ort.InferenceSession(str(source / "runs" / "sem-pretrained" / "weights" / "sem_web.onnx"), providers=["CPUExecutionProvider"])
+    seg = ort.InferenceSession(str(runs_dir(source) / "seg-pretrained" / "weights" / "seg_web.onnx"), providers=["CPUExecutionProvider"])
+    sem = ort.InferenceSession(str(runs_dir(source) / "sem-pretrained" / "weights" / "sem_web.onnx"), providers=["CPUExecutionProvider"])
     head, proto = (torch.from_numpy(a) for a in seg.run(None, {"images": x}))
     candidates = int((head[0, 4:4 + len(SEG_NAMES)].amax(0) > CONF).sum())  # Ultralytics keeps scores above conf
     det = non_max_suppression(head, CONF, IOU, nc=len(SEG_NAMES))[0]
@@ -259,7 +285,7 @@ def iou_cases() -> list[dict]:
 def write_assets(source: Path, picked: list[str]) -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     for name, run, file, names in [("yolo-seg", "seg-pretrained", "seg_web.onnx", SEG_NAMES), ("yolo-sem", "sem-pretrained", "sem_web.onnx", SEM_NAMES)]:
-        onnx = (source / "runs" / run / "weights" / file).read_bytes()
+        onnx = (runs_dir(source) / run / "weights" / file).read_bytes()
         write_data(name, {"names": names, "size": 640, "onnx": gz(onnx)})
     write_data("yolo-samples", {
         "source": "SpaceNet 2 (CC BY-SA 4.0); sports fields and land cover: (c) OpenStreetMap contributors (ODbL)",

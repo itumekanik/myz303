@@ -5,6 +5,7 @@
  *
  *   createLesson({ tab: "math", main: "#pm-main", toc: "#pm-toc", sections, widgets,
  *                  kicker: { tr: "Kısım", en: "Section" }, source: { text, name } })
+ *   A chapter with two files passes sources: [{ text, name }, …] instead; source is the first one.
  *
  * Section: { id, title, blocks }. Blocks (every text may be a { tr, en } pair):
  *   { p }                     a paragraph of HTML; \( TeX \) is typeset, [[key|text]] links a term
@@ -18,7 +19,8 @@
  *   { list: [html, …], ordered }
  *   { links: [{ chapter?, tab, section? }, …] }
  *   { code, name, notes, caption }   a code box (codeview.js)
- *   { file: { from, to, notes } }    lines cut from the source file, by the text of the first and last line
+ *   { file: { from, to, notes, source? } }    lines cut from the source file, by the text of the first and
+ *                             last line; source names one of the sources (default: the first)
  *   { term: title, lines }           a terminal window
  *   { run: { file, text, packages, … } }   how to run a Python file: download, Colab, Windows, macOS (runbox.js)
  *
@@ -43,7 +45,8 @@ export function lessonHTML(tag, attrs, html) {
 export const lessonEq = (tex, cls = "") => h("div", { class: `m-eq ${cls}`.trim(), text: `\\(\\displaystyle ${tex}\\)` });
 
 export function createLesson(config) {
-  const L_ = { started: false, rendered: false, observer: null, derive: {}, state: {}, source: null };
+  const L_ = { started: false, rendered: false, observer: null, derive: {}, state: {}, sources: new Map() };
+  const sourceFiles = config.sources ?? (config.source ? [config.source] : []);
   const { tab, sections, widgets = {} } = config;
   for (const s of sections) PLACE_TITLES[s.id] = s.title;   // links can name the sections before they render
 
@@ -91,8 +94,8 @@ export function createLesson(config) {
     return box;
   }
 
-  function sourceLines(spec) {
-    const all = L_.source.map((text, k) => ({ n: k + 1, text }));
+  function sourceLines(spec, source) {
+    const all = source.map((text, k) => ({ n: k + 1, text }));
     if (spec.whole) return all;
     const start = all.findIndex((l) => l.text.includes(spec.from));
     const end = start === -1 ? -1 : all.findIndex((l, k) => k >= start && l.text.includes(spec.to));
@@ -137,14 +140,15 @@ export function createLesson(config) {
       return codeEditor(lines, { file: L(block.name), notes: block.notes, caption: block.caption });
     }
     if (block.file) {
-      const name = config.source?.name;
-      if (!L_.source) {
+      const name = block.file.source ?? sourceFiles[0]?.name;
+      const source = L_.sources.get(name);
+      if (!source) {
         return h("p", { class: "placeholder", text: L({
           tr: `${name} bu derlemede yok.`,
           en: `${name} is missing from this build.`,
         }) });
       }
-      const lines = sourceLines(block.file);
+      const lines = sourceLines(block.file, source);
       if (!lines) return h("p", { class: "placeholder", text: `${L({ tr: "Kod parçası bulunamadı", en: "Code excerpt not found" })}: ${block.file.from}` });
       return codeEditor(lines, { file: name, fromFile: true, notes: block.file.notes, caption: block.file.caption });
     }
@@ -220,8 +224,8 @@ export function createLesson(config) {
   async function start() {
     if (L_.started) return;
     L_.started = true;
-    if (config.source) {
-      L_.source = config.source.text ? config.source.text.replace(/\r\n/g, "\n").replace(/\n$/, "").split("\n") : null;
+    for (const file of sourceFiles) {
+      if (file.text) L_.sources.set(file.name, file.text.replace(/\r\n/g, "\n").replace(/\n$/, "").split("\n"));
     }
     render();
   }

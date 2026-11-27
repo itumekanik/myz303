@@ -9,9 +9,9 @@ on:
   push:
     branches: [main]
     tags: ["v*"]   # path filters do not apply to tags
-    paths: ["web/**", "Perceptron.py", "MLP.py", "SimpleCNN.py", "dashboard.py", "requirements.txt", "CHANGELOG.md", ".github/workflows/web.yml"]
+    paths: ["web/**", "Perceptron.py", "MLP.py", "SimpleCNN.py", "YOLO_SpaceNet.py", "YOLO_SpaceNet_data.py", "dashboard.py", "requirements.txt", "CHANGELOG.md", ".github/workflows/web.yml"]
   pull_request:
-    paths: ["web/**", "Perceptron.py", "MLP.py", "SimpleCNN.py", "dashboard.py", "requirements.txt", "CHANGELOG.md", ".github/workflows/web.yml"]
+    paths: ["web/**", "Perceptron.py", "MLP.py", "SimpleCNN.py", "YOLO_SpaceNet.py", "YOLO_SpaceNet_data.py", "dashboard.py", "requirements.txt", "CHANGELOG.md", ".github/workflows/web.yml"]
   workflow_dispatch:
 
 permissions:
@@ -48,6 +48,9 @@ jobs:
         run: |
           python Perceptron.py
           python MLP.py
+
+      - name: The YOLO files compile (they download data and train for an hour, so they do not run here)
+        run: python -m py_compile YOLO_SpaceNet.py YOLO_SpaceNet_data.py
 
       - name: The dashboard starts and speaks the page's API version
         run: |

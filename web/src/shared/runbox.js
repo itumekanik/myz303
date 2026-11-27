@@ -8,7 +8,10 @@
  *            colabStep?: { tr, en }, // a step before pasting into Colab (e.g. choosing a GPU)
  *            colab?: { tr, en },     // what Colab already has
  *            install?: { tr, en },   // a note under the Windows install commands (e.g. the GPU build)
- *            extra?: { tr, en } })   // a note at the end (e.g. another file of the chapter)
+ *            extra?: { tr, en },     // a note at the end (e.g. another file of the chapter)
+ *            args?: "train seg",     // command-line arguments the file needs
+ *            writefile?: true })     // Colab: save the file with %%writefile and run it with !python
+ *                                    // (a file that reads its command line cannot run as a pasted cell)
  */
 import { L } from "./i18n.js";
 import { h } from "./core.js";
@@ -42,7 +45,8 @@ function save(name, text) {
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
-export function runBox({ file, text, packages, colabStep, colab, install, extra }) {
+export function runBox({ file, text, packages, colabStep, colab, install, extra, args = "", writefile = false }) {
+  const command = args ? `${file} ${args}` : file;
   const download = h("button", { type: "button", class: "btn small primary run-download", text: `⬇ ${L({ tr: `${file} dosyasını indir`, en: `Download ${file}` })}` });
   download.addEventListener("click", () => save(file, text));
   const copy = copyButton(() => text.replace(/\r\n/g, "\n"), "btn small", { tr: "Tümünü kopyala", en: "Copy all" });
@@ -52,8 +56,17 @@ export function runBox({ file, text, packages, colabStep, colab, install, extra 
   const run = (prefix) => [
     `$ ${prefix.venv}`,
     `$ ${prefix.python} -m pip install ${packages}`,
-    `$ ${prefix.python} ${file}`,
+    `$ ${prefix.python} ${command}`,
   ];
+  const colabSteps = writefile
+    ? [
+        { tr: `İlk hücrenin en üstüne \`%%writefile ${file}\` yazın, alt satırına **Tümünü kopyala** ile kopyaladığınız dosyayı yapıştırın ve hücreyi **Shift + Enter** ile çalıştırın: dosya Colab'ın diskine kaydedilir.`, en: `At the top of the first cell write \`%%writefile ${file}\`, paste the file copied with **Copy all** below it and run the cell with **Shift + Enter**: the file is saved to Colab's disk.` },
+        { tr: "Yeni bir hücrede şu iki satırı çalıştırın (baştaki `!`, satırı Python yerine kabuğa gönderir):", en: "In a new cell run these two lines (the leading `!` sends the line to the shell instead of Python):" },
+      ]
+    : [
+        { tr: "**Tümünü kopyala** ile dosyayı kopyalayıp ilk hücreye yapıştırın.", en: "Copy the file with **Copy all** and paste it into the first cell." },
+        { tr: "Hücreyi **Shift + Enter** ile çalıştırın. Çıktı ve grafikler hücrenin altında görünür.", en: "Run the cell with **Shift + Enter**. The output and the plots appear under the cell." },
+      ];
 
   return h("section", { class: "run-box", "aria-label": L({ tr: "Bu dosyayı çalıştırmak", en: "Running this file" }) },
     h("h3", { text: L({ tr: "Bu dosyayı nasıl çalıştırırım?", en: "How do I run this file?" }) }),
@@ -66,9 +79,9 @@ export function runBox({ file, text, packages, colabStep, colab, install, extra 
       steps([
         { tr: "{colab} adresinde Google hesabınızla yeni bir not defteri açın.", en: "Open a new notebook at {colab} with your Google account." },
         ...(colabStep ? [colabStep] : []),
-        { tr: "**Tümünü kopyala** ile dosyayı kopyalayıp ilk hücreye yapıştırın.", en: "Copy the file with **Copy all** and paste it into the first cell." },
-        { tr: "Hücreyi **Shift + Enter** ile çalıştırın. Çıktı ve grafikler hücrenin altında görünür.", en: "Run the cell with **Shift + Enter**. The output and the plots appear under the cell." },
+        ...colabSteps,
       ]),
+      writefile ? terminal(L({ tr: "Colab hücresi", en: "Colab cell" }), [`$ !pip install ${packages}`, `$ !python ${command}`], "") : null,
       note(colab),
       note({
         tr: "Colab, Google'ın ücretsiz bir hizmetidir: kod Google'ın bilgisayarlarında çalışır ve not defteri Google Drive'ınızda saklanır.",

@@ -34,6 +34,9 @@ desktop.ini
 
 # === Data and Cache ===
 data/
+# YOLO_SpaceNet.py: training runs, predictions and exported models (Ultralytics' weights are *.pt above)
+runs/
+*.onnx
 *.h5
 *.npz
 *.npy

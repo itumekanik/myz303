@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { expect, open, overflows, test } from "./fixtures";
 
 /**
@@ -134,6 +135,35 @@ test.describe("chapter 4: yolo", () => {
     await page.locator("#y-iou .m-theory-link").click();
     await expect(page).toHaveURL(/#matematik\/ym-iou$/);
     await expect(page.locator("#ym-iou")).toBeVisible();
+    void errors;
+  });
+
+  test("coding: two Python files, each downloadable, with the Colab way for command-line files", async ({ page, errors }) => {
+    await open(page, "yolo.html#kodlama");
+    await expect(page.locator("#yc-toc li")).toHaveCount(15);
+    await expect(page.locator("#yc-main .code-line").first()).toBeVisible();
+    await expect(page.locator("#yc-main")).not.toContainText("bu derlemede yok");
+    await expect(page.locator("#yc-main")).not.toContainText("Kod parçası bulunamadı");
+    await expect(page.locator("#yc-main")).toContainText("def make_datasets(");
+    await expect(page.locator("#yc-main")).toContainText("def train(task");
+    const boxes = page.locator(".run-box");
+    await expect(boxes).toHaveCount(2);
+    for (const [k, file, line] of [
+      [0, "YOLO_SpaceNet_data.py", "def download_tile("],
+      [1, "YOLO_SpaceNet.py", 'if __name__ == "__main__":'],
+    ] as const) {
+      const box = boxes.nth(k);
+      const [download] = await Promise.all([page.waitForEvent("download"), box.locator(".run-download").click()]);
+      expect(download.suggestedFilename()).toBe(file);
+      expect(readFileSync(await download.path(), "utf8")).toContain(line);
+    }
+    // Colab: the file is saved with %%writefile and run with !python and its arguments
+    const model = boxes.nth(1);
+    await model.locator("summary").first().click();
+    await expect(model).toContainText("%%writefile YOLO_SpaceNet.py");
+    await expect(model).toContainText("!python YOLO_SpaceNet.py train seg");
+    await model.locator("summary").nth(2).click();
+    await expect(model).toContainText(".venv/bin/python YOLO_SpaceNet.py train seg");
     void errors;
   });
 

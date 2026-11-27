@@ -20,6 +20,7 @@ Object.assign(TABS, {
   detect: { tab: "#tab-detect", panel: "#panel-detect", hash: "#tespit" },
   train: { tab: "#tab-train", panel: "#panel-train", hash: "#egitim" },
   math: { tab: "#tab-math", panel: "#panel-math", hash: "#matematik" },
+  code: { tab: "#tab-code", panel: "#panel-code", hash: "#kodlama" },
 });
 
 export interface Sample {
