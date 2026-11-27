@@ -25,6 +25,7 @@ export const DIST = join(ROOT, "dist");
 const TAB_LABELS = {
   train: "Eğitim",
   infer: "Çıkarım",
+  detect: "Tespit",
   theory: "Teori",
   play: 'Deneme<span class="tab-long"> alanı</span>', // phones show the short name
   math: "Matematik",

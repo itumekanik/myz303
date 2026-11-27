@@ -1681,3 +1681,63 @@ a.pc-next.link:focus-visible { outline: 2px solid var(--accent); outline-offset:
   .tabs { gap: 0; }
   .tabs button { padding: 6px 3px; }
 }
+
+/* ============================== YOLO chapter (chapters/yolo) ============================== */
+.yo-detect, .yo-training { display: grid; gap: 16px; }
+.yo-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); gap: 16px; align-items: start; }
+.yo-side { display: grid; gap: 16px; }
+.yo-thumbs { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; }
+.yo-thumb { display: grid; gap: 4px; padding: 4px; border: 2px solid transparent; border-radius: 9px; background: var(--surface-2); color: var(--text-2); font: inherit; font-size: 12px; cursor: pointer; }
+.yo-thumb img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; display: block; }
+.yo-thumb[aria-pressed="true"] { border-color: var(--accent); color: var(--text); }
+.yo-thumb:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.yo-upload-box { flex: none; }
+.yo-file { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.yo-file:focus-visible + .yo-upload { outline: 2px solid var(--accent); outline-offset: 2px; }
+.yo-upload { cursor: pointer; display: inline-block; }
+.yo-note { margin-top: 10px; }
+.yo-tile { display: block; width: 100%; aspect-ratio: 1; border-radius: 8px; background: var(--surface-2); }
+.yo-status { margin: 0 0 10px; color: var(--text-2); font-size: 13.5px; }
+.yo-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 10px 0 6px; color: var(--text-2); font-size: 13px; }
+.yo-key { display: inline-flex; align-items: center; gap: 6px; }
+.yo-key i { display: inline-block; width: 14px; height: 14px; border-radius: 3px; box-sizing: border-box; }
+.yo-controls { display: grid; gap: 12px; }
+.yo-controls h2 { margin: 0; }
+.yo-slider { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; font-size: 13.5px; color: var(--text); }
+.yo-slider input { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+.yo-slider output { grid-row: 1; grid-column: 2; font-variant-numeric: tabular-nums; color: var(--text-2); }
+.yo-check { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--text); }
+.yo-check input { accent-color: var(--accent); width: 16px; height: 16px; }
+.yo-check input:disabled + span { color: var(--muted); }
+.yo-pipeline { display: grid; gap: 4px; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); color: var(--text-2); font-size: 13px; }
+.yo-pipeline:empty { display: none; }
+.yo-pipeline strong { color: var(--text); font-variant-numeric: tabular-nums; }
+.yo-table-wrap { overflow-x: auto; }
+.yo-table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.yo-table th, .yo-table td { padding: 6px 8px; border-bottom: 1px solid var(--grid); text-align: right; white-space: nowrap; }
+.yo-table th:first-child { text-align: left; font-weight: 600; color: var(--text); }
+.yo-table thead th { color: var(--text-2); font-weight: 600; }
+.yo-table .yo-total th, .yo-table .yo-total td { font-weight: 650; border-bottom: none; }
+.yo-big { margin: 12px 0 8px; color: var(--text); font-size: 14px; line-height: 1.55; }
+.yo-results .sub + .sub { margin-top: 6px; }
+.yo-card h3 { margin: 16px 0 8px; font-size: 14px; }
+.yo-facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; margin: 0 0 12px; font-size: 14px; }
+.yo-facts dt { color: var(--text-2); }
+.yo-facts dd { margin: 0; color: var(--text); }
+.yo-bars { display: grid; gap: 6px; max-width: 560px; }
+.yo-bar { display: grid; grid-template-columns: 90px minmax(0, 1fr) 44px; gap: 10px; align-items: center; font-size: 13px; color: var(--text); }
+.yo-bar-track { height: 12px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.yo-bar-track i { display: block; height: 100%; border-radius: 0 4px 4px 0; }
+.yo-bar output { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-2); }
+.yo-shot-controls { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 12px; }
+.yo-epochs { display: flex; align-items: center; gap: 8px; color: var(--text-2); font-size: 13px; }
+.yo-training .yo-tile { max-width: 640px; }
+@media (max-width: 1100px) {
+  .yo-main { grid-template-columns: minmax(0, 1fr); }
+  .yo-side { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .yo-thumbs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .yo-side { grid-template-columns: minmax(0, 1fr); }
+  .yo-picker .card-head { flex-wrap: wrap; }
+}

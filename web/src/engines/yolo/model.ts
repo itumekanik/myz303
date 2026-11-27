@@ -74,31 +74,56 @@ export interface InstanceObject extends Detection {
   imageBox: [number, number, number, number];
 }
 
-export interface InstanceResult {
+/** The network's raw output for one image: every candidate, before any filtering. */
+export interface SegmentationOutput {
   letterbox: Letterbox;
-  objects: InstanceObject[];
-  /** the raw outputs, for the lesson's step-by-step pictures */
+  /** 4 + classes + 32 numbers for each of the 8400 candidates */
   head: Head;
+  /** the 32 prototype masks */
   protos: Prototypes;
+  ms: { prepare: number; network: number };
+}
+
+/** Runs the instance model once; the post-processing can then be repeated with other thresholds. */
+export async function runSegmentation(model: YoloModel, image: Rgb): Promise<SegmentationOutput> {
+  const { input, box, ms: prepareMs } = prepare(model, image);
+  const t = now();
+  const out = await model.session.run({ [model.session.inputNames[0]]: input });
+  const network = now() - t;
+  const [h, p] = model.session.outputNames.map((n) => out[n]);
+  return {
+    letterbox: box,
+    head: { data: h.data as Float32Array, rows: h.dims[1], count: h.dims[2] },
+    protos: { data: p.data as Float32Array, k: p.dims[1], height: p.dims[2], width: p.dims[3] },
+    ms: { prepare: prepareMs, network },
+  };
+}
+
+/** Detections with their masks and boxes in image pixels, from a network output. */
+export function objectsOf(
+  out: SegmentationOutput,
+  classes: number,
+  image: { width: number; height: number },
+  options: { conf?: number; iou?: number } = {},
+): InstanceObject[] {
+  return detect(out.head, classes, options).map((d) => ({
+    ...d,
+    mask: instanceMask(d.coefficients, out.protos, d.box, out.letterbox.size),
+    imageBox: toImageBox(d.box, out.letterbox, image.width, image.height),
+  }));
+}
+
+export interface InstanceResult extends SegmentationOutput {
+  objects: InstanceObject[];
   ms: { prepare: number; network: number; post: number };
 }
 
 /** Buildings and sports fields: boxes, scores and masks. */
 export async function runInstances(model: YoloModel, image: Rgb, options: { conf?: number; iou?: number } = {}): Promise<InstanceResult> {
-  const { input, box, ms: prepareMs } = prepare(model, image);
-  let t = now();
-  const out = await model.session.run({ [model.session.inputNames[0]]: input });
-  const network = now() - t;
-  t = now();
-  const [h, p] = model.session.outputNames.map((n) => out[n]);
-  const head: Head = { data: h.data as Float32Array, rows: h.dims[1], count: h.dims[2] };
-  const protos: Prototypes = { data: p.data as Float32Array, k: p.dims[1], height: p.dims[2], width: p.dims[3] };
-  const objects = detect(head, model.names.length, options).map((d) => ({
-    ...d,
-    mask: instanceMask(d.coefficients, protos, d.box, model.size),
-    imageBox: toImageBox(d.box, box, image.width, image.height),
-  }));
-  return { letterbox: box, objects, head, protos, ms: { prepare: prepareMs, network, post: now() - t } };
+  const out = await runSegmentation(model, image);
+  const t = now();
+  const objects = objectsOf(out, model.names.length, image, options);
+  return { ...out, objects, ms: { ...out.ms, post: now() - t } };
 }
 
 export interface LandCoverResult {

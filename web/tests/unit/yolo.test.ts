@@ -16,6 +16,7 @@ import { letterbox, letterboxParams, resizeLinear, roundHalfEven, toImageBox } f
 import { areaSquareMetres } from "../../src/engines/yolo/masks.ts";
 import { averagePrecision, matchPredictions, precisionRecall } from "../../src/engines/yolo/metrics.ts";
 import { createModel, initRuntime, runInstances, runLandCover, type PackedYolo, type YoloModel } from "../../src/engines/yolo/model.ts";
+import { fillPolygon, maskIou, unionArea } from "../../src/engines/yolo/raster.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const WEB = join(here, "../..");
@@ -155,6 +156,26 @@ describe("YOLO metrics (engines/yolo/metrics.ts)", () => {
   it("converts mask pixels to square metres", () => {
     // 1000 model pixels at gain 0.5 are 4000 image pixels; 0.3 m × 0.25 m each
     assert.ok(Math.abs(areaSquareMetres(1000, 0.5, [0.3, 0.25]) - 300) < 1e-9);
+  });
+});
+
+describe("YOLO polygons and mask overlap (engines/yolo/raster.ts)", () => {
+  it("fills the pixels whose centre lies inside a polygon", () => {
+    const square = fillPolygon([2, 2, 6, 2, 6, 5, 2, 5], 10, 10); // 4 × 3 pixels
+    assert.deepEqual([square.x, square.y, square.width, square.height, square.area], [2, 2, 4, 3, 12]);
+    const triangle = fillPolygon([0, 0, 10, 0, 0, 10], 10, 10); // half of 10 × 10, centres strictly inside
+    assert.equal(triangle.area, 45);
+    const clipped = fillPolygon([-5, -5, 3, -5, 3, 3, -5, 3], 10, 10); // only the part inside the image
+    assert.deepEqual([clipped.x, clipped.y, clipped.area], [0, 0, 9]);
+  });
+
+  it("measures IoU and the union of overlapping masks", () => {
+    const a = fillPolygon([0, 0, 4, 0, 4, 4, 0, 4], 10, 10);
+    const b = fillPolygon([2, 0, 6, 0, 6, 4, 2, 4], 10, 10);
+    assert.equal(maskIou(a, b), 8 / 24);
+    assert.equal(maskIou(a, a), 1);
+    assert.equal(maskIou(a, fillPolygon([7, 7, 9, 7, 9, 9, 7, 9], 10, 10)), 0);
+    assert.equal(unionArea([a, b], 10, 10), 24);
   });
 });
 

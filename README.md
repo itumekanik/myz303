@@ -366,6 +366,9 @@ The site is a step-by-step learning platform. Click the page title (top left, wi
    * **Math** - layers and the forward pass, the derivatives of the activations and the vanishing gradient, cross-entropy from maximum likelihood and its gradient, the four equations of backpropagation with a numerical gradient check, mini-batches and why the weights start random, and the universal approximation theorem.
    * **Coding** - a walk through [MLP.py](MLP.py), a network with one hidden layer written from scratch with NumPy (`python MLP.py` checks backpropagation against numerical derivatives, then learns XOR and the two moons), plus the same in PyTorch and exercises.
 3. **Convolutional network (CNN)** - `cnn.html`, described above.
+4. **Object detection and segmentation (YOLO)** - `yolo.html`, in progress. Two YOLO26n models, trained for this chapter on SpaceNet satellite tiles of Las Vegas, Paris, Shanghai and Khartoum, run in the browser with ONNX Runtime Web.
+   * **Detection** - pick a validation tile or upload your own image: buildings and sports fields with their masks, the confidence and NMS thresholds as sliders (8400 candidates → those above the threshold → those left after NMS), building count, footprint area in m² and built-up ratio, a comparison with the true outlines (correct, wrong, missed), and a land-cover map (building, road, green, water, parking) with the share of each class.
+   * **Training** - the record of our training runs: pretrained against from scratch, the three loss terms, precision, recall and mAP per epoch, the land-cover model's IoU per class, and the same tile predicted after 1, 5, 10, 25, 50, 75 and 100 epochs.
 
 The whole site can be switched between Turkish and English. Formulas are written in LaTeX and typeset with [KaTeX](https://katex.org) (MIT license), which is bundled into the pages, so the site also works without an internet connection.
 

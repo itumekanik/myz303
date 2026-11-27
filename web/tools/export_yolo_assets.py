@@ -14,6 +14,8 @@ Writes web/public/data/:
     yolo-seg.js       the instance segmentation model (building, sports_field), gzip
     yolo-sem.js       the semantic segmentation model (background, building, road, green, water, parking), gzip
     yolo-samples.js   validation tiles (JPEG as they are), their true polygons and land-cover masks, metres per pixel
+    yolo-run.js       the three training runs (results.csv curves, final scores per class) and one val tile
+                      predicted after 1, 5, 10, 25, 50, 75 and 100 epochs (runs/*/weights/epoch*.pt)
 
 and web/tests/fixtures/yolo-parity.json: what Ultralytics and OpenCV give on small inputs (resize, letterbox,
 NMS, masks, AP), which the unit tests compare with the TypeScript engine (src/engines/yolo/).
@@ -60,7 +62,7 @@ def gz(data) -> dict:
 
 def write_data(name: str, value) -> None:
     text = f"(window.__AI_DATA__ ||= {{}})[{json.dumps(name)}] = {json.dumps(value, separators=(',', ':'))};\n"
-    (OUT / f"{name}.js").write_text(text, encoding="utf-8")
+    (OUT / f"{name}.js").write_text(text, encoding="utf-8", newline="\n")
     print(f"web/public/data/{name}.js  {len(text) / 1e6:.2f} MB")
 
 
@@ -106,6 +108,79 @@ def samples(source: Path, names: list[str]) -> list[dict]:
             "landCover": gz(mask),  # uint8 class per pixel, 255 = no image data
         })
     return out
+
+
+RUNS = {  # what the Training tab shows: run folder → the curves it keeps
+    "seg-pretrained": ["train/box_loss", "train/seg_loss", "train/cls_loss", "val/box_loss", "val/seg_loss", "val/cls_loss",
+                       "metrics/precision(M)", "metrics/recall(M)", "metrics/mAP50(M)", "metrics/mAP50-95(M)", "metrics/mAP50(B)"],
+    "seg-scratch": ["train/box_loss", "train/seg_loss", "train/cls_loss", "val/box_loss", "val/seg_loss", "val/cls_loss",
+                    "metrics/precision(M)", "metrics/recall(M)", "metrics/mAP50(M)", "metrics/mAP50-95(M)", "metrics/mAP50(B)"],
+    "sem-pretrained": ["train/ce_loss", "train/dice_loss", "val/ce_loss", "val/dice_loss", "metrics/mIoU", "metrics/pixel_acc"],
+}
+SNAPSHOT_EPOCHS = [1, 5, 10, 25, 50, 75, 100]  # epochN.pt is saved after epoch N + 1; the last one is last.pt
+SNAPSHOT_TILE = "Shanghai_img209"
+
+
+def run_record(source: Path) -> dict:
+    """The three training runs: curves per epoch, final scores per class, and one val tile predicted along the way."""
+    import csv
+
+    from ultralytics import YOLO
+
+    runs = {}
+    for run, columns in RUNS.items():
+        rows = list(csv.DictReader((source / "runs" / run / "results.csv").open()))
+        runs[run] = {
+            "epochs": len(rows),
+            "seconds": round(float(rows[-1]["time"])),
+            "curves": {c: [round(float(r[c]), 5) for r in rows] for c in columns},
+        }
+    # final scores per class, measured again on the val set with the best weights
+    for run in ("seg-pretrained", "seg-scratch"):
+        m = YOLO(str(source / "runs" / run / "weights" / "best.pt")).val(
+            data=str(source / "data" / "seg" / "data.yaml"), imgsz=640, batch=4, plots=False, verbose=False)
+        runs[run]["final"] = {
+            "maskAP50": [round(float(v), 4) for v in m.seg.ap50], "maskAP50_95": [round(float(v), 4) for v in m.seg.ap],
+            "boxAP50": [round(float(v), 4) for v in m.box.ap50], "maskMAP50": round(float(m.seg.map50), 4),
+            "maskMAP50_95": round(float(m.seg.map), 4), "boxMAP50": round(float(m.box.map50), 4),
+            "precision": round(float(m.seg.mp), 4), "recall": round(float(m.seg.mr), 4),
+        }
+    m = YOLO(str(source / "runs" / "sem-pretrained" / "weights" / "best.pt")).val(
+        data=str(source / "data" / "sem" / "data.yaml"), imgsz=640, batch=4, plots=False, verbose=False)
+    iou = getattr(m, "_per_class_iou", None)  # SemanticMetrics keeps the IoU of every class here
+    runs["sem-pretrained"]["final"] = {
+        "mIoU": round(float(m.results_dict["metrics/mIoU"]), 4), "pixelAccuracy": round(float(m.results_dict["metrics/pixel_acc"]), 4),
+        "iou": [round(float(v), 4) for v in iou] if iou is not None else None,
+    }
+
+    # the same val tile after 1, 5, 10, … epochs
+    tile = str(source / "data" / "seg" / "images" / "val" / f"{SNAPSHOT_TILE}.jpg")
+    snapshots = {}
+    for run in RUNS:
+        shots = []
+        for epoch in SNAPSHOT_EPOCHS:
+            weights = source / "runs" / run / "weights" / ("last.pt" if epoch == runs[run]["epochs"] else f"epoch{epoch - 1}.pt")
+            r = YOLO(str(weights)).predict(tile, imgsz=640, conf=CONF, iou=IOU, verbose=False)[0]
+            if run.startswith("sem"):
+                classes = r.semantic_mask.data if hasattr(r, "semantic_mask") else r.masks.data
+                classes = np.asarray(classes.cpu().numpy() if hasattr(classes, "cpu") else classes).astype(np.uint8).squeeze()
+                shots.append({"epoch": epoch, "classes": gz(classes), "width": int(classes.shape[1]), "height": int(classes.shape[0])})
+            else:
+                objects = []
+                if r.masks is not None:
+                    for box, cls, score, poly in zip(r.boxes.xyxy.tolist(), r.boxes.cls.tolist(), r.boxes.conf.tolist(), r.masks.xy):
+                        objects.append({"cls": int(cls), "score": round(score, 3), "box": [round(v, 1) for v in box],
+                                        "xy": [round(float(v), 1) for v in np.asarray(poly).ravel()]})
+                shots.append({"epoch": epoch, "objects": objects})
+            print(f"  {run} epoch {epoch}: {len(shots[-1].get('objects', []))} objects")
+        snapshots[run] = shots
+    count = lambda split: len(list((source / "data" / "seg" / "images" / split).glob("*.jpg")))  # noqa: E731
+    return {
+        "device": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU",
+        "settings": {"imgsz": 640, "batch": 4, "epochs": 100, "flipud": 0.5, "degrees": 90, "seed": 0},
+        "images": {"train": count("train"), "val": count("val")},
+        "runs": runs, "snapshotTile": SNAPSHOT_TILE, "snapshots": snapshots,
+    }
 
 
 def resize_cases() -> list[dict]:
@@ -182,10 +257,11 @@ def main() -> None:
         "source": "SpaceNet 2 (CC BY-SA 4.0); sports fields and land cover: (c) OpenStreetMap contributors (ODbL)",
         "segNames": SEG_NAMES, "semNames": SEM_NAMES, "samples": samples(source, picked),
     })
+    write_data("yolo-run", run_record(source))
     FIXTURES.mkdir(parents=True, exist_ok=True)
     fixture = {"resize": resize_cases(), "letterbox": letterbox_cases(), "model": model_case(source, picked[0]), "ap": ap_cases()}
     path = FIXTURES / "yolo-parity.json"
-    path.write_text(json.dumps(fixture, separators=(",", ":")) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(fixture, separators=(",", ":")) + "\n", encoding="utf-8", newline="\n")
     print(f"web/tests/fixtures/yolo-parity.json  {path.stat().st_size / 1e6:.2f} MB; samples: {', '.join(picked)}")
 
 

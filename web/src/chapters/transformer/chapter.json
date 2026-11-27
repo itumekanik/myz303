@@ -1,7 +1,7 @@
 {
   "$schema": "../chapter.schema.json",
   "id": "transformer",
-  "order": 6,
+  "order": 7,
   "status": "planned",
   "year": "2017",
   "short": "Transformer",

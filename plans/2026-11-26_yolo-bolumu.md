@@ -1,7 +1,7 @@
 # 4. bölüm planı: "Nesne tespiti ve segmentasyon: YOLO"
 
 - **Tarih:** 2026-11-26
-- **Durum:** onaylandı (2026-11-26). 0. aşama (ön deneme) ve 1. aşama (motor) bitti (2026-11-27). Kararlar aşağıda.
+- **Durum:** onaylandı (2026-11-26). 0. aşama (ön deneme), 1. aşama (motor) ve 2. aşama (iskelet, Tespit ve Eğitim sekmeleri) bitti (2026-11-27). Kararlar aşağıda.
 - **Öğretim üyesinin isteği (2026-11-26):** YOLO'nun son sürümüyle, inşaat mühendisliğine uygun bir
   kuş bakışı görüntü örneği. YOLO'nun nasıl çalıştığı ve nasıl eğitildiği, tam bir ders gibi ve
   pedagojik olarak.

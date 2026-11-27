@@ -1,0 +1,15 @@
+{
+  "$schema": "../chapter.schema.json",
+  "id": "yolo",
+  "order": 4,
+  "status": "ready",
+  "year": "2015",
+  "short": "YOLO",
+  "title": { "tr": "Nesne tespiti ve segmentasyon (YOLO)", "en": "Object detection and segmentation (YOLO)" },
+  "sub": { "tr": "Uydu görüntüsünde binalar, yollar, yeşil alanlar", "en": "Buildings, roads and green areas in satellite images" },
+  "page": {
+    "title": { "tr": "YOLO", "en": "YOLO" },
+    "brand": { "tr": "Nesne tespiti (YOLO)", "en": "Object detection (YOLO)" },
+    "tabs": ["detect", "train"]
+  }
+}

@@ -98,6 +98,7 @@ Object.assign(STATIC_EN, {
   "top.sub": "Chapter 3 · SimpleCNN: training and inference on MNIST",
   "tab.train": "Training",
   "tab.infer": "Inference",
+  "tab.detect": "Detection",
   "tab.theory": "Theory",
   "tab.math": "Math",
   "tab.code": "Coding",

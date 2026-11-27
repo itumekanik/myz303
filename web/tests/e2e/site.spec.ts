@@ -27,9 +27,9 @@ const CHAPTERS = [
 test.describe("start page", () => {
   test("lists the learning path and links every chapter", async ({ page, errors }) => {
     await open(page, "index.html");
-    await expect(page.locator("a.lp-chapter")).toHaveCount(3);
+    await expect(page.locator("a.lp-chapter")).toHaveCount(4);
     await expect(page.locator("a.lp-chapter").first()).toHaveAttribute("href", "perceptron.html");
-    await expect(page.locator("a.lp-chapter").last()).toHaveAttribute("href", "cnn.html");
+    await expect(page.locator("a.lp-chapter").last()).toHaveAttribute("href", "yolo.html");
     const planned = page.locator(".lp-chapter.soon");
     await expect(planned).toHaveCount(3);
     await expect(planned.first()).toContainText("RNN");
@@ -136,7 +136,7 @@ for (const c of CHAPTERS) {
       await page.locator("#chapter-btn").click();
       const menu = page.locator("#chapter-menu");
       await expect(menu).toBeVisible();
-      await expect(menu.locator(".chm-item")).toHaveCount(6);
+      await expect(menu.locator(".chm-item")).toHaveCount(7);
       await expect(menu.locator(".chm-item.soon")).toHaveCount(3);
       await expect(menu.locator(".chm-item.soon").first()).toContainText("coming soon");
       const other = CHAPTERS.find((o) => o.id !== c.id)!;

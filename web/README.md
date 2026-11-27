@@ -11,9 +11,10 @@ server and no Python: everything, including training the networks, runs in the b
   (`dist/`) and answers the CNN chapter's requests itself, so training runs in PyTorch on this
   computer instead of in the browser (see "The Python dashboard" below).
 
-Three chapters are ready: 1 the perceptron, 2 the multilayer network (MLP), 3 the convolutional
-network (CNN, SimpleCNN on MNIST). Three more are listed as "coming soon": 4 recurrent networks
-(RNN and LSTM), 5 the attention mechanism, 6 the Transformer.
+Four chapters are ready: 1 the perceptron, 2 the multilayer network (MLP), 3 the convolutional
+network (CNN, SimpleCNN on MNIST), 4 object detection and segmentation (YOLO26 on aerial images).
+Three more are listed as "coming soon": 5 recurrent networks (RNN and LSTM), 6 the attention
+mechanism, 7 the Transformer.
 
 ## For students
 
@@ -124,6 +125,7 @@ one thread). [tools/export_yolo_assets.py](tools/export_yolo_assets.py) writes:
 | `yolo-seg.js` | instance segmentation (building, sports field): ONNX, float16 weights, float32 inputs and outputs | 6.8 MB |
 | `yolo-sem.js` | semantic segmentation (background, building, road, green, water, parking), the same way | 3.9 MB |
 | `yolo-samples.js` | eight validation tiles (two per city), their true polygons and land-cover masks, metres per pixel | 1.9 MB |
+| `yolo-run.js` | the three training runs (curves per epoch, scores per class) and one tile predicted after 1, 5, 10, 25, 50, 75 and 100 epochs | 0.3 MB |
 
 and `tests/fixtures/yolo-parity.json`: OpenCV's resize, Ultralytics' letterbox, NMS, masks and AP on
 small inputs, which `tests/unit/yolo.test.ts` compares with `engines/yolo/`. ONNX Runtime's own

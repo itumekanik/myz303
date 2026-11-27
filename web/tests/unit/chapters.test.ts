@@ -23,15 +23,15 @@ describe("chapter discovery (scripts/chapters.mjs)", () => {
     const chapters = loadChapters(join(here, "../../src/chapters"));
     assert.deepEqual(
       chapters.map((c) => c.id),
-      ["perceptron", "mlp", "cnn", "rnn", "attention", "transformer"],
+      ["perceptron", "mlp", "cnn", "yolo", "rnn", "attention", "transformer"],
     );
     assert.deepEqual(
       chapters.map((c) => c.number),
-      [1, 2, 3, 4, 5, 6],
+      [1, 2, 3, 4, 5, 6, 7],
     );
     assert.deepEqual(
       chapters.map((c) => c.url),
-      ["perceptron.html", "mlp.html", "cnn.html", null, null, null], // the last three are still to come
+      ["perceptron.html", "mlp.html", "cnn.html", "yolo.html", null, null, null], // the last three are still to come
     );
     assert.ok(!("dir" in runtimeList(chapters)[0]));
   });

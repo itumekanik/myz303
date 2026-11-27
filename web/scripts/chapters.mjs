@@ -5,7 +5,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-const TAB_IDS = ["train", "infer", "theory", "play", "math", "code", "practice"];
+const TAB_IDS = ["train", "infer", "detect", "theory", "play", "math", "code", "practice"];
 const isText = (v) => v && typeof v.tr === "string" && typeof v.en === "string";
 
 /** Throws with a readable message when a chapter.json is wrong. */
