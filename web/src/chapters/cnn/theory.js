@@ -9,6 +9,7 @@ import { $, LUTS, clamp, setHoverHost, cssVar, fmtInt, fmtNum, fmtPct, fmtTick, 
 import { I18N, L, t } from "../../shared/i18n.js";
 import { texNum } from "../../shared/math.js";
 import { termify } from "../../shared/glossary/terms.js";
+import { KIT } from "../../shared/kit.js";
 
 
 export const SIZE = 28;
@@ -2273,3 +2274,14 @@ document.addEventListener("theme-change", () => {
   refreshAll();
   drawOpt();
 });
+
+// The card that leads on to the next chapter (YOLO), under the summary, as in chapters 1 and 2
+function placeNextChapter() {
+  const host = $("#t-recap .t-intro-text");
+  if (!host) return;
+  host.querySelector(".pc-next")?.remove();
+  const card = KIT.nextChapterCard();
+  if (card) host.append(card);
+}
+placeNextChapter();
+document.addEventListener("lang-change", placeNextChapter);

@@ -146,6 +146,14 @@ def snapshot_epochs(source: Path, last: int) -> list[int]:
     return [have[round(i)] for i in np.linspace(0, len(have) - 1, min(7, len(have)))]
 
 
+def training_settings(source: Path) -> dict:
+    """The settings the instance model was trained with, as Ultralytics wrote them (args.yaml)."""
+    from ultralytics.utils import YAML
+
+    args = YAML.load(runs_dir(source) / "seg-pretrained" / "args.yaml")
+    return {k: args[k] for k in ("imgsz", "batch", "epochs", "flipud", "degrees", "seed")}
+
+
 def run_record(source: Path) -> dict:
     """The three training runs: curves per epoch, final scores per class, and one val tile predicted along the way."""
     import csv
@@ -203,7 +211,7 @@ def run_record(source: Path) -> dict:
     count = lambda split: len(list((data_dir(source) / "seg" / "images" / split).glob("*.jpg")))  # noqa: E731
     return {
         "device": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU",
-        "settings": {"imgsz": 640, "batch": 4, "epochs": 100, "flipud": 0.5, "degrees": 90, "seed": 0},
+        "settings": training_settings(source),
         "images": {"train": count("train"), "val": count("val")},
         "runs": runs, "snapshotTile": SNAPSHOT_TILE, "snapshots": snapshots,
     }

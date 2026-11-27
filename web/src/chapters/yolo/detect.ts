@@ -42,6 +42,8 @@ const MATCH_IOU = 0.5;
 /** The tile shown first: buildings, a river and four sports fields the model finds. */
 const FIRST = "Shanghai_img209";
 const DEFAULT_MPP = 0.3;
+/** The largest side an uploaded image is read at (a 100-megapixel photo would need ~700 MB, and Safari limits a canvas to 16.7 megapixels). */
+const MAX_SIDE = 4000;
 
 interface Shown extends Candidate {
   mask: InstanceMask;
@@ -102,10 +104,11 @@ async function showSample(k: number): Promise<void> {
 async function showUpload(file: File): Promise<void> {
   const url = URL.createObjectURL(file);
   try {
-    const { image, rgb } = await decodeImage(url);
+    // a very large photo is read at most MAX_SIDE pixels wide; then one pixel covers more ground
+    const { image, rgb, scale } = await decodeImage(url, MAX_SIDE);
     state.pick = -1;
     state.compare = false;
-    await analyse({ label: file.name, image, rgb, sample: null, metresPerPixel: [DEFAULT_MPP, DEFAULT_MPP] });
+    await analyse({ label: file.name, image, rgb, sample: null, metresPerPixel: [DEFAULT_MPP * scale, DEFAULT_MPP * scale] });
   } catch {
     state.error = T({ tr: "Bu dosya bir görüntü olarak açılamadı.", en: "This file could not be opened as an image." });
     render();
@@ -118,7 +121,7 @@ async function analyse(current: Current): Promise<void> {
   state.current = current;
   state.busy = true;
   state.error = "";
-  state.status = T({ tr: "Modeller yükleniyor (ilk seferde ~10 MB)…", en: "Loading the models (~10 MB the first time)…" });
+  state.status = T({ tr: "Modeller yükleniyor (ilk seferde ~16 MB)…", en: "Loading the models (~16 MB the first time)…" });
   render();
   try {
     const [seg, sem] = await Promise.all([loadModel("seg"), loadModel("sem")]);
@@ -127,17 +130,20 @@ async function analyse(current: Current): Promise<void> {
     await new Promise((r) => setTimeout(r, 0)); // let the status paint before the CPU is busy
     const instances = await runSegmentation(seg, current.rgb);
     const land = await runLandCover(sem, current.rgb);
-    if (state.current !== current) return; // another image was picked meanwhile
+    if (state.current !== current) return; // another image was picked meanwhile: its own run reports
     current.instances = instances;
     current.land = land;
     state.ms = { network: instances.ms.network, land: land.ms.network };
     if (current.sample) current.truths = truthsOf(current.sample, instances.letterbox);
   } catch (e) {
-    state.error = `${T({ tr: "Model çalıştırılamadı:", en: "The model could not run:" })} ${(e as Error).message}`;
+    if (state.current === current)
+      state.error = `${T({ tr: "Model çalıştırılamadı:", en: "The model could not run:" })} ${(e as Error).message}`;
   } finally {
-    state.busy = false;
-    state.status = "";
-    render();
+    if (state.current === current) {
+      state.busy = false;
+      state.status = "";
+      render();
+    }
   }
 }
 
@@ -172,7 +178,14 @@ function picker(): HTMLElement {
   const thumbs = set.samples.map((s, k) =>
     h(
       "button",
-      { type: "button", class: "yo-thumb", "aria-pressed": String(k === state.pick), title: `${T(CITIES[s.city])} · ${s.tile}` },
+      {
+        type: "button",
+        class: "yo-thumb",
+        "aria-pressed": String(k === state.pick),
+        "aria-disabled": state.busy ? "true" : null,
+        title: `${T(CITIES[s.city])} · ${s.tile}`,
+        "aria-label": `${T(CITIES[s.city])} · ${s.tile}`,
+      },
       h("img", { src: `data:image/jpeg;base64,${s.jpeg}`, alt: "", loading: "lazy" }),
       h("span", { text: T(CITIES[s.city]) }),
     ),
@@ -198,8 +211,8 @@ function picker(): HTMLElement {
         h("p", {
           class: "sub",
           text: T({
-            tr: "Doğrulama setinden sekiz kare, her şehirden iki tane: modeller bunları eğitimde hiç görmedi. Bir kare yaklaşık 195 m × 195 m.",
-            en: "Eight validation tiles, two per city: the models never saw them in training. A tile is about 195 m × 195 m.",
+            tr: "Doğrulama setinden sekiz kare, her şehirden iki tane: modeller bunları eğitimde hiç görmedi. Bir kare kuzey-güneyde 195 m, doğu-batıda şehre göre 128–188 m.",
+            en: "Eight validation tiles, two per city: the models never saw them in training. A tile is 195 m north-south and, depending on the city, 128–188 m east-west.",
           }),
         }),
       ),
@@ -384,6 +397,7 @@ function showObjects(c: Current, legend: HTMLElement, results: HTMLElement, pipe
 
   // numbers per class
   const mpp = c.metresPerPixel;
+  const content = { x: lb.left, y: lb.top, width: lb.width, height: lb.height }; // not the grey border of an upload
   const groundArea = c.rgb.width * c.rgb.height * mpp[0] * mpp[1];
   // one column per class, one row per number (the side column is narrow)
   const perClass = SEG_CLASSES.map((_, k) => {
@@ -393,6 +407,7 @@ function showObjects(c: Current, legend: HTMLElement, results: HTMLElement, pipe
         mine.map((s) => s.mask),
         lb.size,
         lb.size,
+        content,
       ),
       lb.gain,
       mpp,
@@ -403,6 +418,7 @@ function showObjects(c: Current, legend: HTMLElement, results: HTMLElement, pipe
         truths.map((t) => t.mask),
         lb.size,
         lb.size,
+        content,
       ),
       lb.gain,
       mpp,
@@ -425,13 +441,14 @@ function showObjects(c: Current, legend: HTMLElement, results: HTMLElement, pipe
       line({ tr: "duyarlılık", en: "recall" }, (p) => (p.truths ? pct(p.hits / p.truths, 0) : "–")),
     );
   }
-  const head = ["", ...SEG_CLASSES.map((name) => T(name))];
+  const head = [T({ tr: "ölçü", en: "measure" }), ...SEG_CLASSES.map((name) => T(name))];
   const buildings = shown.filter((s) => s.cls === 0);
   const builtArea = areaSquareMetres(
     unionArea(
       buildings.map((s) => s.mask),
       lb.size,
       lb.size,
+      content,
     ),
     lb.gain,
     mpp,
@@ -495,7 +512,11 @@ function showLand(c: Current, legend: HTMLElement, results: HTMLElement): void {
     if (compare) cells.push(pct(compare.share[k]), Number.isNaN(compare.iou[k]) ? "–" : nf(compare.iou[k], 2));
     rows.push(h("tr", {}, ...cells.map((v, i) => h(i ? "td" : "th", { scope: i ? null : "row" }, v))));
   });
-  const head = ["", T({ tr: "model", en: "model" }), ...(compare ? [T({ tr: "gerçek", en: "true" }), T({ tr: "IoU", en: "IoU" })] : [])];
+  const head = [
+    T({ tr: "sınıf", en: "class" }),
+    T({ tr: "model", en: "model" }),
+    ...(compare ? [T({ tr: "gerçek", en: "true" }), T({ tr: "IoU", en: "IoU" })] : []),
+  ];
   results.replaceChildren(
     h("h2", { text: T({ tr: "Karenin ne kadarı ne?", en: "How much of the tile is what?" }) }),
     h(

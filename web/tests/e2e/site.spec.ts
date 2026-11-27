@@ -455,6 +455,18 @@ test("mlp → cnn: the next-chapter card opens the CNN theory", async ({ page, e
   void errors;
 });
 
+test("cnn → yolo: the next-chapter card opens the YOLO theory", async ({ page, errors }) => {
+  await open(page, "cnn.html#teori/t-recap");
+  await expect(page.locator("#t-recap a.pc-next")).toContainText("4 · Nesne tespiti");
+  await page.locator('#lang-switch [data-lang="en"]').click();
+  await expect(page.locator("#t-recap a.pc-next")).toHaveCount(1);
+  await expect(page.locator("#t-recap a.pc-next")).toContainText("Object detection");
+  await page.locator("#t-recap a.pc-next").click();
+  await expect(page).toHaveURL(/yolo.html#teori$/);
+  await expect(page.locator("#y-intro")).toBeVisible();
+  void errors;
+});
+
 test("mlp: a See also link opens the CNN Math tab at that section", async ({ page, errors }) => {
   await open(page, "mlp.html#matematik");
   await expect(page.locator("#mm-main .m-link-soon")).toHaveCount(0);

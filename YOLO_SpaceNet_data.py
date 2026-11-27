@@ -39,6 +39,7 @@ import rasterio
 from rasterio.transform import Affine
 from shapely import STRtree, force_2d, transform as map_coords
 from shapely.geometry import LineString, Polygon, box, shape
+from shapely.ops import polygonize, unary_union
 
 
 #--------------- Settings ---------------#
@@ -146,15 +147,21 @@ def classify(tags: dict) -> str | None:
 
 
 def geometry(element: dict):
-    """An OSM way or relation as a shapely shape: closed ways are areas, open ones lines."""
+    """An OSM way or relation as a shapely shape: roads are always lines (a roundabout is a closed line, not an
+    area); other closed ways are areas; a multipolygon relation is the area its outer ways enclose together
+    (a large park's outline is often split into several ways)."""
+    if element["type"] == "relation":
+        outer = [[(p["lon"], p["lat"]) for p in m["geometry"]] for m in element.get("members", [])
+                 if m.get("role") == "outer" and len(m.get("geometry", [])) >= 2]
+        area = unary_union(list(polygonize([LineString(w) for w in outer]))) if outer else None
+        return area if area is not None and not area.is_empty else None
     points = [(p["lon"], p["lat"]) for p in element.get("geometry", [])]
-    if element["type"] == "relation":                      # a multipolygon: its first outer ring
-        outer = [m for m in element.get("members", []) if m.get("role") == "outer" and m.get("geometry")]
-        points = [(p["lon"], p["lat"]) for m in outer[:1] for p in m["geometry"]]
     if len(points) < 2:
         return None
     closed = len(points) >= 4 and points[0] == points[-1]
-    return Polygon(points).buffer(0) if closed else LineString(points)
+    if closed and "highway" not in element.get("tags", {}):
+        return Polygon(points).buffer(0)
+    return LineString(points)
 
 
 # ===========================================================================================
@@ -229,23 +236,31 @@ def tile_layers(meta: dict, objects: list, roads: list, tree: STRtree, road_tree
 # 4. The two datasets
 # ===========================================================================================
 
-def make_datasets(tiles: Path) -> None:
-    """data/yolo/seg (polygons) and data/yolo/sem (masks) from the downloaded tiles, split into train and val."""
+def osm_elements(city: str, ms: list[dict]) -> list[dict]:
+    """The OSM objects of a city's tiles, kept in data/yolo/osm_<city>.json and fetched again when tiles were added."""
+    cache = OUT / f"osm_{city}.json"
+    names = sorted(m["img"] for m in ms)
+    saved = json.loads(cache.read_text()) if cache.exists() else {}
+    if not set(names) <= set(saved.get("tiles", [])):
+        print(f"OpenStreetMap: {len(ms)} tiles of {city}", flush=True)
+        saved = {"tiles": names, "elements": overpass([m["bounds"] for m in ms])}
+        cache.write_text(json.dumps(saved))
+    return saved["elements"]
+
+
+def make_datasets(tiles: Path, names: list[str]) -> None:
+    """data/yolo/seg (polygons) and data/yolo/sem (masks) from the chosen tiles, split into train and val."""
     rng = random.Random(SEED)
     seg, sem = OUT / "seg", OUT / "sem"
     for d in (seg, sem):
         shutil.rmtree(d, ignore_errors=True)
-    metas = [json.loads(p.read_text()) for p in sorted(tiles.glob("*.json"))]
+    metas = [json.loads((tiles / f"{name}.json").read_text()) for name in sorted(names)]
     by_city = defaultdict(list)
     for m in metas:
         by_city[m["city"]].append(m)
     stats = defaultdict(Counter)
     for city, ms in by_city.items():
-        cache = OUT / f"osm_{city}.json"
-        if not cache.exists():
-            print(f"OpenStreetMap: {len(ms)} tiles of {city}", flush=True)
-            cache.write_text(json.dumps(overpass([m["bounds"] for m in ms])))
-        elements = json.loads(cache.read_text())
+        elements = osm_elements(city, ms)
         shapes = [(classify(el.get("tags", {})), geometry(el)) for el in elements]
         objects = [(c, g) for c, g in shapes if c and c != "road" and g is not None and g.geom_type in ("Polygon", "MultiPolygon") and not g.is_empty]
         roads = [(el["tags"]["highway"], g) for el, (c, g) in zip(elements, shapes) if c == "road" and g is not None and g.geom_type == "LineString"]
@@ -273,7 +288,8 @@ def make_datasets(tiles: Path) -> None:
             mask = np.zeros((h, w), np.uint8)
             for cls in PAINT:
                 polys = layers[cls] + (layers["sports_field"] if cls == "green" else [])   # sports fields are mostly grass
-                cv2.fillPoly(mask, [np.round(np.asarray(p.exterior.coords)).astype(np.int32) for p in polys], SEM_NAMES.index(cls))
+                for p in polys:   # one polygon at a time: in one call, OpenCV would leave where two overlap empty
+                    cv2.fillPoly(mask, [np.round(np.asarray(p.exterior.coords)).astype(np.int32)], SEM_NAMES.index(cls))
             mask[nodata] = IGNORE
             (sem / "masks" / split).mkdir(parents=True, exist_ok=True)
             cv2.imwrite(str(sem / "masks" / split / f"{name}.png"), mask)
@@ -401,7 +417,7 @@ def main() -> None:
             total += size
             if done % 25 == 0 or done == len(jobs):
                 print(f"  {done}/{len(jobs)} tiles, {total / 1e9:.2f} GB", flush=True)
-    make_datasets(tiles)
+    make_datasets(tiles, [f"{city.split('_', 2)[2]}_{img}" for city, img in jobs])   # only these, even if more were downloaded before
     print("labels from OpenStreetMap: (c) OpenStreetMap contributors, ODbL")
     print("next: python YOLO_SpaceNet_data.py --check <tile name>, then python YOLO_SpaceNet.py train seg")
 

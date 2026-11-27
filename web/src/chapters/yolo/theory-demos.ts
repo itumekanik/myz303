@@ -2,7 +2,7 @@
  * The live demos of the YOLO Theory tab, one per section. They work on two validation tiles:
  * Shanghai_img209 (buildings, a river, four sports fields) and Paris_img637 (51 small houses).
  *
- * The demos that need the network show a button first: the models are about 7 MB, so they are loaded
+ * The demos that need the network show a button first: the model and its runtime are about 12 MB, so they are loaded
  * only when the reader asks. Once one demo has run the model, the others start by themselves.
  */
 import { fmtNum, fmtPct, h, paint } from "../../shared/core.js";
@@ -38,6 +38,8 @@ export const DENSE_TILE = "Paris_img637";
 
 const nf = (v: number, d = 2) => fmtNum(v, d) as string;
 const pct = (v: number, d = 0) => fmtPct(100 * v, d) as string;
+/** A number inside TeX: a comma (Turkish decimal, English thousands) needs braces or TeX adds a space after it. */
+const texNumber = (v: number, d = 2) => nf(v, d).replace(/,/g, "{,}");
 const NC = SEG_CLASSES.length;
 
 // ---------------------------------------------------------------------
@@ -135,8 +137,8 @@ function needsModel(name: string, body: HTMLElement, ready: (run: Run) => void):
       h("p", {
         class: "sub",
         text: T({
-          tr: "Bölümün eğitilmiş modeli bu tarayıcıda çalışır (bir kez ~7 MB yüklenir, sonra bütün demolar kullanır).",
-          en: "The chapter's trained model runs in this browser (about 7 MB, loaded once and then used by every demo).",
+          tr: "Bölümün eğitilmiş modeli bu tarayıcıda çalışır (bir kez ~12 MB yüklenir, sonra bütün demolar kullanır).",
+          en: "The chapter's trained model runs in this browser (about 12 MB, loaded once and then used by every demo).",
         }),
       }),
     );
@@ -181,6 +183,13 @@ function range(
 }
 
 const demo = (...children: (Node | null)[]) => h("div", { class: "t-demo yo-demo" }, ...children);
+
+/** "Next object": choosing an object without a pointer (the demos also take a click on the tile). */
+function nextObject(count: () => number, current: () => number, choose: (k: number) => void): HTMLElement {
+  const b = h("button", { type: "button", class: "btn small", text: T({ tr: "Sonraki nesne →", en: "Next object →" }) });
+  b.addEventListener("click", () => count() && choose((current() + 1) % count()));
+  return b;
+}
 const caption = (text = "") => h("p", { class: "sub yo-caption", "aria-live": "polite", text });
 
 /** A distinct colour for the k-th object. */
@@ -328,10 +337,11 @@ export function iouDemo(): HTMLElement {
           { box: pred, rgb: good ? MATCH_RGB.hit : MATCH_RGB.wrong, label: T({ tr: "tahmin", en: "prediction" }) },
         ],
         paint: (ctx, sc, dpr) => {
-          if (!w || !hh) return;
-          ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
-          ctx.fillRect(inter[0] * sc, inter[1] * sc, w * sc, hh * sc);
-          // the corner that resizes the prediction
+          if (w && hh) {
+            ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+            ctx.fillRect(inter[0] * sc, inter[1] * sc, w * sc, hh * sc);
+          }
+          // the corner that resizes the prediction, also when the boxes do not overlap
           ctx.fillStyle = "#fff";
           ctx.fillRect(pred[2] * sc - 5 * dpr, pred[3] * sc - 5 * dpr, 10 * dpr, 10 * dpr);
         },
@@ -345,7 +355,7 @@ export function iouDemo(): HTMLElement {
     readout.replaceChildren(
       h("div", {
         class: "formula small",
-        text: `\\(\\mathrm{IoU} = \\dfrac{\\text{${T({ tr: "kesişim", en: "intersection" })}}}{\\text{${T({ tr: "birleşim", en: "union" })}}} = \\dfrac{${nf(w * hh * m2, 0)}\\ \\mathrm{m^2}}{${nf(union * m2, 0)}\\ \\mathrm{m^2}} = ${nf(iou, 2).replace(",", "{,}")}\\)`,
+        text: `\\(\\mathrm{IoU} = \\dfrac{\\text{${T({ tr: "kesişim", en: "intersection" })}}}{\\text{${T({ tr: "birleşim", en: "union" })}}} = \\dfrac{${texNumber(w * hh * m2, 0)}\\ \\mathrm{m^2}}{${texNumber(union * m2, 0)}\\ \\mathrm{m^2}} = ${texNumber(iou, 2)}\\)`,
       }),
       h("p", {
         class: `pc-msg ${good ? "good" : "bad"}`,
@@ -595,6 +605,18 @@ export function gridDemo(): HTMLElement {
   };
   view.canvas.addEventListener("pointerdown", select);
   view.canvas.addEventListener("pointermove", (e) => e.buttons && select(e));
+  // the keyboard moves the chosen cell with the arrow keys
+  view.canvas.tabIndex = 0;
+  view.canvas.addEventListener("keydown", (e) => {
+    const step = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+    if (!run || !step || cell < 0) return;
+    e.preventDefault();
+    const a = anchorOf(cell);
+    const gx = Math.min(a.grid - 1, Math.max(0, a.gx + step[0]));
+    const gy = Math.min(a.grid - 1, Math.max(0, a.gy + step[1]));
+    cell = levelStart(a.level) + gy * a.grid + gx;
+    draw();
+  });
   const body = h(
     "div",
     { class: "yo-demo-body" },
@@ -603,8 +625,8 @@ export function gridDemo(): HTMLElement {
     h("p", {
       class: "sub",
       text: T({
-        tr: "Bir hücreye tıklayın. Sarı ne kadar koyuysa o hücrenin en yüksek sınıf skoru o kadar büyük.",
-        en: "Click a cell. The deeper the yellow, the higher that cell's best class score.",
+        tr: "Bir hücreye tıklayın (ya da kareye odaklanıp ok tuşlarını kullanın). Sarı ne kadar koyuysa o hücrenin en yüksek sınıf skoru o kadar büyük.",
+        en: "Click a cell (or focus the tile and use the arrow keys). The deeper the yellow, the higher that cell's best class score.",
       }),
     }),
     info,
@@ -818,6 +840,10 @@ export function masksDemo(): HTMLElement {
     });
     protoCells.forEach((cellNode, k) => {
       cellNode.setAttribute("aria-pressed", String(k === proto));
+      cellNode.setAttribute(
+        "aria-label",
+        T({ tr: `Prototip ${k + 1}, katsayı ${nf(coeffs[k], 2)}`, en: `Prototype ${k + 1}, coefficient ${nf(coeffs[k], 2)}` }),
+      );
       (cellNode.querySelector("output") as HTMLElement).textContent = nf(coeffs[k], 2);
     });
   };
@@ -877,13 +903,22 @@ export function masksDemo(): HTMLElement {
   const body = h(
     "div",
     { class: "yo-demo-body" },
-    h("p", {
-      class: "sub",
-      text: T({
-        tr: "Bir nesneye tıklayın; sonra bir prototip seçip katsayısını değiştirin.",
-        en: "Click an object; then pick a prototype and change its coefficient.",
+    h(
+      "div",
+      { class: "t-controls" },
+      h("p", {
+        class: "sub",
+        text: T({
+          tr: "Bir nesneye tıklayın; sonra bir prototip seçip katsayısını değiştirin.",
+          en: "Click an object; then pick a prototype and change its coefficient.",
+        }),
       }),
-    }),
+      nextObject(
+        () => objects.length,
+        () => chosen,
+        choose,
+      ),
+    ),
     view.canvas,
     readout,
     h("div", {
@@ -1113,8 +1148,8 @@ export function metricsDemo(): HTMLElement {
 // 8. Reading the result: how much one mask pixel changes the area
 // ---------------------------------------------------------------------
 
-/** The mask grown (r > 0) or shrunk (r < 0) by r pixels, with a round brush. */
-function grow(m: InstanceMask, r: number): InstanceMask {
+/** The mask grown (r > 0) or shrunk (r < 0) by r pixels, with a round brush, kept inside the size × size input. */
+function grow(m: InstanceMask, r: number, size: number): InstanceMask {
   if (!r) return m;
   const R = Math.abs(r);
   const pad = r > 0 ? R : 0;
@@ -1127,6 +1162,9 @@ function grow(m: InstanceMask, r: number): InstanceMask {
     for (let x = 0; x < w; x++) {
       const sx = x - pad;
       const sy = y - pad;
+      const gx = m.x + sx;
+      const gy = m.y + sy;
+      if (gx < 0 || gy < 0 || gx >= size || gy >= size) continue; // outside the input: no pixel to grow into
       let on = r < 0;
       for (let dy = -R; dy <= R && on === r < 0; dy++) {
         for (let dx = -R; dx <= R; dx++) {
@@ -1164,7 +1202,7 @@ export function areaDemo(): HTMLElement {
     const { seg, sample: s } = run;
     const lb = seg.letterbox;
     const o = objects[chosen];
-    const moved = grow(o.mask, shift * PROTO);
+    const moved = grow(o.mask, shift * PROTO, lb.size);
     const a0 = areaSquareMetres(o.mask.area, lb.gain, s.metresPerPixel);
     const a1 = areaSquareMetres(moved.area, lb.gain, s.metresPerPixel);
     const ew = (PROTO / lb.gain) * s.metresPerPixel[0]; // one prototype pixel on the ground, east-west
@@ -1214,10 +1252,22 @@ export function areaDemo(): HTMLElement {
   const body = h(
     "div",
     { class: "yo-demo-body" },
-    h("p", {
-      class: "sub",
-      text: T({ tr: "Bir binaya tıklayın, sonra sınırını kaydırın.", en: "Click a building, then move its outline." }),
-    }),
+    h(
+      "div",
+      { class: "t-controls" },
+      h("p", {
+        class: "sub",
+        text: T({ tr: "Bir binaya tıklayın, sonra sınırını kaydırın.", en: "Click a building, then move its outline." }),
+      }),
+      nextObject(
+        () => objects.length,
+        () => chosen,
+        (k) => {
+          chosen = k;
+          draw();
+        },
+      ),
+    ),
     view.canvas,
     h(
       "div",

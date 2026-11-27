@@ -422,7 +422,11 @@ export function epochViewer(
     T({ tr: "Aynı doğrulama karesi, seçilen epoch'taki tahmin", en: "The same validation tile, predicted at the chosen epoch" }),
   );
   const note = h("p", { class: "yo-big", "aria-live": "polite" });
+  // a run with fewer saved epochs than the choice remembers starts at its last one
+  choice.shot = Math.min(choice.shot, r.snapshots["seg-pretrained"].length - 1);
+  let latest = 0;
   const redraw = async () => {
+    const ticket = ++latest; // a land-cover map is unpacked first: only the last click may draw
     const { image, width, height } = tile;
     const shot = r.snapshots[choice.run][choice.shot];
     if ("objects" in shot) {
@@ -437,6 +441,7 @@ export function epochViewer(
       note.textContent = T({ tr: `${shot.epoch}. epoch: ${counts}.`, en: `Epoch ${shot.epoch}: ${counts}.` });
     } else {
       const classes = await unpack(shot.classes);
+      if (ticket !== latest) return;
       view.show(image, width, height, [{ canvas: classOverlay(classes, shot.width, shot.height) }]);
       note.textContent = T({ tr: `${shot.epoch}. epoch.`, en: `Epoch ${shot.epoch}.` });
     }

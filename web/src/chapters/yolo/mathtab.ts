@@ -115,8 +115,9 @@ const WIDGETS: Record<string, (state: State) => HTMLElement> = {
           <line x1="${X(ax)}" y1="${Y(ay)}" x2="${X(ax)}" y2="${Y(y1)}" class="ym-arrow"/><line x1="${X(ax)}" y1="${Y(ay)}" x2="${X(ax)}" y2="${Y(y2)}" class="ym-arrow"/>
           <circle cx="${X(ax)}" cy="${Y(ay)}" r="4" class="ym-anchor"/></svg>`),
         eq(R`a = \big((${gx} + ${tx(0.5, 1)})\cdot ${stride},\ (${gy} + ${tx(0.5, 1)})\cdot ${stride}\big) = (${ax},\ ${ay})`),
+        // two lines, so the formula fits without a scroll bar (a scrolling formula cannot be reached by keyboard)
         eq(
-          R`(x_1, y_1, x_2, y_2) = (${ax} - ${tx(l)}\cdot ${stride},\ ${ay} - ${tx(t)}\cdot ${stride},\ ${ax} + ${tx(r)}\cdot ${stride},\ ${ay} + ${tx(b)}\cdot ${stride}) = (${tx(x1, 1)},\ ${tx(y1, 1)},\ ${tx(x2, 1)},\ ${tx(y2, 1)})`,
+          R`\begin{aligned} x_1 &= ${ax} - ${tx(l)}\cdot ${stride} = ${tx(x1, 1)}, & y_1 &= ${ay} - ${tx(t)}\cdot ${stride} = ${tx(y1, 1)} \\ x_2 &= ${ax} + ${tx(r)}\cdot ${stride} = ${tx(x2, 1)}, & y_2 &= ${ay} + ${tx(b)}\cdot ${stride} = ${tx(y2, 1)} \end{aligned}`,
         ),
       );
     };
@@ -432,7 +433,7 @@ const WIDGETS: Record<string, (state: State) => HTMLElement> = {
                 h(
                   "tr",
                   {},
-                  ...["#", T({ tr: "skor", en: "score" }), "", "P", "R", T({ tr: "zarf", en: "envelope" })].map((t) =>
+                  ...["#", T({ tr: "skor", en: "score" }), "TP / FP", "P", "R", T({ tr: "zarf", en: "envelope" })].map((t) =>
                     h("th", { scope: "col", text: t }),
                   ),
                 ),
@@ -803,7 +804,7 @@ const MATH = [
       {
         table: {
           head: [
-            R`\(\tau_{\text{IoU}}\)`,
+            { tr: "IoU eşiği", en: "IoU threshold" },
             { tr: "kalan nesne", en: "objects left" },
             { tr: "bina", en: "buildings" },
             { tr: "spor sahası", en: "sports fields" },

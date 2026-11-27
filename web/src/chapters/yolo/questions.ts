@@ -9,7 +9,7 @@ import { resizeLinear, type Rgb } from "../../engines/yolo/image.ts";
 import { objectsOf, runSegmentation, type YoloModel } from "../../engines/yolo/model.ts";
 import type { PracticeSection } from "../../shared/practice.ts";
 
-/** What the experiments need: the model and the decoded tile (loaded when the first one runs, about 7 MB). */
+/** What the experiments need: the model and the decoded tile (loaded when the first one runs, about 12 MB). */
 export interface YoloLab {
   model: YoloModel;
   tile: Rgb;
@@ -922,8 +922,8 @@ export function buildPractice(lab: () => Promise<YoloLab>): PracticeSection[] {
       id: "yx-model",
       title: { tr: "Eğitilmiş modelle deneyler", en: "Experiments with the trained model" },
       intro: {
-        tr: "Önce tahmininizi seçin; sonra bölümün modeli Teori'deki Şanghay karesinde gerçekten çalışır (ilk deneyde yaklaşık 7 MB yüklenir).",
-        en: "Pick your prediction first; then the chapter's model really runs on the Shanghai tile of the Theory tab (about 7 MB load at the first experiment).",
+        tr: "Önce tahmininizi seçin; sonra bölümün modeli Teori'deki Şanghay karesinde gerçekten çalışır (ilk deneyde yaklaşık 12 MB yüklenir).",
+        en: "Pick your prediction first; then the chapter's model really runs on the Shanghai tile of the Theory tab (about 12 MB to load at the first experiment).",
       },
       read: { tab: "detect" },
       questions: [

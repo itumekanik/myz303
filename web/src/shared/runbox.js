@@ -68,7 +68,7 @@ export function runBox({ file, text, packages, colabStep, colab, install, extra,
         { tr: "Hücreyi **Shift + Enter** ile çalıştırın. Çıktı ve grafikler hücrenin altında görünür.", en: "Run the cell with **Shift + Enter**. The output and the plots appear under the cell." },
       ];
 
-  return h("section", { class: "run-box", "aria-label": L({ tr: "Bu dosyayı çalıştırmak", en: "Running this file" }) },
+  return h("section", { class: "run-box", "aria-label": L({ tr: `${file} dosyasını çalıştırmak`, en: `Running ${file}` }) },
     h("h3", { text: L({ tr: "Bu dosyayı nasıl çalıştırırım?", en: "How do I run this file?" }) }),
     h("p", {}, rich({
       tr: `Proje klasörünüz varsa \`${file}\` kök klasörde hazır. Yoksa dosyayı buradan indirin ya da kopyalayın:`,

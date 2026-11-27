@@ -40,6 +40,7 @@ kapanmadığı, neyin sonraya bırakıldığı buradan izlenir.
 | [3_2026-11-22_genel-gozden-gecirme.md](3_2026-11-22_genel-gozden-gecirme.md) | 2026-11-22 | Site ve Python panelinin genel gözden geçirmesi (1.0.1) | 2 |
 | [4_2026-11-26_genel-kontrol.md](4_2026-11-26_genel-kontrol.md) | 2026-11-26 | Genel kontrol, ana sayfa bağlantısı, kod taraması | 3 |
 | [5_2026-11-26_pedagojik-inceleme.md](5_2026-11-26_pedagojik-inceleme.md) | 2026-11-26 | İlk üç bölümün ikinci pedagojik incelemesi | 14 (çoğu eğitmen kararı) |
+| [6_2026-11-27_yolo-bolumu.md](6_2026-11-27_yolo-bolumu.md) | 2026-11-27 | YOLO bölümünün incelemesi: erişilebilirlik, kod taraması, içerik | 2 (eğitmen kararı: modeller düzeltilmiş veriyle yeniden eğitilecek) |
 
 İlk üç dosya, o günlerdeki konuşmalardan ve commit'lerden sonradan yazıldı. Onlarda yalnızca
 bulguların özeti ve bugünkü durumları var.

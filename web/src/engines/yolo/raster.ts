@@ -71,15 +71,30 @@ export function maskIou(a: InstanceMask, b: InstanceMask): number {
   return union > 0 ? inter / union : 0;
 }
 
-/** Pixels covered by at least one of the masks (overlapping masks are not counted twice). */
-export function unionArea(masks: readonly InstanceMask[], width: number, height: number): number {
+/** A rectangle of pixels: x, y of its top-left corner, its width and height. */
+export interface Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Pixels covered by at least one of the masks (overlapping masks are not counted twice), only those inside
+ * `inside` when it is given (the image within the grey letterbox border).
+ */
+export function unionArea(masks: readonly InstanceMask[], width: number, height: number, inside?: Rect): number {
+  const r = inside ?? { x: 0, y: 0, width, height };
   const seen = new Uint8Array(width * height);
   let area = 0;
   for (const m of masks) {
     for (let y = 0; y < m.height; y++) {
       for (let x = 0; x < m.width; x++) {
         if (!m.data[y * m.width + x]) continue;
-        const i = (m.y + y) * width + m.x + x;
+        const gx = m.x + x;
+        const gy = m.y + y;
+        if (gx < r.x || gy < r.y || gx >= r.x + r.width || gy >= r.y + r.height) continue;
+        const i = gy * width + gx;
         if (!seen[i]) {
           seen[i] = 1;
           area++;

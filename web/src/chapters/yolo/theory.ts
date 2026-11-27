@@ -45,7 +45,7 @@ const INTRO = {
   compare: {
     title: { tr: "CNN bölümünden YOLO'ya", en: "From the CNN chapter to YOLO" },
     head: [
-      { tr: "", en: "" },
+      { tr: "Özellik", en: "Property" },
       { tr: "SimpleCNN (Bölüm 3)", en: "SimpleCNN (chapter 3)" },
       { tr: "YOLO26n-seg (bu bölüm)", en: "YOLO26n-seg (this chapter)" },
     ],

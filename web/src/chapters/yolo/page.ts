@@ -103,11 +103,15 @@ export const css = (c: readonly number[], alpha = 1): string => `rgba(${c[0]}, $
 export const T = (text: Text): string => L(text) as string;
 
 /** Decodes a tile and reads its pixels (the browsers decode JPEG exactly as OpenCV does). */
-export async function decodeImage(src: string): Promise<{ image: HTMLImageElement; rgb: Rgb }> {
+export async function decodeImage(src: string, maxSide = Infinity): Promise<{ image: HTMLImageElement; rgb: Rgb; scale: number }> {
   const image = new Image();
   image.src = src;
   await image.decode();
-  return { image, rgb: readRgb(image, image.naturalWidth, image.naturalHeight) };
+  // an image larger than maxSide is read smaller; scale = original pixels per pixel read
+  const scale = Math.max(1, Math.max(image.naturalWidth, image.naturalHeight) / maxSide);
+  const width = Math.round(image.naturalWidth / scale);
+  const height = Math.round(image.naturalHeight / scale);
+  return { image, rgb: readRgb(image, width, height), scale };
 }
 
 export function readRgb(source: CanvasImageSource, width: number, height: number): Rgb {
